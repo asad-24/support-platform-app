@@ -7,6 +7,9 @@ class PopulationSummary {
     required this.age6to9,
     required this.age10to14,
     required this.age15plus,
+    this.boys = 0,
+    this.girls = 0,
+    this.ageGroups = const [],
     this.notes,
   });
 
@@ -17,6 +20,9 @@ class PopulationSummary {
   final int age6to9;
   final int age10to14;
   final int age15plus;
+  final int boys;
+  final int girls;
+  final List<String> ageGroups;
   final String? notes;
 
   factory PopulationSummary.empty() => const PopulationSummary(
@@ -38,6 +44,9 @@ class PopulationSummary {
       age6to9: json['age6to9'] as int? ?? 0,
       age10to14: json['age10to14'] as int? ?? 0,
       age15plus: json['age15plus'] as int? ?? 0,
+      boys: json['boys'] as int? ?? 0,
+      girls: json['girls'] as int? ?? 0,
+      ageGroups: List<String>.from(json['ageGroups'] as List? ?? const []),
       notes: json['notes'] as String?,
     );
   }
@@ -50,6 +59,9 @@ class PopulationSummary {
     'age6to9': age6to9,
     'age10to14': age10to14,
     'age15plus': age15plus,
+    'boys': boys,
+    'girls': girls,
+    'ageGroups': ageGroups,
     'notes': notes,
   };
 }

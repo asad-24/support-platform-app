@@ -19,6 +19,7 @@ final authControllerProvider = AsyncNotifierProvider<AuthController, AuthState>(
 class AuthController extends AsyncNotifier<AuthState> {
   @override
   Future<AuthState> build() async {
+    await Future<void>.delayed(const Duration(milliseconds: 1600));
     final session = await ref.read(authRepositoryProvider).restoreSession();
     return AuthState(session: session);
   }
@@ -38,7 +39,7 @@ class AuthController extends AsyncNotifier<AuthState> {
   }
 
   Future<void> signup({
-    required String name,
+    required String username,
     required String emailOrPhone,
     required String password,
     required UserAccessRole accessRole,
@@ -48,12 +49,43 @@ class AuthController extends AsyncNotifier<AuthState> {
       final session = await ref
           .read(authRepositoryProvider)
           .signup(
-            name: name,
+            username: username,
             emailOrPhone: emailOrPhone,
             password: password,
             accessRole: accessRole,
           );
       return AuthState(session: session);
+    });
+  }
+
+  Future<bool> isUsernameAvailable(String username) {
+    return ref.read(authRepositoryProvider).isUsernameAvailable(username);
+  }
+
+  Future<void> completeVolunteerProfile({
+    required String name,
+    required String phone,
+    required String stateName,
+    required String lga,
+    required String address,
+    String? profileImagePath,
+  }) async {
+    final session = state.valueOrNull?.session;
+    if (session == null) return;
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final updatedSession = await ref
+          .read(authRepositoryProvider)
+          .updateVolunteerProfile(
+            session: session,
+            name: name,
+            phone: phone,
+            state: stateName,
+            lga: lga,
+            address: address,
+            profileImagePath: profileImagePath,
+          );
+      return AuthState(session: updatedSession);
     });
   }
 

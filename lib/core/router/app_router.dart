@@ -9,7 +9,6 @@ import '../../features/auth/presentation/splash_screen.dart';
 import '../../features/dashboard/presentation/home_screen.dart';
 import '../../features/export/presentation/export_screen.dart';
 import '../../features/map/presentation/map_screen.dart';
-import '../../features/onboarding/access_selection_screen.dart';
 import '../../features/sites/presentation/add_site_flow_screen.dart';
 import '../../features/sites/presentation/drafts_screen.dart';
 import '../../features/sites/presentation/site_list_screen.dart';
@@ -18,6 +17,8 @@ import '../../features/sites/presentation/sync_screen.dart';
 import '../../features/volunteer/presentation/volunteer_home_screen.dart';
 import '../../features/volunteer/presentation/volunteer_draft_records_screen.dart';
 import '../../features/volunteer/presentation/volunteer_profile_screen.dart';
+import '../../features/volunteer/presentation/volunteer_profile_setup_screen.dart';
+import '../../features/volunteer/presentation/volunteer_settings_screen.dart';
 import '../../features/volunteer/presentation/school_submission_detail_screen.dart';
 import '../../features/volunteer/presentation/volunteer_submitted_schools_screen.dart';
 import '../../features/volunteer/presentation/welcome_screen.dart';
@@ -29,12 +30,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   final auth = ref.watch(authControllerProvider);
 
   return GoRouter(
-    initialLocation: '/access',
+    initialLocation: '/splash',
     routes: [
-      GoRoute(
-        path: '/access',
-        builder: (context, state) => const AccessSelectionScreen(),
-      ),
+      GoRoute(path: '/access', redirect: (_, _) => '/login/volunteer'),
       GoRoute(
         path: '/splash',
         builder: (context, state) => const SplashScreen(),
@@ -92,11 +90,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const VolunteerProfileScreen(),
       ),
       GoRoute(
+        path: '/volunteer/profile/setup',
+        builder: (context, state) => const VolunteerProfileSetupScreen(),
+      ),
+      GoRoute(
+        path: '/volunteer/profile/edit',
+        builder: (context, state) =>
+            const VolunteerProfileSetupScreen(editMode: true),
+      ),
+      GoRoute(
         path: '/volunteer/settings',
-        builder: (context, state) => const VolunteerPlaceholderScreen(
-          title: 'Settings',
-          icon: Icons.settings_outlined,
-        ),
+        builder: (context, state) => const VolunteerSettingsScreen(),
       ),
       GoRoute(
         path: '/volunteer/help',
@@ -150,28 +154,51 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
     redirect: (context, state) {
       final location = state.matchedLocation;
-      final isPublicRoute =
-          location == '/access' ||
-          location == '/splash' ||
-          location.startsWith('/login') ||
-          location.startsWith('/signup');
+      final isAuthRoute =
+          location.startsWith('/login') || location.startsWith('/signup');
 
       if (auth.isLoading) {
-        return isPublicRoute ? null : '/splash';
+        return location == '/splash' ? null : '/splash';
       }
 
       final session = auth.valueOrNull?.session;
       final isLoggedIn = session != null;
 
       if (!isLoggedIn) {
-        return isPublicRoute ? null : '/access';
+        if (location == '/splash' || location == '/access') {
+          return '/login/volunteer';
+        }
+        return isAuthRoute ? null : '/login/volunteer';
       }
 
-      if (location.startsWith('/login') || location.startsWith('/signup')) {
+      if (isAuthRoute) {
         if (session.accessRole == UserAccessRole.volunteer) {
-          return '/welcome/volunteer';
+          return session.user.profileComplete
+              ? '/welcome/volunteer'
+              : '/volunteer/profile/setup';
         }
         return session.accessRole.dashboardPath;
+      }
+
+      if (location == '/splash' || location == '/access') {
+        if (session.accessRole == UserAccessRole.volunteer &&
+            !session.user.profileComplete) {
+          return '/volunteer/profile/setup';
+        }
+        return session.accessRole.dashboardPath;
+      }
+
+      final isVolunteerProfileSetup = location == '/volunteer/profile/setup';
+      if (session.accessRole == UserAccessRole.volunteer &&
+          !session.user.profileComplete &&
+          !isVolunteerProfileSetup) {
+        return '/volunteer/profile/setup';
+      }
+
+      if (session.accessRole == UserAccessRole.volunteer &&
+          session.user.profileComplete &&
+          isVolunteerProfileSetup) {
+        return '/welcome/volunteer';
       }
 
       final adminOnly = location == '/export';

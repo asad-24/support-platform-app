@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../../../core/utils/google_maps_web_availability.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/map_unavailable_placeholder.dart';
 import '../../sites/data/sites_repository.dart';
 
 class MapScreen extends ConsumerWidget {
@@ -23,6 +25,23 @@ class MapScreen extends ConsumerWidget {
               icon: Icons.map_outlined,
               title: 'No mapped sites yet',
               message: 'Captured GPS points will appear here after sync.',
+            );
+          }
+          if (!isGoogleMapsAvailableForCurrentPlatform()) {
+            return Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: Responsive.pageMaxWidth(context),
+                ),
+                child: Padding(
+                  padding: Responsive.pagePadding(context),
+                  child: const MapUnavailablePlaceholder(
+                    title: 'Web map setup required',
+                    message:
+                        'Add a Google Maps JavaScript API key in web configuration to view mapped sites in the browser.',
+                  ),
+                ),
+              ),
             );
           }
           final center = LatLng(items.first.latitude, items.first.longitude);

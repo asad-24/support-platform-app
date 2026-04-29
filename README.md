@@ -1,8 +1,8 @@
-# School Support Atlas
+# Support Atlas
 
 Mobile-first Flutter MVP for mapping and supporting informal education / Almajiri-style learning centres in Nigeria.
 
-Tagline: **Enabling data-driven transformation in education**
+Tagline: **Loading workspace...**
 
 ## What is included
 

@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/google_maps_web_availability.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../features/auth/presentation/auth_controller.dart';
 import '../../../shared/models/app_enums.dart';
+import '../../../shared/widgets/map_unavailable_placeholder.dart';
 import '../../../shared/widgets/status_badge.dart';
 import '../data/sites_repository.dart';
 
@@ -68,20 +70,29 @@ class SiteProfileScreen extends ConsumerWidget {
                     height: 210,
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: GoogleMap(
-                        initialCameraPosition: CameraPosition(
-                          target: LatLng(site.latitude, site.longitude),
-                          zoom: 13,
-                        ),
-                        markers: {
-                          Marker(
-                            markerId: MarkerId(site.id),
-                            position: LatLng(site.latitude, site.longitude),
-                            infoWindow: InfoWindow(title: site.name),
-                          ),
-                        },
-                        zoomControlsEnabled: false,
-                      ),
+                      child: isGoogleMapsAvailableForCurrentPlatform()
+                          ? GoogleMap(
+                              initialCameraPosition: CameraPosition(
+                                target: LatLng(site.latitude, site.longitude),
+                                zoom: 13,
+                              ),
+                              markers: {
+                                Marker(
+                                  markerId: MarkerId(site.id),
+                                  position: LatLng(
+                                    site.latitude,
+                                    site.longitude,
+                                  ),
+                                  infoWindow: InfoWindow(title: site.name),
+                                ),
+                              },
+                              zoomControlsEnabled: false,
+                            )
+                          : const MapUnavailablePlaceholder(
+                              title: 'Map unavailable on web',
+                              message:
+                                  'Add a Google Maps JavaScript API key in web configuration to preview this site on the browser.',
+                            ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -107,9 +118,13 @@ class SiteProfileScreen extends ConsumerWidget {
                         'Non-resident',
                         '${population?.nonResidentChildren ?? 0}',
                       ),
+                      _Info('Boys', '${population?.boys ?? 0}'),
+                      _Info('Girls', '${population?.girls ?? 0}'),
                       _Info(
-                        'Ages 6-14',
-                        '${(population?.age6to9 ?? 0) + (population?.age10to14 ?? 0)}',
+                        'Age groups',
+                        population?.ageGroups.isNotEmpty == true
+                            ? population!.ageGroups.join(', ')
+                            : 'Not specified',
                       ),
                     ],
                   ),

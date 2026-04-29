@@ -17,6 +17,20 @@ class AuthSession {
   final String refreshToken;
   final User user;
   final UserAccessRole accessRole;
+
+  AuthSession copyWith({
+    String? accessToken,
+    String? refreshToken,
+    User? user,
+    UserAccessRole? accessRole,
+  }) {
+    return AuthSession(
+      accessToken: accessToken ?? this.accessToken,
+      refreshToken: refreshToken ?? this.refreshToken,
+      user: user ?? this.user,
+      accessRole: accessRole ?? this.accessRole,
+    );
+  }
 }
 
 class SecureTokenStorage {

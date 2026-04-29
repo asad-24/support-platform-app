@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
@@ -9,30 +10,37 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppLogo(size: 92),
-            SizedBox(height: 18),
-            Text(
-              AppConstants.appName,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
-                color: AppColors.ink,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: AppColors.onboardingGreen,
+        systemNavigationBarIconBrightness: Brightness.light,
+      ),
+      child: const Scaffold(
+        backgroundColor: AppColors.onboardingGreen,
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AppLogo(size: 104),
+                  SizedBox(height: 22),
+                  Text(
+                    AppConstants.appName,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
               ),
             ),
-            SizedBox(height: 8),
-            Text(
-              AppConstants.tagline,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.muted),
-            ),
-            SizedBox(height: 24),
-            CircularProgressIndicator(),
-          ],
+          ),
         ),
       ),
     );

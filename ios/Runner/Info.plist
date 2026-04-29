@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>School Support Atlas</string>
+	<string>Support Atlas</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -46,10 +46,10 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>School Support Atlas uses the camera to capture site condition photos for admin review.</string>
+	<string>Support Atlas uses the camera to capture site condition photos for admin review.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>School Support Atlas uses location while in use to capture accurate GPS coordinates for mapped learning centres.</string>
+	<string>Support Atlas uses location while in use to capture accurate GPS coordinates for mapped learning centres.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>School Support Atlas lets field workers attach existing site photos to records.</string>
+	<string>Support Atlas lets field workers attach existing site photos to records.</string>
 </dict>
 </plist>

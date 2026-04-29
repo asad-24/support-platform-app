@@ -15,6 +15,8 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 abstract class AuthRepository {
   Future<AuthSession?> restoreSession();
 
+  Future<bool> isUsernameAvailable(String username);
+
   Future<AuthSession> login({
     required String email,
     required String password,
@@ -22,10 +24,20 @@ abstract class AuthRepository {
   });
 
   Future<AuthSession> signup({
-    required String name,
+    required String username,
     required String emailOrPhone,
     required String password,
     required UserAccessRole accessRole,
+  });
+
+  Future<AuthSession> updateVolunteerProfile({
+    required AuthSession session,
+    required String name,
+    required String phone,
+    required String state,
+    required String lga,
+    required String address,
+    String? profileImagePath,
   });
 
   Future<void> logout();
@@ -37,8 +49,23 @@ class MockAuthRepository implements AuthRepository {
   final SecureTokenStorage _tokenStorage;
   final _uuid = const Uuid();
 
+  static const _reservedUsernames = {
+    'admin',
+    'atlas',
+    'support',
+    'volunteer',
+    'ibrahim',
+  };
+
   @override
   Future<AuthSession?> restoreSession() => _tokenStorage.readSession();
+
+  @override
+  Future<bool> isUsernameAvailable(String username) async {
+    await Future<void>.delayed(const Duration(milliseconds: 320));
+    final normalized = username.trim().toLowerCase();
+    return normalized.length >= 3 && !_reservedUsernames.contains(normalized);
+  }
 
   @override
   Future<AuthSession> login({
@@ -69,6 +96,14 @@ class MockAuthRepository implements AuthRepository {
             : 'Helper User',
         email: email,
         role: role,
+        username: role == UserRole.admin ? 'admin' : 'ibrahim',
+        phone: accessRole == UserAccessRole.volunteer ? '+2348012345678' : null,
+        state: accessRole == UserAccessRole.volunteer ? 'Kano' : null,
+        lga: accessRole == UserAccessRole.volunteer ? 'Nassarawa' : null,
+        address: accessRole == UserAccessRole.volunteer
+            ? 'Nassarawa LGA, Kano State'
+            : null,
+        profileComplete: true,
         permissions: role == UserRole.admin
             ? const [
                 'sites:read',
@@ -85,18 +120,23 @@ class MockAuthRepository implements AuthRepository {
 
   @override
   Future<AuthSession> signup({
-    required String name,
+    required String username,
     required String emailOrPhone,
     required String password,
     required UserAccessRole accessRole,
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 600));
-    if (name.trim().length < 2 ||
+    final normalizedUsername = username.trim().toLowerCase();
+    if (normalizedUsername.length < 3 ||
         emailOrPhone.trim().isEmpty ||
+        !emailOrPhone.trim().contains('@') ||
         password.length < 6) {
       throw const AppException(
-        'Enter your name, email or phone, and a password of at least 6 characters.',
+        'Enter a username, valid email, and a password of at least 6 characters.',
       );
+    }
+    if (!await isUsernameAvailable(normalizedUsername)) {
+      throw const AppException('That username is already taken.');
     }
 
     final session = AuthSession(
@@ -105,9 +145,11 @@ class MockAuthRepository implements AuthRepository {
       accessRole: accessRole,
       user: User(
         id: '${accessRole.name}-${_uuid.v4().substring(0, 8)}',
-        name: name.trim(),
+        name: '',
         email: emailOrPhone.trim(),
         role: UserRole.fieldWorker,
+        username: normalizedUsername,
+        profileComplete: accessRole != UserAccessRole.volunteer,
         permissions: accessRole == UserAccessRole.volunteer
             ? const ['sites:create', 'sites:update:assigned']
             : const ['sites:read', 'support:offer'],
@@ -115,6 +157,40 @@ class MockAuthRepository implements AuthRepository {
     );
     await _tokenStorage.saveSession(session);
     return session;
+  }
+
+  @override
+  Future<AuthSession> updateVolunteerProfile({
+    required AuthSession session,
+    required String name,
+    required String phone,
+    required String state,
+    required String lga,
+    required String address,
+    String? profileImagePath,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 450));
+    if (name.trim().length < 2 ||
+        phone.trim().length < 7 ||
+        state.trim().isEmpty ||
+        lga.trim().isEmpty ||
+        address.trim().length < 4) {
+      throw const AppException('Complete your name, phone, and address.');
+    }
+
+    final updated = session.copyWith(
+      user: session.user.copyWith(
+        name: name.trim(),
+        phone: phone.trim(),
+        state: state.trim(),
+        lga: lga.trim(),
+        address: address.trim(),
+        profileImagePath: profileImagePath,
+        profileComplete: true,
+      ),
+    );
+    await _tokenStorage.saveSession(updated);
+    return updated;
   }
 
   @override

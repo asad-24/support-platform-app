@@ -19,14 +19,16 @@ class SignupScreen extends ConsumerStatefulWidget {
 
 class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _emailOrPhoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _checkingUsername = false;
+  String? _usernameError;
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _usernameController.dispose();
     _emailOrPhoneController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -40,7 +42,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           if (state.isAuthenticated) {
             context.go(
               widget.selectedRole == UserAccessRole.volunteer
-                  ? '/welcome/volunteer'
+                  ? '/volunteer/profile/setup'
                   : widget.selectedRole.dashboardPath,
             );
           }
@@ -86,15 +88,29 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         ),
                         const SizedBox(height: 24),
                         TextFormField(
-                          controller: _nameController,
+                          controller: _usernameController,
                           textInputAction: TextInputAction.next,
                           decoration: const InputDecoration(
-                            labelText: 'Full name',
-                            prefixIcon: Icon(Icons.badge_outlined),
+                            labelText: 'Username',
+                            prefixIcon: Icon(Icons.alternate_email_rounded),
                           ),
+                          onChanged: (_) {
+                            if (_usernameError != null) {
+                              setState(() => _usernameError = null);
+                            }
+                          },
                           validator: (value) {
-                            if (value == null || value.trim().length < 2) {
-                              return 'Enter your name';
+                            final username = value?.trim() ?? '';
+                            if (username.length < 3) {
+                              return 'Username must be at least 3 characters';
+                            }
+                            if (!RegExp(
+                              r'^[a-zA-Z0-9_]+$',
+                            ).hasMatch(username)) {
+                              return 'Use letters, numbers, or underscore only';
+                            }
+                            if (_usernameError != null) {
+                              return _usernameError;
                             }
                             return null;
                           },
@@ -105,12 +121,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
                           decoration: const InputDecoration(
-                            labelText: 'Email or phone',
-                            prefixIcon: Icon(Icons.person_outline_rounded),
+                            labelText: 'Email',
+                            prefixIcon: Icon(Icons.mail_outline_rounded),
                           ),
                           validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Enter your email or phone';
+                            final email = value?.trim() ?? '';
+                            if (!email.contains('@') || !email.contains('.')) {
+                              return 'Enter a valid email';
                             }
                             return null;
                           },
@@ -145,8 +162,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         ),
                         const SizedBox(height: 22),
                         ElevatedButton.icon(
-                          onPressed: authState.isLoading ? null : _submit,
-                          icon: authState.isLoading
+                          onPressed: authState.isLoading || _checkingUsername
+                              ? null
+                              : _submit,
+                          icon: authState.isLoading || _checkingUsername
                               ? const SizedBox.square(
                                   dimension: 18,
                                   child: CircularProgressIndicator(
@@ -180,10 +199,29 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
-    ref
+    _submitAfterUsernameCheck();
+  }
+
+  Future<void> _submitAfterUsernameCheck() async {
+    setState(() {
+      _checkingUsername = true;
+      _usernameError = null;
+    });
+    final available = await ref
+        .read(authControllerProvider.notifier)
+        .isUsernameAvailable(_usernameController.text.trim());
+    if (!mounted) return;
+    setState(() {
+      _checkingUsername = false;
+      _usernameError = available ? null : 'That username is already taken';
+    });
+    if (!_formKey.currentState!.validate()) return;
+    if (!available) return;
+
+    await ref
         .read(authControllerProvider.notifier)
         .signup(
-          name: _nameController.text.trim(),
+          username: _usernameController.text.trim(),
           emailOrPhone: _emailOrPhoneController.text.trim(),
           password: _passwordController.text,
           accessRole: widget.selectedRole,

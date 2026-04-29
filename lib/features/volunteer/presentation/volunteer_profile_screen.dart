@@ -1,6 +1,9 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
@@ -19,6 +22,12 @@ class VolunteerProfileScreen extends ConsumerWidget {
     final email = (user?.email.trim().isNotEmpty ?? false)
         ? user!.email
         : 'ibrahim.sule@volunteer.org';
+    final phone = user?.phone ?? 'Not provided';
+    final username = user?.username == null ? '' : '@${user!.username}';
+    final location = [
+      user?.lga,
+      user?.state,
+    ].where((item) => item != null && item.trim().isNotEmpty).join(' · ');
 
     return Scaffold(
       backgroundColor: AppColors.dashboardBackground,
@@ -35,8 +44,13 @@ class VolunteerProfileScreen extends ConsumerWidget {
                 VolunteerProfileHeaderCard(
                   name: name,
                   email: email,
+                  username: username,
+                  phone: phone,
                   role: 'Field Volunteer',
-                  location: 'Kano State · Nassarawa LGA',
+                  location: location.isEmpty
+                      ? 'Location not provided'
+                      : location,
+                  imagePath: user?.profileImagePath,
                 ),
                 const SizedBox(height: 18),
                 const ProfileMenuCard(),
@@ -58,14 +72,20 @@ class VolunteerProfileHeaderCard extends StatelessWidget {
     super.key,
     required this.name,
     required this.email,
+    required this.username,
+    required this.phone,
     required this.role,
     required this.location,
+    this.imagePath,
   });
 
   final String name;
   final String email;
+  final String username;
+  final String phone;
   final String role;
   final String location;
+  final String? imagePath;
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +97,7 @@ class VolunteerProfileHeaderCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _ProfileAvatar(initials: _initials(name)),
+          _ProfileAvatar(initials: _initials(name), imagePath: imagePath),
           const SizedBox(height: 18),
           FittedBox(
             fit: BoxFit.scaleDown,
@@ -127,7 +147,11 @@ class VolunteerProfileHeaderCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            email,
+            [
+              username,
+              email,
+              phone,
+            ].where((item) => item.trim().isNotEmpty).join(' · '),
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: AppColors.mutedOnGreen,
@@ -181,6 +205,11 @@ class ProfileMenuCard extends StatelessWidget {
       ),
       child: Column(
         children: [
+          ProfileMenuTile(
+            icon: Icons.person_rounded,
+            label: 'Edit Profile',
+            onTap: () => context.go('/volunteer/profile/edit'),
+          ),
           ProfileMenuTile(
             icon: Icons.map_outlined,
             label: 'My Submitted Schools',
@@ -330,7 +359,7 @@ class SignOutButton extends ConsumerWidget {
     );
     if (signOut != true || !context.mounted) return;
     await ref.read(authControllerProvider.notifier).logout();
-    if (context.mounted) context.go('/access');
+    if (context.mounted) context.go('/login/volunteer');
   }
 }
 
@@ -415,31 +444,78 @@ class VolunteerPlaceholderScreen extends StatelessWidget {
 }
 
 class _ProfileAvatar extends StatelessWidget {
-  const _ProfileAvatar({required this.initials});
+  const _ProfileAvatar({required this.initials, this.imagePath});
 
   final String initials;
+  final String? imagePath;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 88,
-      height: 88,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: AppColors.onboardingCardGreen,
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.35),
-          width: 4,
-        ),
-      ),
-      child: Text(
-        initials.toUpperCase(),
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 26,
-          fontWeight: FontWeight.w900,
-        ),
+    final hasImage = imagePath != null && imagePath!.isNotEmpty;
+
+    return SizedBox(
+      width: 96,
+      height: 96,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Container(
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppColors.onboardingCardGreen,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.35),
+                  width: 4,
+                ),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: hasImage
+                  ? FutureBuilder<Uint8List>(
+                      future: XFile(imagePath!).readAsBytes(),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          return Image.memory(
+                            snapshot.data!,
+                            width: 96,
+                            height: 96,
+                            fit: BoxFit.cover,
+                          );
+                        }
+                        return const CircularProgressIndicator(
+                          color: Colors.white,
+                        );
+                      },
+                    )
+                  : Text(
+                      initials.toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+            ),
+          ),
+          Positioned(
+            right: 2,
+            bottom: 4,
+            child: Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: AppColors.deepGreen,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 3),
+              ),
+              child: const Icon(
+                Icons.edit_rounded,
+                color: Colors.white,
+                size: 15,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

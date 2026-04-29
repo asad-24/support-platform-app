@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 
@@ -13,6 +14,17 @@ import '../../../shared/models/app_enums.dart';
 import '../../../shared/models/media_file.dart';
 import '../../../shared/models/site_draft.dart';
 import '../data/sites_repository.dart';
+import 'add_site_flow/flow_timeline.dart';
+import 'add_site_flow/location_step.dart';
+import 'add_site_flow/models.dart';
+import 'add_site_flow/nigeria_locations_service.dart';
+import 'add_site_flow/needs_priorities_step.dart';
+import 'add_site_flow/photos_review_step.dart';
+import 'add_site_flow/population_step.dart';
+import 'add_site_flow/review_step.dart';
+import 'add_site_flow/school_details_step.dart';
+import 'add_site_flow/shared_widgets.dart';
+import 'add_site_flow/welfare_step.dart';
 
 class AddSiteFlowScreen extends ConsumerStatefulWidget {
   const AddSiteFlowScreen({super.key, this.siteId, this.initialStep = 0});
@@ -25,15 +37,66 @@ class AddSiteFlowScreen extends ConsumerStatefulWidget {
 }
 
 class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
+  static const _minPhotos = 2;
+  static const _maxPhotos = 8;
+
+  static const _schoolTypes = [
+    'Traditional Quranic School',
+    'Informal Islamic School',
+    'Integrated Islamic School',
+    'Non-Formal Education Center',
+    'Community Islamic School',
+  ];
+
+  static const _flowSteps = [
+    FlowStepMeta(
+      title: 'School Details',
+      subtitle: 'School identity and operator details.',
+    ),
+    FlowStepMeta(
+      title: 'Location',
+      subtitle: 'School address and GPS coordinates.',
+    ),
+    FlowStepMeta(
+      title: 'Photo Documentation',
+      subtitle: 'Upload 2-8 clear school environment photos.',
+    ),
+    FlowStepMeta(
+      title: 'Students',
+      subtitle: 'Estimated student totals, gender counts, and age groups.',
+    ),
+    FlowStepMeta(
+      title: 'Welfare',
+      subtitle: 'Nutrition, water, and living conditions.',
+    ),
+    FlowStepMeta(
+      title: 'Needs & Priorities',
+      subtitle: 'Intervention needs and follow-up urgency.',
+    ),
+    FlowStepMeta(
+      title: 'Review',
+      subtitle: 'Check the record before final submission.',
+    ),
+  ];
+
   final _formKey = GlobalKey<FormState>();
   final _uuid = const Uuid();
   final _picker = ImagePicker();
+  final _locationsService = NigeriaLocationsService();
+
   int _step = 0;
+  bool _movingForward = true;
   bool _submitting = false;
+  bool _leavingFlow = false;
+  bool _isLoadingStates = true;
+  bool _isFetchingLocation = false;
+  bool _didAttemptAutoLocation = false;
+  String? _statesLoadError;
+  LatLng? _selectedLocation;
 
   final _name = TextEditingController();
   final _localName = TextEditingController();
-  final _type = TextEditingController(text: 'Informal learning centre');
+  final _type = TextEditingController();
   final _state = TextEditingController();
   final _lga = TextEditingController();
   final _ward = TextEditingController();
@@ -46,29 +109,37 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
   final _totalChildren = TextEditingController(text: '0');
   final _residentChildren = TextEditingController(text: '0');
   final _nonResidentChildren = TextEditingController(text: '0');
+  final _boys = TextEditingController(text: '0');
+  final _girls = TextEditingController(text: '0');
   final _age0to5 = TextEditingController(text: '0');
   final _age6to9 = TextEditingController(text: '0');
   final _age10to14 = TextEditingController(text: '0');
   final _age15plus = TextEditingController(text: '0');
   final _populationNotes = TextEditingController();
-  final _feeding = TextEditingController(text: 'Unknown');
-  final _shelter = TextEditingController(text: 'Unknown');
-  final _sanitation = TextEditingController(text: 'Unknown');
-  final _water = TextEditingController(text: 'Unknown');
-  final _health = TextEditingController(text: 'Unknown');
-  final _clothing = TextEditingController(text: 'Unknown');
+  final _feeding = TextEditingController();
+  final _shelter = TextEditingController();
+  final _sanitation = TextEditingController(text: 'false');
+  final _water = TextEditingController();
+  final _health = TextEditingController(text: 'false');
+  final _clothing = TextEditingController(text: 'false');
+  final _hygiene = TextEditingController();
   final _safetyRisks = TextEditingController();
   final _urgencyReason = TextEditingController();
   final _welfareNotes = TextEditingController();
+
   bool _immediateIntervention = false;
   UrgencyLevel _urgency = UrgencyLevel.low;
   final Set<NeedType> _needs = {};
-  final List<XFile> _photos = [];
+  final Set<String> _studentAgeGroups = {};
+  final List<SitePhotoDraft> _photos = [];
+  final List<OperatorContactFields> _additionalOperators = [];
+  List<NigeriaStateOption> _nigeriaStates = [];
 
   @override
   void initState() {
     super.initState();
-    _step = widget.initialStep.clamp(0, 6);
+    _step = widget.initialStep.clamp(0, _flowSteps.length - 1);
+    _loadNigeriaStates();
     if (widget.siteId != null) {
       Future<void>.microtask(_loadSiteForEdit);
     }
@@ -92,6 +163,8 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
       _totalChildren,
       _residentChildren,
       _nonResidentChildren,
+      _boys,
+      _girls,
       _age0to5,
       _age6to9,
       _age10to14,
@@ -103,9 +176,11 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
       _water,
       _health,
       _clothing,
+      _hygiene,
       _safetyRisks,
       _urgencyReason,
       _welfareNotes,
+      ..._additionalOperators.expand((entry) => [entry.name, entry.phone]),
     ]) {
       controller.dispose();
     }
@@ -115,41 +190,150 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.siteId != null;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isEdit ? 'Edit site' : 'Register site'),
-        actions: [
-          TextButton.icon(
-            onPressed: _submitting
-                ? null
-                : () => _saveDraft(syncPending: false),
-            icon: const Icon(Icons.save_outlined, color: Colors.white),
-            label: const Text('Draft', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: Responsive.pageMaxWidth(context),
+    final isLast = _step == _flowSteps.length - 1;
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop || _leavingFlow) return;
+        _handleDeviceBack();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          foregroundColor: AppColors.deepGreen,
+          surfaceTintColor: Colors.white,
+          elevation: 0,
+          shadowColor: AppColors.line,
+          centerTitle: true,
+          leadingWidth: 64,
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 12),
+            child: IconButton.filled(
+              tooltip: 'Back to home',
+              onPressed: _submitting || _leavingFlow
+                  ? null
+                  : _saveDraftAndGoHome,
+              icon: const Icon(Icons.arrow_back_rounded),
+              style: IconButton.styleFrom(
+                backgroundColor: AppColors.paleGreen,
+                disabledBackgroundColor: AppColors.line,
+                disabledForegroundColor: AppColors.muted,
+                fixedSize: const Size.square(44),
+                foregroundColor: AppColors.deepGreen,
+                shape: const CircleBorder(),
+              ),
             ),
-            child: Form(
-              key: _formKey,
-              child: Stepper(
-                type: MediaQuery.sizeOf(context).width > 800
-                    ? StepperType.horizontal
-                    : StepperType.vertical,
-                currentStep: _step,
-                onStepTapped: (step) => setState(() => _step = step),
-                controlsBuilder: (context, details) {
-                  final isLast = _step == 6;
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 16),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
+          ),
+          title: Text(
+            isEdit ? 'Edit School' : 'Add School',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: AppColors.deepGreen,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: IconButton.filled(
+                tooltip: 'Save draft',
+                onPressed: _submitting
+                    ? null
+                    : () => _saveDraft(syncPending: false),
+                icon: const Icon(Icons.save_outlined),
+                style: IconButton.styleFrom(
+                  backgroundColor: AppColors.paleGreen,
+                  disabledBackgroundColor: AppColors.line,
+                  disabledForegroundColor: AppColors.muted,
+                  fixedSize: const Size.square(44),
+                  foregroundColor: AppColors.deepGreen,
+                  shape: const CircleBorder(),
+                ),
+              ),
+            ),
+          ],
+        ),
+        body: SafeArea(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppColors.paleGreen.withValues(alpha: 0.55),
+                  Colors.white,
+                  AppColors.scaffold,
+                ],
+              ),
+            ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: Responsive.pageMaxWidth(context),
+                ),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 18, 16, 12),
+                        child: AddSiteFlowTimeline(
+                          currentStep: _step,
+                          steps: _flowSteps,
+                        ),
+                      ),
+                      Expanded(
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 260),
+                          transitionBuilder: (child, animation) {
+                            final offsetTween = Tween<Offset>(
+                              begin: Offset(_movingForward ? 0.14 : -0.14, 0),
+                              end: Offset.zero,
+                            );
+                            return FadeTransition(
+                              opacity: animation,
+                              child: SlideTransition(
+                                position: animation
+                                    .drive(
+                                      CurveTween(curve: Curves.easeOutCubic),
+                                    )
+                                    .drive(offsetTween),
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: SingleChildScrollView(
+                            key: ValueKey(_step),
+                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                AddSiteStepHeader(
+                                  stepNumber: _step + 1,
+                                  totalSteps: _flowSteps.length,
+                                  title: _flowSteps[_step].title,
+                                  subtitle: _flowSteps[_step].subtitle,
+                                ),
+                                const SizedBox(height: 14),
+                                AddSiteStepCard(child: _buildCurrentStep()),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        child: AddSiteResponsiveActions(
+                          secondary: _step > 0
+                              ? OutlinedButton.icon(
+                                  onPressed: _submitting ? null : _goBack,
+                                  icon: const Icon(Icons.arrow_back_rounded),
+                                  label: const Text('Back'),
+                                )
+                              : null,
+                          primary: ElevatedButton.icon(
                             onPressed: _submitting
                                 ? null
                                 : (isLast ? _confirmSubmit : _continue),
@@ -169,284 +353,10 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
                             label: Text(isLast ? 'Submit' : 'Continue'),
                           ),
                         ),
-                        const SizedBox(width: 10),
-                        if (_step > 0)
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: _submitting
-                                  ? null
-                                  : () => setState(() => _step -= 1),
-                              icon: const Icon(Icons.arrow_back_rounded),
-                              label: const Text('Back'),
-                            ),
-                          ),
-                      ],
-                    ),
-                  );
-                },
-                steps: [
-                  Step(
-                    title: const Text('Identity'),
-                    isActive: _step >= 0,
-                    content: _StepCard(
-                      children: [
-                        _field(_name, 'Centre name', required: true),
-                        _field(_localName, 'Local name'),
-                        _field(_type, 'Type', required: true),
-                        _field(_state, 'State', required: true),
-                        _field(_lga, 'LGA', required: true),
-                        _field(_ward, 'Ward', required: true),
-                        _field(_community, 'Community', required: true),
-                        _field(_landmark, 'Landmark'),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  Step(
-                    title: const Text('GPS'),
-                    isActive: _step >= 1,
-                    content: _StepCard(
-                      children: [
-                        OutlinedButton.icon(
-                          onPressed: _captureGps,
-                          icon: const Icon(Icons.my_location_rounded),
-                          label: const Text('Capture current GPS'),
-                        ),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _field(
-                                _lat,
-                                'Latitude',
-                                required: true,
-                                keyboardType: TextInputType.number,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _field(
-                                _lng,
-                                'Longitude',
-                                required: true,
-                                keyboardType: TextInputType.number,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const Text(
-                          'Manual adjustment is available for cases where the field worker is standing near, but not inside, the learning centre.',
-                          style: TextStyle(
-                            color: AppColors.muted,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Step(
-                    title: const Text('Contact'),
-                    isActive: _step >= 2,
-                    content: _StepCard(
-                      children: [
-                        _field(
-                          _operator,
-                          'Operator/contact name',
-                          required: true,
-                        ),
-                        _field(
-                          _phone,
-                          'Phone number',
-                          keyboardType: TextInputType.phone,
-                        ),
-                      ],
-                    ),
-                  ),
-                  Step(
-                    title: const Text('Population'),
-                    isActive: _step >= 3,
-                    content: _StepCard(
-                      children: [
-                        _numberGrid(
-                          [
-                            _totalChildren,
-                            _residentChildren,
-                            _nonResidentChildren,
-                            _age0to5,
-                            _age6to9,
-                            _age10to14,
-                            _age15plus,
-                          ],
-                          const [
-                            'Total children',
-                            'Resident',
-                            'Non-resident',
-                            'Age 0-5',
-                            'Age 6-9',
-                            'Age 10-14',
-                            'Age 15+',
-                          ],
-                        ),
-                        _field(
-                          _populationNotes,
-                          'Population notes',
-                          maxLines: 3,
-                        ),
-                      ],
-                    ),
-                  ),
-                  Step(
-                    title: const Text('Welfare'),
-                    isActive: _step >= 4,
-                    content: _StepCard(
-                      children: [
-                        _field(_feeding, 'Feeding status', required: true),
-                        _field(_shelter, 'Shelter status', required: true),
-                        _field(
-                          _sanitation,
-                          'Sanitation status',
-                          required: true,
-                        ),
-                        _field(_water, 'Water access', required: true),
-                        _field(_health, 'Health access', required: true),
-                        _field(_clothing, 'Clothing status', required: true),
-                        SwitchListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: const Text('Immediate intervention needed'),
-                          value: _immediateIntervention,
-                          onChanged: (value) =>
-                              setState(() => _immediateIntervention = value),
-                        ),
-                        DropdownButtonFormField<UrgencyLevel>(
-                          key: ValueKey(_urgency),
-                          initialValue: _urgency,
-                          decoration: const InputDecoration(
-                            labelText: 'Urgency level',
-                          ),
-                          items: UrgencyLevel.values
-                              .map(
-                                (level) => DropdownMenuItem(
-                                  value: level,
-                                  child: Text(level.label),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (value) => setState(
-                            () => _urgency = value ?? UrgencyLevel.low,
-                          ),
-                        ),
-                        _field(_urgencyReason, 'Urgency reason', maxLines: 3),
-                        _field(
-                          _safetyRisks,
-                          'Safeguarding/safety risks for admin review',
-                          maxLines: 3,
-                        ),
-                        _field(_welfareNotes, 'Welfare notes', maxLines: 3),
-                        const SizedBox(height: 8),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'Needs',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                        ),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: NeedType.values.map((need) {
-                            return FilterChip(
-                              label: Text(need.label),
-                              selected: _needs.contains(need),
-                              onSelected: (selected) => setState(() {
-                                if (selected) {
-                                  _needs.add(need);
-                                } else {
-                                  _needs.remove(need);
-                                }
-                              }),
-                            );
-                          }).toList(),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Step(
-                    title: const Text('Photos'),
-                    isActive: _step >= 5,
-                    content: _StepCard(
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () => _pickPhoto(ImageSource.camera),
-                                icon: const Icon(Icons.camera_alt_rounded),
-                                label: const Text('Camera'),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () =>
-                                    _pickPhoto(ImageSource.gallery),
-                                icon: const Icon(Icons.photo_library_rounded),
-                                label: const Text('Gallery'),
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (_photos.isEmpty)
-                          const Text(
-                            'No photos selected yet.',
-                            style: TextStyle(color: AppColors.muted),
-                          )
-                        else
-                          ..._photos.map(
-                            (photo) => ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              leading: const Icon(
-                                Icons.image_rounded,
-                                color: AppColors.deepGreen,
-                              ),
-                              title: Text(photo.name),
-                              subtitle: const Text(
-                                'Stored locally until upload/sync',
-                              ),
-                              trailing: IconButton(
-                                tooltip: 'Remove photo',
-                                onPressed: () =>
-                                    setState(() => _photos.remove(photo)),
-                                icon: const Icon(Icons.delete_outline_rounded),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  Step(
-                    title: const Text('Review'),
-                    isActive: _step >= 6,
-                    content: _StepCard(
-                      children: [
-                        _ReviewRow('Name', _name.text),
-                        _ReviewRow(
-                          'Location',
-                          '${_community.text}, ${_lga.text}, ${_state.text}',
-                        ),
-                        _ReviewRow('GPS', '${_lat.text}, ${_lng.text}'),
-                        _ReviewRow('Children', _totalChildren.text),
-                        _ReviewRow('Urgency', _urgency.label),
-                        _ReviewRow('Photos', '${_photos.length} selected'),
-                        const Divider(),
-                        OutlinedButton.icon(
-                          onPressed: _submitting
-                              ? null
-                              : () => _saveDraft(syncPending: true),
-                          icon: const Icon(Icons.sync_problem_rounded),
-                          label: const Text('Sync later'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -455,17 +365,158 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
     );
   }
 
+  Widget _buildCurrentStep() {
+    switch (_step) {
+      case 0:
+        return SchoolDetailsStep(
+          schoolTypes: _schoolTypes,
+          nameController: _name,
+          typeController: _type,
+          primaryOperatorNameController: _operator,
+          primaryOperatorPhoneController: _phone,
+          additionalOperators: _additionalOperators,
+          onAddOperator: _addOperator,
+          onRemoveOperator: _removeOperator,
+        );
+      case 1:
+        _triggerAutoLocationIfNeeded();
+        return LocationStep(
+          states: _nigeriaStates,
+          availableLgas: _availableLgas,
+          selectedState: _selectedStateValue,
+          selectedLga: _selectedLgaValue,
+          isLoadingStates: _isLoadingStates,
+          statesLoadError: _statesLoadError,
+          isFetchingLocation: _isFetchingLocation,
+          currentLocation: _selectedLocation,
+          onRetryLoadStates: _loadNigeriaStates,
+          onStateChanged: _onStateChanged,
+          onLgaChanged: _onLgaChanged,
+          onMapTap: _onMapTap,
+          wardController: _ward,
+          communityController: _community,
+          landmarkController: _landmark,
+          latitudeController: _lat,
+          longitudeController: _lng,
+          onCaptureGps: _captureGps,
+        );
+      case 2:
+        return PhotosReviewStep(
+          photos: _photos,
+          minPhotos: _minPhotos,
+          maxPhotos: _maxPhotos,
+          onCapturePhoto: () => _pickPhoto(ImageSource.camera),
+          onSelectFromGallery: () => _pickPhoto(ImageSource.gallery),
+          onPhotoCategoryChanged: _setPhotoCategory,
+          onRemovePhoto: (photo) => setState(() => _photos.remove(photo)),
+        );
+      case 3:
+        return PopulationStep(
+          totalChildrenController: _totalChildren,
+          residentChildrenController: _residentChildren,
+          nonResidentChildrenController: _nonResidentChildren,
+          boysController: _boys,
+          girlsController: _girls,
+          selectedAgeGroups: _studentAgeGroups,
+          onAgeGroupToggled: (ageGroup, selected) => setState(() {
+            if (selected) {
+              _studentAgeGroups.add(ageGroup);
+            } else {
+              _studentAgeGroups.remove(ageGroup);
+            }
+          }),
+          populationNotesController: _populationNotes,
+        );
+      case 4:
+        return WelfareStep(
+          feedingController: _feeding,
+          shelterController: _shelter,
+          sanitationController: _sanitation,
+          waterController: _water,
+          healthController: _health,
+          clothingController: _clothing,
+          hygieneController: _hygiene,
+          welfareNotesController: _welfareNotes,
+        );
+      case 5:
+        return NeedsPrioritiesStep(
+          needs: _needs,
+          urgency: _urgency,
+          onNeedToggled: (need, selected) => setState(() {
+            if (selected) {
+              _needs.add(need);
+            } else {
+              _needs.remove(need);
+            }
+          }),
+          onUrgencyChanged: (value) => setState(() => _urgency = value),
+        );
+      case 6:
+        return ReviewStep(
+          data: AddSiteReviewData(
+            name: _name.text,
+            type: _type.text,
+            operatorName: _operator.text,
+            phone: _phone.text,
+            additionalOperators: _additionalOperators
+                .map((entry) {
+                  final name = entry.name.text.trim();
+                  final phone = entry.phone.text.trim();
+                  if (name.isEmpty && phone.isEmpty) return '';
+                  if (name.isEmpty) return phone;
+                  if (phone.isEmpty) return name;
+                  return '$name - $phone';
+                })
+                .where((entry) => entry.isNotEmpty)
+                .toList(),
+            state: _state.text,
+            lga: _lga.text,
+            ward: _ward.text,
+            community: _community.text,
+            landmark: _landmark.text,
+            latitude: _lat.text,
+            longitude: _lng.text,
+            totalChildren: _totalChildren.text,
+            residentChildren: _residentChildren.text,
+            nonResidentChildren: _nonResidentChildren.text,
+            boys: _boys.text,
+            girls: _girls.text,
+            ageGroups: _studentAgeGroups.toList(),
+            populationNotes: _populationNotes.text,
+            mealsPerDay: _feeding.text,
+            waterSource: _water.text,
+            toiletAccess: _boolLabel(_sanitation),
+            adequateClothing: _boolLabel(_clothing),
+            healthcareAccess: _boolLabel(_health),
+            sleepingArrangement: _shelter.text,
+            hygieneCondition: _hygiene.text,
+            welfareNotes: _welfareNotes.text,
+            needs: _needs.toList(),
+            urgency: _urgency,
+          ),
+          photos: _photos,
+          submitting: _submitting,
+          onEditStep: _goToStep,
+          onSyncLater: _saveForSyncLater,
+        );
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
   Future<void> _loadSiteForEdit() async {
     final site = await ref
         .read(sitesRepositoryProvider)
         .getSite(widget.siteId!);
     if (!mounted) return;
+
     final population = site.populationSummary;
     final welfare = site.welfareAssessment;
+
     setState(() {
       _name.text = site.name;
       _localName.text = site.localName ?? '';
-      _type.text = site.type;
+      _type.text = _normalizeSchoolType(site.type);
       _state.text = site.state;
       _lga.text = site.lga;
       _ward.text = site.ward;
@@ -475,129 +526,331 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
       _phone.text = site.phone;
       _lat.text = site.latitude.toStringAsFixed(6);
       _lng.text = site.longitude.toStringAsFixed(6);
+      _selectedLocation = LatLng(site.latitude, site.longitude);
       _urgency = site.urgencyLevel;
       _needs
         ..clear()
         ..addAll(site.needs);
+
       if (population != null) {
         _totalChildren.text = '${population.totalChildren}';
         _residentChildren.text = '${population.residentChildren}';
         _nonResidentChildren.text = '${population.nonResidentChildren}';
+        _boys.text = '${population.boys}';
+        _girls.text = '${population.girls}';
         _age0to5.text = '${population.age0to5}';
         _age6to9.text = '${population.age6to9}';
         _age10to14.text = '${population.age10to14}';
         _age15plus.text = '${population.age15plus}';
+        _studentAgeGroups
+          ..clear()
+          ..addAll(population.ageGroups);
         _populationNotes.text = population.notes ?? '';
       }
+
       if (welfare != null) {
-        _feeding.text = welfare.feedingStatus;
-        _shelter.text = welfare.shelterStatus;
-        _sanitation.text = welfare.sanitationStatus;
-        _water.text = welfare.waterAccess;
-        _health.text = welfare.healthAccess;
-        _clothing.text = welfare.clothingStatus;
+        _feeding.text =
+            welfare.mealsPerDay?.toString() ??
+            _extractMealsPerDay(welfare.feedingStatus);
+        _shelter.text = welfare.sleepingArrangement ?? welfare.shelterStatus;
+        _sanitation.text =
+            welfare.hasToiletAccess?.toString() ??
+            _statusToBoolText(welfare.sanitationStatus);
+        _water.text = welfare.waterSource ?? welfare.waterAccess;
+        _health.text =
+            welfare.hasHealthcareAccess?.toString() ??
+            _statusToBoolText(welfare.healthAccess);
+        _clothing.text =
+            welfare.hasAdequateClothing?.toString() ??
+            _statusToBoolText(welfare.clothingStatus);
+        _hygiene.text = welfare.hygieneCondition ?? '';
         _safetyRisks.text = welfare.safetyRisks ?? '';
         _urgencyReason.text = welfare.urgencyReason ?? '';
         _welfareNotes.text = welfare.notes ?? '';
         _immediateIntervention = welfare.immediateInterventionNeeded;
       }
+
+      _photos
+        ..clear()
+        ..addAll(
+          site.media
+              .where((file) => file.localPath != null)
+              .map(
+                (file) => SitePhotoDraft(
+                  file: XFile(file.localPath!),
+                  category: file.type,
+                ),
+              ),
+        );
     });
   }
 
-  Widget _field(
-    TextEditingController controller,
-    String label, {
-    bool required = false,
-    int maxLines = 1,
-    TextInputType? keyboardType,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: TextFormField(
-        controller: controller,
-        maxLines: maxLines,
-        keyboardType: keyboardType,
-        decoration: InputDecoration(labelText: label),
-        validator: required
-            ? (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return '$label is required';
-                }
-                return null;
-              }
-            : null,
-      ),
-    );
+  String _normalizeSchoolType(String rawType) {
+    if (_schoolTypes.contains(rawType)) {
+      return rawType;
+    }
+    if (rawType.toLowerCase() == 'informal learning centre') {
+      return 'Informal Islamic School';
+    }
+    return '';
   }
 
-  Widget _numberGrid(
-    List<TextEditingController> controllers,
-    List<String> labels,
-  ) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final twoColumns = constraints.maxWidth > 520;
-        return Wrap(
-          spacing: 10,
-          runSpacing: 0,
-          children: [
-            for (var i = 0; i < controllers.length; i++)
-              SizedBox(
-                width: twoColumns
-                    ? (constraints.maxWidth - 10) / 2
-                    : constraints.maxWidth,
-                child: _field(
-                  controllers[i],
-                  labels[i],
-                  required: true,
-                  keyboardType: TextInputType.number,
-                ),
-              ),
-          ],
-        );
-      },
-    );
+  String _extractMealsPerDay(String value) {
+    final match = RegExp(r'\b[0-3]\b').firstMatch(value);
+    return match?.group(0) ?? '';
+  }
+
+  String _statusToBoolText(String value) {
+    final normalized = value.toLowerCase();
+    if (normalized == 'true' ||
+        normalized.contains('available') ||
+        normalized.contains('adequate') ||
+        normalized.contains('yes') ||
+        normalized.contains('functional')) {
+      return 'true';
+    }
+    return 'false';
   }
 
   void _continue() {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _step += 1);
+    if (_step == 2 && !_validatePhotos()) return;
+    setState(() {
+      _movingForward = true;
+      _step += 1;
+    });
+    if (_step == 1) {
+      _triggerAutoLocationIfNeeded();
+    }
   }
 
-  Future<void> _captureGps() async {
+  void _goBack() {
+    setState(() {
+      _movingForward = false;
+      _step -= 1;
+    });
+  }
+
+  void _goToStep(int step) {
+    setState(() {
+      _movingForward = step > _step;
+      _step = step.clamp(0, _flowSteps.length - 1);
+    });
+  }
+
+  void _handleDeviceBack() {
+    if (_step > 0) {
+      _goBack();
+      return;
+    }
+    _saveDraftAndGoHome();
+  }
+
+  Future<void> _saveDraftAndGoHome() async {
+    if (_leavingFlow) return;
+    setState(() => _leavingFlow = true);
+    await _saveDraft(syncPending: false);
+    if (!mounted) return;
+    await Future<void>.delayed(const Duration(milliseconds: 650));
+    if (!mounted) return;
+    context.go(_homePath);
+  }
+
+  void _addOperator() {
+    setState(() => _additionalOperators.add(OperatorContactFields()));
+  }
+
+  void _removeOperator(int index) {
+    setState(() {
+      final entry = _additionalOperators.removeAt(index);
+      entry.dispose();
+    });
+  }
+
+  Future<void> _captureGps({bool silent = false}) async {
+    if (mounted) {
+      setState(() => _isFetchingLocation = true);
+    }
     var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
     }
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Location permission is required to capture GPS.'),
-        ),
-      );
+      if (mounted && !silent) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Location permission is required to capture GPS.'),
+          ),
+        );
+      }
+      if (mounted) {
+        setState(() => _isFetchingLocation = false);
+      }
       return;
     }
-    final position = await Geolocator.getCurrentPosition();
+    try {
+      final position = await Geolocator.getCurrentPosition();
+      if (!mounted) return;
+      setState(() {
+        _selectedLocation = LatLng(position.latitude, position.longitude);
+        _lat.text = position.latitude.toStringAsFixed(6);
+        _lng.text = position.longitude.toStringAsFixed(6);
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isFetchingLocation = false);
+      }
+    }
+  }
+
+  void _onMapTap(LatLng location) {
     setState(() {
-      _lat.text = position.latitude.toStringAsFixed(6);
-      _lng.text = position.longitude.toStringAsFixed(6);
+      _selectedLocation = location;
+      _lat.text = location.latitude.toStringAsFixed(6);
+      _lng.text = location.longitude.toStringAsFixed(6);
     });
   }
 
+  void _onStateChanged(String? value) {
+    setState(() {
+      _state.text = value ?? '';
+      _lga.clear();
+    });
+  }
+
+  void _onLgaChanged(String? value) {
+    setState(() {
+      _lga.text = value ?? '';
+    });
+  }
+
+  List<String> get _availableLgas {
+    final selectedState = _selectedStateValue;
+    if (selectedState == null) {
+      return const [];
+    }
+    final matches = _nigeriaStates.where((item) => item.name == selectedState);
+    if (matches.isEmpty) {
+      return const [];
+    }
+    return matches.first.lgas;
+  }
+
+  String? get _selectedStateValue {
+    final value = _state.text.trim();
+    return value.isEmpty ? null : value;
+  }
+
+  String? get _selectedLgaValue {
+    final value = _lga.text.trim();
+    return value.isEmpty ? null : value;
+  }
+
+  Future<void> _loadNigeriaStates() async {
+    setState(() {
+      _isLoadingStates = true;
+      _statesLoadError = null;
+    });
+    try {
+      final states = await _locationsService.fetchStatesAndLgas();
+      if (!mounted) return;
+      setState(() {
+        _nigeriaStates = states;
+        _isLoadingStates = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingStates = false;
+        _statesLoadError =
+            'Could not load Nigerian states and LGAs. Check internet and try again.';
+      });
+    }
+  }
+
+  void _triggerAutoLocationIfNeeded() {
+    if (_didAttemptAutoLocation) return;
+    _didAttemptAutoLocation = true;
+    Future<void>.microtask(() => _captureGps(silent: true));
+  }
+
   Future<void> _pickPhoto(ImageSource source) async {
+    final remainingSlots = _maxPhotos - _photos.length;
+    if (remainingSlots <= 0) {
+      _showPhotoLimitMessage();
+      return;
+    }
+
+    if (source == ImageSource.gallery) {
+      final selectedPhotos = await _picker.pickMultiImage(
+        imageQuality: 82,
+        maxWidth: 1600,
+        limit: remainingSlots,
+      );
+      if (selectedPhotos.isEmpty) return;
+
+      final acceptedPhotos = selectedPhotos
+          .take(remainingSlots)
+          .map((photo) => SitePhotoDraft(file: photo));
+      setState(() => _photos.addAll(acceptedPhotos));
+
+      if (selectedPhotos.length > remainingSlots) {
+        _showPhotoLimitMessage();
+      }
+      return;
+    }
+
     final photo = await _picker.pickImage(
       source: source,
       imageQuality: 82,
       maxWidth: 1600,
     );
-    if (photo != null) {
-      setState(() => _photos.add(photo));
-    }
+    if (photo == null) return;
+    setState(() => _photos.add(SitePhotoDraft(file: photo)));
   }
 
-  Future<void> _saveDraft({required bool syncPending}) async {
+  void _setPhotoCategory(SitePhotoDraft photo, MediaType? category) {
+    if (category == null) return;
+    final index = _photos.indexOf(photo);
+    if (index == -1) return;
+    setState(() {
+      _photos[index] = photo.copyWith(category: category);
+    });
+  }
+
+  bool _validatePhotos() {
+    if (_photos.length < _minPhotos) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Add at least 2 school environment photos.'),
+        ),
+      );
+      return false;
+    }
+    if (_photos.length > _maxPhotos) {
+      _showPhotoLimitMessage();
+      return false;
+    }
+    if (_photos.any((photo) => photo.category == null)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Assign a category to each photo.')),
+      );
+      return false;
+    }
+    return true;
+  }
+
+  void _showPhotoLimitMessage() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('You can upload a maximum of 8 photos.')),
+    );
+  }
+
+  Future<void> _saveDraft({
+    required bool syncPending,
+    bool showMessage = true,
+  }) async {
     final draft = SiteDraft(
       id: widget.siteId ?? _uuid.v4(),
       updatedAt: DateTime.now(),
@@ -607,18 +860,68 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
     await ref.read(localDraftStorageProvider).save(draft);
     ref.invalidate(draftsProvider);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          syncPending ? 'Saved for later sync.' : 'Draft saved locally.',
-        ),
-      ),
-    );
+
+    if (showMessage) {
+      _showDraftSavedMessage(syncPending: syncPending);
+    }
+
     if (syncPending) context.go('/sync');
+  }
+
+  Future<void> _saveForSyncLater() async {
+    if (!_validatePhotos()) return;
+    await _saveDraft(syncPending: true);
+  }
+
+  void _showDraftSavedMessage({required bool syncPending}) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.deepGreen,
+          elevation: 8,
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 18),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          content: Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.18),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  syncPending
+                      ? 'Record saved for later sync'
+                      : 'Record saved in draft',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
   }
 
   Future<void> _confirmSubmit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (!_validatePhotos()) return;
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -638,8 +941,14 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
         ],
       ),
     );
+
     if (confirmed != true) return;
     await _submit();
+  }
+
+  String get _homePath {
+    final session = ref.read(authControllerProvider).valueOrNull?.session;
+    return session?.accessRole.dashboardPath ?? '/home';
   }
 
   Future<void> _submit() async {
@@ -653,6 +962,7 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
         ..invalidate(sitesProvider)
         ..invalidate(dashboardSummaryProvider);
       if (!mounted) return;
+
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
@@ -666,6 +976,7 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
           ],
         ),
       );
+
       if (mounted) context.go('/sites/${site.id}');
     } catch (error) {
       if (!mounted) return;
@@ -679,6 +990,10 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
 
   Map<String, dynamic> _payload() {
     final session = ref.read(authControllerProvider).valueOrNull?.session;
+    final mealsPerDay = int.tryParse(_feeding.text.trim());
+    final hasToiletAccess = _parseBoolController(_sanitation);
+    final hasAdequateClothing = _parseBoolController(_clothing);
+    final hasHealthcareAccess = _parseBoolController(_health);
     return {
       'name': _name.text.trim(),
       'localName': _localName.text.trim().isEmpty
@@ -687,6 +1002,20 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
       'type': _type.text.trim(),
       'operatorName': _operator.text.trim(),
       'phone': _phone.text.trim(),
+      'operatorContacts':
+          [
+            {'name': _operator.text.trim(), 'phone': _phone.text.trim()},
+            ..._additionalOperators.map(
+              (entry) => {
+                'name': entry.name.text.trim(),
+                'phone': entry.phone.text.trim(),
+              },
+            ),
+          ].where((entry) {
+            final name = entry['name'] ?? '';
+            final phone = entry['phone'] ?? '';
+            return name.isNotEmpty || phone.isNotEmpty;
+          }).toList(),
       'country': 'Nigeria',
       'state': _state.text.trim(),
       'lga': _lga.text.trim(),
@@ -701,6 +1030,9 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
         'totalChildren': int.tryParse(_totalChildren.text) ?? 0,
         'residentChildren': int.tryParse(_residentChildren.text) ?? 0,
         'nonResidentChildren': int.tryParse(_nonResidentChildren.text) ?? 0,
+        'boys': int.tryParse(_boys.text) ?? 0,
+        'girls': int.tryParse(_girls.text) ?? 0,
+        'ageGroups': _studentAgeGroups.toList(),
         'age0to5': int.tryParse(_age0to5.text) ?? 0,
         'age6to9': int.tryParse(_age6to9.text) ?? 0,
         'age10to14': int.tryParse(_age10to14.text) ?? 0,
@@ -708,12 +1040,27 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
         'notes': _populationNotes.text.trim(),
       },
       'welfareAssessment': {
-        'feedingStatus': _feeding.text.trim(),
+        'feedingStatus': mealsPerDay == null
+            ? _feeding.text.trim()
+            : '$mealsPerDay meals per day',
         'shelterStatus': _shelter.text.trim(),
-        'sanitationStatus': _sanitation.text.trim(),
+        'sanitationStatus': hasToiletAccess
+            ? 'Functional toilet/latrine available'
+            : 'No functional toilet/latrine available',
         'waterAccess': _water.text.trim(),
-        'healthAccess': _health.text.trim(),
-        'clothingStatus': _clothing.text.trim(),
+        'healthAccess': hasHealthcareAccess
+            ? 'Healthcare access available'
+            : 'No healthcare access',
+        'clothingStatus': hasAdequateClothing
+            ? 'Adequate clothing'
+            : 'Inadequate clothing',
+        'mealsPerDay': mealsPerDay,
+        'waterSource': _water.text.trim(),
+        'hasToiletAccess': hasToiletAccess,
+        'hasAdequateClothing': hasAdequateClothing,
+        'hasHealthcareAccess': hasHealthcareAccess,
+        'sleepingArrangement': _shelter.text.trim(),
+        'hygieneCondition': _hygiene.text.trim(),
         'safetyRisks': _safetyRisks.text.trim(),
         'immediateInterventionNeeded': _immediateIntervention,
         'urgencyReason': _urgencyReason.text.trim(),
@@ -725,8 +1072,8 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
             (photo) => MediaFile(
               id: _uuid.v4(),
               siteId: widget.siteId ?? 'pending',
-              localPath: photo.path,
-              type: MediaType.other,
+              localPath: photo.file.path,
+              type: photo.category ?? MediaType.other,
               timestamp: DateTime.now(),
               latitude: double.tryParse(_lat.text),
               longitude: double.tryParse(_lng.text),
@@ -736,52 +1083,12 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
           .toList(),
     };
   }
-}
 
-class _StepCard extends StatelessWidget {
-  const _StepCard({required this.children});
-
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: children,
-        ),
-      ),
-    );
+  bool _parseBoolController(TextEditingController controller) {
+    return controller.text.trim().toLowerCase() == 'true';
   }
-}
 
-class _ReviewRow extends StatelessWidget {
-  const _ReviewRow(this.label, this.value);
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 110,
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: AppColors.muted,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          Expanded(child: Text(value.isEmpty ? 'Not provided' : value)),
-        ],
-      ),
-    );
+  String _boolLabel(TextEditingController controller) {
+    return _parseBoolController(controller) ? 'Yes' : 'No';
   }
 }

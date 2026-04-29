@@ -99,7 +99,7 @@ class _VolunteerDraftRecordsScreenState
   }
 
   void _continueDraft(DraftRecord draft) {
-    final step = (draft.currentStep - 1).clamp(0, 6);
+    final step = (draft.currentStep - 1).clamp(0, 4);
     context.go(
       '/sites/new?draftId=${Uri.encodeComponent(draft.id)}&step=$step',
     );

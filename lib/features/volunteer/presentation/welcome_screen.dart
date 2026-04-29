@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_logo.dart';
 
@@ -52,7 +53,7 @@ class _VolunteerWelcomeScreenState extends State<VolunteerWelcomeScreen> {
                   AppLogo(size: 92),
                   SizedBox(height: 26),
                   Text(
-                    'Welcome to School Support Atlas',
+                    'Welcome to ${AppConstants.appName}',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white,

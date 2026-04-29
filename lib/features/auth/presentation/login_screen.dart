@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../shared/models/user_access_role.dart';
 import '../../../shared/widgets/app_logo.dart';
@@ -71,17 +70,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         const Center(child: AppLogo()),
                         const SizedBox(height: 18),
                         Text(
-                          'Login as ${widget.selectedRole.label}',
+                          'Login',
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.headlineMedium,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          widget.selectedRole == UserAccessRole.volunteer
-                              ? 'Map schools, document welfare, submit records'
-                              : 'Browse schools in need and offer support',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: AppColors.muted),
                         ),
                         const SizedBox(height: 24),
                         TextFormField(
@@ -148,15 +139,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   '/signup/${widget.selectedRole.name}',
                                 ),
                           child: const Text("Don't have an account? Sign up"),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Demo ${widget.selectedRole.label.toLowerCase()} access: enter any email/phone and password.',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppColors.muted,
-                            fontSize: 12,
-                          ),
                         ),
                       ],
                     ),

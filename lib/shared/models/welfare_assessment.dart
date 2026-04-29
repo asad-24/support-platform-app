@@ -6,6 +6,13 @@ class WelfareAssessment {
     required this.waterAccess,
     required this.healthAccess,
     required this.clothingStatus,
+    this.mealsPerDay,
+    this.waterSource,
+    this.hasToiletAccess,
+    this.hasAdequateClothing,
+    this.hasHealthcareAccess,
+    this.sleepingArrangement,
+    this.hygieneCondition,
     this.safetyRisks,
     this.immediateInterventionNeeded = false,
     this.urgencyReason,
@@ -19,6 +26,13 @@ class WelfareAssessment {
   final String waterAccess;
   final String healthAccess;
   final String clothingStatus;
+  final int? mealsPerDay;
+  final String? waterSource;
+  final bool? hasToiletAccess;
+  final bool? hasAdequateClothing;
+  final bool? hasHealthcareAccess;
+  final String? sleepingArrangement;
+  final String? hygieneCondition;
   final String? safetyRisks;
   final bool immediateInterventionNeeded;
   final String? urgencyReason;
@@ -42,6 +56,13 @@ class WelfareAssessment {
       waterAccess: json['waterAccess'] as String? ?? 'Unknown',
       healthAccess: json['healthAccess'] as String? ?? 'Unknown',
       clothingStatus: json['clothingStatus'] as String? ?? 'Unknown',
+      mealsPerDay: (json['mealsPerDay'] as num?)?.toInt(),
+      waterSource: json['waterSource'] as String?,
+      hasToiletAccess: json['hasToiletAccess'] as bool?,
+      hasAdequateClothing: json['hasAdequateClothing'] as bool?,
+      hasHealthcareAccess: json['hasHealthcareAccess'] as bool?,
+      sleepingArrangement: json['sleepingArrangement'] as String?,
+      hygieneCondition: json['hygieneCondition'] as String?,
       safetyRisks: json['safetyRisks'] as String?,
       immediateInterventionNeeded:
           json['immediateInterventionNeeded'] as bool? ?? false,
@@ -60,6 +81,13 @@ class WelfareAssessment {
     'waterAccess': waterAccess,
     'healthAccess': healthAccess,
     'clothingStatus': clothingStatus,
+    'mealsPerDay': mealsPerDay,
+    'waterSource': waterSource,
+    'hasToiletAccess': hasToiletAccess,
+    'hasAdequateClothing': hasAdequateClothing,
+    'hasHealthcareAccess': hasHealthcareAccess,
+    'sleepingArrangement': sleepingArrangement,
+    'hygieneCondition': hygieneCondition,
     'safetyRisks': safetyRisks,
     'immediateInterventionNeeded': immediateInterventionNeeded,
     'urgencyReason': urgencyReason,
