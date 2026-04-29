@@ -22,7 +22,6 @@ import '../../features/volunteer/presentation/volunteer_settings_screen.dart';
 import '../../features/volunteer/presentation/school_submission_detail_screen.dart';
 import '../../features/volunteer/presentation/volunteer_submitted_schools_screen.dart';
 import '../../features/volunteer/presentation/welcome_screen.dart';
-import '../../features/volunteer/data/submitted_school.dart';
 import '../../shared/models/app_enums.dart';
 import '../../shared/models/user_access_role.dart';
 
@@ -73,13 +72,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/volunteer/submitted-schools/:id',
-        builder: (context, state) {
-          final school = mockSubmittedSchools.firstWhere(
-            (item) => item.id == state.pathParameters['id'],
-            orElse: () => mockSubmittedSchools.first,
-          );
-          return SchoolSubmissionDetailScreen(school: school);
-        },
+        builder: (context, state) =>
+            SchoolSubmissionDetailScreen(siteId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/volunteer/drafts',
@@ -124,6 +118,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => AddSiteFlowScreen(
           initialStep:
               int.tryParse(state.uri.queryParameters['step'] ?? '') ?? 0,
+          draftId: state.uri.queryParameters['draftId'],
         ),
       ),
       GoRoute(
@@ -133,8 +128,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/sites/:id/edit',
-        builder: (context, state) =>
-            AddSiteFlowScreen(siteId: state.pathParameters['id']!),
+        builder: (context, state) => AddSiteFlowScreen(
+          siteId: state.pathParameters['id']!,
+          correctionOnly: state.uri.queryParameters['correctionOnly'] == 'true',
+        ),
       ),
       GoRoute(
         path: '/drafts',

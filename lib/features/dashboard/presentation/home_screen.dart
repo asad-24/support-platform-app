@@ -55,7 +55,7 @@ class HomeScreen extends ConsumerWidget {
                       : isHelper
                       ? 'Browse mapped schools and offer support where needed'
                       : 'Field collection and welfare assessment workspace',
-                  style: const TextStyle(color: AppColors.muted),
+                  style: TextStyle(color: AppColors.secondaryText(context)),
                 ),
                 const SizedBox(height: 18),
                 summary.when(
@@ -170,9 +170,9 @@ class _ActionGrid extends StatelessWidget {
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                       ),
-                      const Icon(
+                      Icon(
                         Icons.arrow_forward_rounded,
-                        color: AppColors.muted,
+                        color: AppColors.secondaryText(context),
                       ),
                     ],
                   ),

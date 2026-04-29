@@ -33,7 +33,7 @@ class AddSiteFlowTimeline extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 24),
                 color: i < currentStep
                     ? AppColors.onboardingGreen
-                    : AppColors.line,
+                    : AppColors.border(context),
               ),
           ],
         ],
@@ -68,10 +68,14 @@ class _AddSiteFlowTimelineNode extends StatelessWidget {
             height: 34,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: active ? AppColors.onboardingGreen : Colors.white,
+              color: active
+                  ? AppColors.onboardingGreen
+                  : AppColors.elevatedSurface(context),
               shape: BoxShape.circle,
               border: Border.all(
-                color: active ? AppColors.onboardingGreen : AppColors.line,
+                color: active
+                    ? AppColors.onboardingGreen
+                    : AppColors.border(context),
                 width: 2,
               ),
               boxShadow: active
@@ -91,7 +95,9 @@ class _AddSiteFlowTimelineNode extends StatelessWidget {
                 : Text(
                     '${index + 1}',
                     style: TextStyle(
-                      color: active ? Colors.white : AppColors.muted,
+                      color: active
+                          ? Colors.white
+                          : AppColors.secondaryText(context),
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -101,7 +107,9 @@ class _AddSiteFlowTimelineNode extends StatelessWidget {
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: isCurrent ? AppColors.ink : AppColors.muted,
+              color: isCurrent
+                  ? AppColors.primaryText(context)
+                  : AppColors.secondaryText(context),
               fontSize: 12,
               fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600,
               height: 1.2,

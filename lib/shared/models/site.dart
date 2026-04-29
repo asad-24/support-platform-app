@@ -30,6 +30,8 @@ class Site {
     this.media = const [],
     this.needs = const [],
     this.adminNotes,
+    this.reviewStatus,
+    this.correctionIssues = const [],
   });
 
   final String id;
@@ -57,6 +59,22 @@ class Site {
   final List<MediaFile> media;
   final List<NeedType> needs;
   final String? adminNotes;
+  final SubmissionReviewStatus? reviewStatus;
+  final List<CorrectionIssue> correctionIssues;
+
+  SubmissionReviewStatus get submissionStatus {
+    return reviewStatus ??
+        switch (verificationStatus) {
+          VerificationStatus.verified => SubmissionReviewStatus.approved,
+          VerificationStatus.rejected => SubmissionReviewStatus.needsCorrection,
+          VerificationStatus.pending =>
+            SubmissionReviewStatus.pendingVerification,
+        };
+  }
+
+  bool get isLive => submissionStatus == SubmissionReviewStatus.approved;
+  bool get needsCorrection =>
+      submissionStatus == SubmissionReviewStatus.needsCorrection;
 
   factory Site.fromJson(Map<String, dynamic> json) {
     return Site(
@@ -104,6 +122,16 @@ class Site {
           .map((item) => NeedType.fromJson(item as String))
           .toList(),
       adminNotes: json['adminNotes'] as String?,
+      reviewStatus: json['reviewStatus'] == null
+          ? null
+          : SubmissionReviewStatus.fromJson(json['reviewStatus'] as String),
+      correctionIssues: (json['correctionIssues'] as List? ?? const [])
+          .map(
+            (item) => CorrectionIssue.fromJson(
+              Map<String, dynamic>.from(item as Map),
+            ),
+          )
+          .toList(),
     );
   }
 
@@ -133,5 +161,7 @@ class Site {
     'media': media.map((item) => item.toJson()).toList(),
     'needs': needs.map((item) => item.toJson()).toList(),
     'adminNotes': adminNotes,
+    'reviewStatus': reviewStatus?.toJson(),
+    'correctionIssues': correctionIssues.map((item) => item.toJson()).toList(),
   };
 }

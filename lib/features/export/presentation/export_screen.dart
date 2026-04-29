@@ -39,9 +39,11 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const SizedBox(height: 8),
-                      const Text(
+                      Text(
                         'Exports aggregate site data for admin review. Safeguarding notes should only be handled through protected backend reports.',
-                        style: TextStyle(color: AppColors.muted),
+                        style: TextStyle(
+                          color: AppColors.secondaryText(context),
+                        ),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton.icon(
@@ -65,9 +67,9 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                 const SizedBox(height: 16),
                 SelectableText(
                   _csv!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'monospace',
-                    color: AppColors.ink,
+                    color: AppColors.primaryText(context),
                   ),
                 ),
               ],

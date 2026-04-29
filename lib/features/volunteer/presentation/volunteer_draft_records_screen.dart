@@ -1,117 +1,120 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
+import '../../../core/storage/storage_providers.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
-import '../data/draft_record.dart';
+import '../../../features/sites/data/sites_repository.dart';
+import '../../../shared/models/site_draft.dart';
 import 'volunteer_home_screen.dart';
 
-class VolunteerDraftRecordsScreen extends StatefulWidget {
+class VolunteerDraftRecordsScreen extends ConsumerWidget {
   const VolunteerDraftRecordsScreen({super.key});
 
   @override
-  State<VolunteerDraftRecordsScreen> createState() =>
-      _VolunteerDraftRecordsScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final drafts = ref.watch(draftsProvider);
 
-class _VolunteerDraftRecordsScreenState
-    extends State<VolunteerDraftRecordsScreen> {
-  late final List<DraftRecord> _drafts;
-
-  @override
-  void initState() {
-    super.initState();
-    _drafts = List<DraftRecord>.of(mockDraftRecords);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.dashboardBackground,
-      body: SafeArea(
-        bottom: false,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: Responsive.pageMaxWidth(context),
-            ),
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(18, 28, 18, 18),
-              children: [
-                Text(
-                  'Draft Records',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${_drafts.length} unsaved drafts',
-                  style: const TextStyle(
-                    color: AppColors.muted,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 26),
-                if (_drafts.isEmpty)
-                  _DraftEmptyState(onStart: _startNewRecord)
-                else ...[
-                  for (final draft in _drafts) ...[
-                    DraftRecordCard(
-                      draft: draft,
-                      onContinue: () => _continueDraft(draft),
-                      onDelete: () => _confirmDelete(draft),
-                    ),
-                    const SizedBox(height: 14),
-                  ],
-                  const SizedBox(height: 8),
-                  ElevatedButton.icon(
-                    onPressed: _startNewRecord,
-                    icon: const Icon(Icons.add_rounded, size: 22),
-                    label: const Text('Start New School Record'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.onboardingGreen,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size.fromHeight(56),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      textStyle: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
+    return VolunteerMainBackScope(
+      currentPath: '/volunteer/drafts',
+      child: Scaffold(
+        backgroundColor: AppColors.screen(context),
+        body: SafeArea(
+          bottom: false,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: Responsive.pageMaxWidth(context),
+              ),
+              child: drafts.when(
+                data: (items) => _DraftBody(drafts: items),
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, _) => Center(child: Text(error.toString())),
+              ),
             ),
           ),
         ),
+        bottomNavigationBar: const VolunteerBottomNavigation(currentIndex: 2),
       ),
-      bottomNavigationBar: const VolunteerBottomNavigation(currentIndex: 2),
+    );
+  }
+}
+
+class _DraftBody extends ConsumerWidget {
+  const _DraftBody({required this.drafts});
+
+  final List<SiteDraft> drafts;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(18, 28, 18, 18),
+      children: [
+        Text(
+          'Draft Records',
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '${drafts.length} saved drafts',
+          style: TextStyle(
+            color: AppColors.secondaryText(context),
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 26),
+        if (drafts.isEmpty)
+          _DraftEmptyState(onStart: () => context.go('/sites/new'))
+        else ...[
+          for (final draft in drafts) ...[
+            DraftRecordCard(
+              draft: draft,
+              onContinue: () => context.go(
+                '/sites/new?draftId=${Uri.encodeComponent(draft.id)}&step=${draft.currentStep}',
+              ),
+              onDelete: () => _confirmDelete(context, ref, draft),
+            ),
+            const SizedBox(height: 14),
+          ],
+          const SizedBox(height: 8),
+          ElevatedButton.icon(
+            onPressed: () => context.go('/sites/new'),
+            icon: const Icon(Icons.add_rounded, size: 22),
+            label: const Text('Start New School Record'),
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size.fromHeight(56),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              textStyle: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 
-  void _startNewRecord() {
-    context.go('/sites/new');
-  }
-
-  void _continueDraft(DraftRecord draft) {
-    final step = (draft.currentStep - 1).clamp(0, 4);
-    context.go(
-      '/sites/new?draftId=${Uri.encodeComponent(draft.id)}&step=$step',
-    );
-  }
-
-  Future<void> _confirmDelete(DraftRecord draft) async {
+  Future<void> _confirmDelete(
+    BuildContext context,
+    WidgetRef ref,
+    SiteDraft draft,
+  ) async {
     final delete = await showDialog<bool>(
       context: context,
       builder: (context) => const DeleteDraftDialog(),
     );
-    if (delete != true || !mounted) return;
-    setState(() => _drafts.removeWhere((item) => item.id == draft.id));
+    if (delete != true || !context.mounted) return;
+    await ref.read(localDraftStorageProvider).delete(draft.id);
+    ref.invalidate(draftsProvider);
   }
 }
 
@@ -123,21 +126,24 @@ class DraftRecordCard extends StatelessWidget {
     required this.onDelete,
   });
 
-  final DraftRecord draft;
+  final SiteDraft draft;
   final VoidCallback onContinue;
   final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
+    final progressPercent = (draft.progress * 100).round();
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.elevatedSurface(context),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.line),
+        border: Border.all(color: AppColors.border(context)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withValues(
+              alpha: AppColors.isDark(context) ? 0.18 : 0.03,
+            ),
             offset: const Offset(0, 4),
             blurRadius: 12,
           ),
@@ -151,9 +157,9 @@ class DraftRecordCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  draft.schoolName,
-                  style: const TextStyle(
-                    color: AppColors.ink,
+                  draft.displayName,
+                  style: TextStyle(
+                    color: AppColors.primaryText(context),
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
                     height: 1.12,
@@ -167,17 +173,17 @@ class DraftRecordCard extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.access_time_rounded,
-                color: AppColors.muted,
+                color: AppColors.secondaryText(context),
                 size: 16,
               ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  'Last edited: ${draft.lastEditedText}',
-                  style: const TextStyle(
-                    color: AppColors.muted,
+                  'Last edited: ${DateFormat.yMMMd().add_jm().format(draft.updatedAt)}',
+                  style: TextStyle(
+                    color: AppColors.secondaryText(context),
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -188,17 +194,17 @@ class DraftRecordCard extends StatelessWidget {
           const SizedBox(height: 18),
           Row(
             children: [
-              const Text(
+              Text(
                 'Progress',
                 style: TextStyle(
-                  color: AppColors.muted,
+                  color: AppColors.secondaryText(context),
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
               ),
               const Spacer(),
               Text(
-                '${draft.progressPercent}%',
+                '$progressPercent%',
                 style: const TextStyle(
                   color: AppColors.onboardingGreen,
                   fontSize: 13,
@@ -218,8 +224,6 @@ class DraftRecordCard extends StatelessWidget {
                   icon: const Icon(Icons.edit_outlined, size: 18),
                   label: const Text('Continue Editing'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.onboardingGreen,
-                    foregroundColor: Colors.white,
                     minimumSize: const Size.fromHeight(48),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -239,7 +243,7 @@ class DraftRecordCard extends StatelessWidget {
                   onPressed: onDelete,
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.danger,
-                    side: const BorderSide(color: AppColors.line),
+                    side: BorderSide(color: AppColors.border(context)),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -270,7 +274,7 @@ class DraftProgressBar extends StatelessWidget {
         value: value,
         minHeight: 7,
         color: AppColors.onboardingGreen,
-        backgroundColor: const Color(0xFFF0F3F7),
+        backgroundColor: AppColors.softFill(context),
       ),
     );
   }
@@ -307,18 +311,18 @@ class DeleteDraftDialog extends StatelessWidget {
 class _StepBadge extends StatelessWidget {
   const _StepBadge({required this.draft});
 
-  final DraftRecord draft;
+  final SiteDraft draft;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F4F8),
+        color: AppColors.softFill(context),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
-        'Step ${draft.currentStep}/${draft.totalSteps}',
+        'Step ${draft.currentStep + 1}/${draft.totalSteps}',
         style: const TextStyle(
           color: AppColors.onboardingGreen,
           fontSize: 11,
@@ -339,9 +343,9 @@ class _DraftEmptyState extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.elevatedSurface(context),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.line),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: Column(
         children: [
@@ -359,20 +363,20 @@ class _DraftEmptyState extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          const Text(
+          Text(
             'No draft records',
             style: TextStyle(
-              color: AppColors.ink,
+              color: AppColors.primaryText(context),
               fontSize: 16,
               fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Start a new school record and save it as draft anytime.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: AppColors.muted,
+              color: AppColors.secondaryText(context),
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
@@ -383,8 +387,6 @@ class _DraftEmptyState extends StatelessWidget {
             icon: const Icon(Icons.add_rounded, size: 22),
             label: const Text('Start New School Record'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.onboardingGreen,
-              foregroundColor: Colors.white,
               minimumSize: const Size.fromHeight(48),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),

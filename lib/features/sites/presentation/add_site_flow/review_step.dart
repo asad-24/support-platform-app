@@ -208,9 +208,9 @@ class _ReviewSection extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.elevatedSurface(context),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.line),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -231,8 +231,8 @@ class _ReviewSection extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
-                    color: AppColors.ink,
+                  style: TextStyle(
+                    color: AppColors.primaryText(context),
                     fontSize: 15,
                     fontWeight: FontWeight.w900,
                   ),
@@ -269,16 +269,16 @@ class _ReviewInfoRow extends StatelessWidget {
           final compact = constraints.maxWidth < 440;
           final labelWidget = Text(
             label,
-            style: const TextStyle(
-              color: AppColors.muted,
+            style: TextStyle(
+              color: AppColors.secondaryText(context),
               fontSize: 12,
               fontWeight: FontWeight.w800,
             ),
           );
           final valueWidget = Text(
             cleanValue.isEmpty ? 'Not provided' : cleanValue,
-            style: const TextStyle(
-              color: AppColors.ink,
+            style: TextStyle(
+              color: AppColors.primaryText(context),
               fontSize: 13,
               fontWeight: FontWeight.w700,
             ),
@@ -335,7 +335,7 @@ class _ReviewMetricWrap extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppColors.scaffold,
+                      color: AppColors.softFill(context),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Column(
@@ -345,8 +345,8 @@ class _ReviewMetricWrap extends StatelessWidget {
                           metric.label,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: AppColors.muted,
+                          style: TextStyle(
+                            color: AppColors.secondaryText(context),
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
                           ),
@@ -358,8 +358,8 @@ class _ReviewMetricWrap extends StatelessWidget {
                               : metric.value,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: AppColors.ink,
+                          style: TextStyle(
+                            color: AppColors.primaryText(context),
                             fontSize: 14,
                             fontWeight: FontWeight.w900,
                           ),
@@ -391,9 +391,12 @@ class _PhotoReviewGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (photos.isEmpty) {
-      return const Text(
+      return Text(
         'No photos selected.',
-        style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700),
+        style: TextStyle(
+          color: AppColors.secondaryText(context),
+          fontWeight: FontWeight.w700,
+        ),
       );
     }
 
@@ -436,9 +439,9 @@ class _PhotoReviewTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(8),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: AppColors.scaffold,
+          color: AppColors.softFill(context),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.line),
+          border: Border.all(color: AppColors.border(context)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -471,8 +474,8 @@ class _PhotoReviewTile extends StatelessWidget {
                     'Photo ${index + 1}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppColors.ink,
+                    style: TextStyle(
+                      color: AppColors.primaryText(context),
                       fontSize: 12,
                       fontWeight: FontWeight.w900,
                     ),
@@ -482,8 +485,8 @@ class _PhotoReviewTile extends StatelessWidget {
                     photo.category?.label ?? 'No category',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppColors.muted,
+                    style: TextStyle(
+                      color: AppColors.secondaryText(context),
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                     ),
@@ -506,9 +509,12 @@ class _NeedsSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (needs.isEmpty) {
-      return const Text(
+      return Text(
         'No needs selected.',
-        style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700),
+        style: TextStyle(
+          color: AppColors.secondaryText(context),
+          fontWeight: FontWeight.w700,
+        ),
       );
     }
 
@@ -548,7 +554,7 @@ class _UrgencySummary extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF7D6),
+        color: AppColors.warningTint(context),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.amber),
       ),
@@ -559,8 +565,8 @@ class _UrgencySummary extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             '${urgency.label} urgency',
-            style: const TextStyle(
-              color: AppColors.ink,
+            style: TextStyle(
+              color: AppColors.primaryText(context),
               fontWeight: FontWeight.w900,
             ),
           ),

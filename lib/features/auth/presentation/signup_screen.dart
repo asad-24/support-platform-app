@@ -81,10 +81,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                           style: Theme.of(context).textTheme.headlineMedium,
                         ),
                         const SizedBox(height: 8),
-                        const Text(
+                        Text(
                           'Use aggregate data only. Do not enter child-identifiable information.',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: AppColors.muted),
+                          style: TextStyle(
+                            color: AppColors.secondaryText(context),
+                          ),
                         ),
                         const SizedBox(height: 24),
                         TextFormField(

@@ -16,104 +16,130 @@ class VolunteerHomeScreen extends ConsumerWidget {
         ? session!.user.name
         : 'Ibrahim Sule';
 
-    return Scaffold(
-      backgroundColor: AppColors.dashboardBackground,
-      body: SafeArea(
-        bottom: false,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: Responsive.pageMaxWidth(context),
-            ),
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-              children: [
-                VolunteerHeaderCard(userName: userName),
-                const SizedBox(height: 14),
-                const Row(
-                  children: [
-                    Expanded(
-                      child: VolunteerStatCard(
-                        value: '4',
-                        label: 'Submitted',
-                        color: AppColors.onboardingGreen,
+    return VolunteerMainBackScope(
+      currentPath: '/volunteer/home',
+      child: Scaffold(
+        backgroundColor: AppColors.screen(context),
+        body: SafeArea(
+          bottom: false,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: Responsive.pageMaxWidth(context),
+              ),
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+                children: [
+                  VolunteerHeaderCard(userName: userName),
+                  const SizedBox(height: 14),
+                  const Row(
+                    children: [
+                      Expanded(
+                        child: VolunteerStatCard(
+                          value: '4',
+                          label: 'Submitted',
+                          color: AppColors.onboardingGreen,
+                        ),
                       ),
-                    ),
-                    SizedBox(width: 9),
-                    Expanded(
-                      child: VolunteerStatCard(
-                        value: '2',
-                        label: 'Approved',
-                        color: Color(0xFF18A66D),
+                      SizedBox(width: 9),
+                      Expanded(
+                        child: VolunteerStatCard(
+                          value: '2',
+                          label: 'Approved',
+                          color: Color(0xFF18A66D),
+                        ),
                       ),
-                    ),
-                    SizedBox(width: 9),
-                    Expanded(
-                      child: VolunteerStatCard(
-                        value: '1',
-                        label: 'Pending',
-                        color: AppColors.orange,
+                      SizedBox(width: 9),
+                      Expanded(
+                        child: VolunteerStatCard(
+                          value: '1',
+                          label: 'Pending',
+                          color: AppColors.orange,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                Text(
-                  'Quick Actions',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
+                    ],
                   ),
-                ),
-                const SizedBox(height: 10),
-                GridView.count(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 9,
-                  crossAxisSpacing: 9,
-                  childAspectRatio: 1.45,
-                  children: [
-                    QuickActionCard(
-                      title: 'Add New\nSchool',
-                      icon: Icons.add_circle_outline_rounded,
-                      iconColor: AppColors.onboardingGreen,
-                      iconBackground: AppColors.onboardingGreen.withValues(
-                        alpha: 0.10,
+                  const SizedBox(height: 18),
+                  Text(
+                    'Quick Actions',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 9,
+                    crossAxisSpacing: 9,
+                    childAspectRatio: 1.45,
+                    children: [
+                      QuickActionCard(
+                        title: 'Add New\nSchool',
+                        icon: Icons.add_circle_outline_rounded,
+                        iconColor: AppColors.onboardingGreen,
+                        iconBackground: AppColors.onboardingGreen.withValues(
+                          alpha: 0.10,
+                        ),
+                        onTap: () => context.go('/sites/new'),
                       ),
-                      onTap: () => context.go('/sites/new'),
-                    ),
-                    QuickActionCard(
-                      title: 'My Submitted\nSchools',
-                      icon: Icons.map_outlined,
-                      iconColor: AppColors.onboardingGreen,
-                      iconBackground: AppColors.onboardingGreen.withValues(
-                        alpha: 0.10,
+                      QuickActionCard(
+                        title: 'My Submitted\nSchools',
+                        icon: Icons.map_outlined,
+                        iconColor: AppColors.onboardingGreen,
+                        iconBackground: AppColors.onboardingGreen.withValues(
+                          alpha: 0.10,
+                        ),
+                        onTap: () => context.go('/volunteer/submitted-schools'),
                       ),
-                      onTap: () => context.go('/volunteer/submitted-schools'),
-                    ),
-                    QuickActionCard(
-                      title: 'Draft\nRecords',
-                      icon: Icons.edit_outlined,
-                      iconColor: const Color(0xFF1586C7),
-                      iconBackground: const Color(0xFFEAF6FF),
-                      onTap: () => context.go('/volunteer/drafts'),
-                    ),
-                    QuickActionCard(
-                      title: 'My\nProfile',
-                      icon: Icons.person_outline_rounded,
-                      iconColor: const Color(0xFF7C3EC8),
-                      iconBackground: const Color(0xFFF3ECFF),
-                      onTap: () => context.go('/volunteer/profile'),
-                    ),
-                  ],
-                ),
-              ],
+                      QuickActionCard(
+                        title: 'Draft\nRecords',
+                        icon: Icons.edit_outlined,
+                        iconColor: const Color(0xFF1586C7),
+                        iconBackground: const Color(0xFFEAF6FF),
+                        onTap: () => context.go('/volunteer/drafts'),
+                      ),
+                      QuickActionCard(
+                        title: 'My\nProfile',
+                        icon: Icons.person_outline_rounded,
+                        iconColor: const Color(0xFF7C3EC8),
+                        iconBackground: const Color(0xFFF3ECFF),
+                        onTap: () => context.go('/volunteer/profile'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
+        bottomNavigationBar: const VolunteerBottomNavigation(currentIndex: 0),
       ),
-      bottomNavigationBar: const VolunteerBottomNavigation(currentIndex: 0),
+    );
+  }
+}
+
+class VolunteerMainBackScope extends StatelessWidget {
+  const VolunteerMainBackScope({
+    super.key,
+    required this.currentPath,
+    required this.child,
+  });
+
+  final String currentPath;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop || currentPath == '/volunteer/home') return;
+        context.go('/volunteer/home');
+      },
+      child: child,
     );
   }
 }
@@ -293,9 +319,9 @@ class VolunteerStatCard extends StatelessWidget {
     return Container(
       height: 78,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.elevatedSurface(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.line),
+        border: Border.all(color: AppColors.border(context)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -318,8 +344,8 @@ class VolunteerStatCard extends StatelessWidget {
           const SizedBox(height: 5),
           Text(
             label,
-            style: const TextStyle(
-              color: AppColors.muted,
+            style: TextStyle(
+              color: AppColors.secondaryText(context),
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -349,7 +375,7 @@ class QuickActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: AppColors.elevatedSurface(context),
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
@@ -358,7 +384,7 @@ class QuickActionCard extends StatelessWidget {
           padding: const EdgeInsets.all(11),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppColors.line),
+            border: Border.all(color: AppColors.border(context)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -379,8 +405,8 @@ class QuickActionCard extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   title,
-                  style: const TextStyle(
-                    color: AppColors.ink,
+                  style: TextStyle(
+                    color: AppColors.primaryText(context),
                     fontSize: 14,
                     height: 1.08,
                     fontWeight: FontWeight.w900,
@@ -420,8 +446,8 @@ class VolunteerBottomNavigation extends StatelessWidget {
     return NavigationBar(
       selectedIndex: currentIndex,
       height: 68,
-      backgroundColor: Colors.white,
-      indicatorColor: AppColors.onboardingGreen.withValues(alpha: 0.10),
+      backgroundColor: AppColors.elevatedSurface(context),
+      indicatorColor: AppColors.onboardingGreen.withValues(alpha: 0.18),
       onDestinationSelected: (index) {
         if (index != currentIndex) context.go(items[index].path);
       },

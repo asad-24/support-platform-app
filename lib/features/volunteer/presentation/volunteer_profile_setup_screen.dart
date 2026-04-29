@@ -101,9 +101,11 @@ class _VolunteerProfileSetupScreenState
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.deepGreen,
-        surfaceTintColor: Colors.white,
+        backgroundColor: AppColors.elevatedSurface(context),
+        foregroundColor: AppColors.isDark(context)
+            ? AppColors.onboardingGreen
+            : AppColors.deepGreen,
+        surfaceTintColor: AppColors.elevatedSurface(context),
         title: Text(widget.editMode ? 'Edit Profile' : 'Complete Profile'),
         leading: widget.editMode
             ? IconButton(
@@ -119,11 +121,17 @@ class _VolunteerProfileSetupScreenState
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                AppColors.paleGreen.withValues(alpha: 0.55),
-                Colors.white,
-                AppColors.scaffold,
-              ],
+              colors: AppColors.isDark(context)
+                  ? const [
+                      Color(0xFF10241F),
+                      Color(0xFF0F1412),
+                      Color(0xFF0F1412),
+                    ]
+                  : [
+                      AppColors.paleGreen.withValues(alpha: 0.55),
+                      Colors.white,
+                      AppColors.scaffold,
+                    ],
             ),
           ),
           child: Center(

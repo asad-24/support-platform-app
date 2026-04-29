@@ -1,22 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
-import '../data/submitted_school.dart';
+import '../../../features/sites/data/sites_repository.dart';
+import '../../../shared/models/app_enums.dart';
+import '../../../shared/models/site.dart';
 import 'volunteer_home_screen.dart';
 import 'volunteer_submitted_schools_screen.dart';
 
-class SchoolSubmissionDetailScreen extends StatelessWidget {
-  const SchoolSubmissionDetailScreen({super.key, required this.school});
+class SchoolSubmissionDetailScreen extends ConsumerWidget {
+  const SchoolSubmissionDetailScreen({super.key, required this.siteId});
 
-  final SubmittedSchool school;
+  final String siteId;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sites = ref.watch(sitesProvider);
+
     return Scaffold(
-      backgroundColor: AppColors.dashboardBackground,
+      backgroundColor: AppColors.screen(context),
       appBar: AppBar(title: const Text('Submission Details')),
       body: SafeArea(
         bottom: false,
@@ -25,50 +30,13 @@ class SchoolSubmissionDetailScreen extends StatelessWidget {
             constraints: BoxConstraints(
               maxWidth: Responsive.pageMaxWidth(context),
             ),
-            child: ListView(
-              padding: const EdgeInsets.all(18),
-              children: [
-                SubmittedSchoolCard(school: school, onTap: () {}),
-                const SizedBox(height: 16),
-                _StatePanel(school: school),
-                const SizedBox(height: 16),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(18),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Submission Summary',
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w800),
-                        ),
-                        const SizedBox(height: 14),
-                        _DetailRow(
-                          'Children',
-                          '${school.childrenCount} children',
-                        ),
-                        _DetailRow(
-                          'Submitted',
-                          DateFormat(
-                            'MMM d, yyyy',
-                          ).format(school.submittedDate),
-                        ),
-                        _DetailRow('Location', school.location),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            for (final need in school.needs)
-                              NeedChip(label: need),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+            child: sites.when(
+              data: (items) {
+                final site = items.firstWhere((item) => item.id == siteId);
+                return _DetailBody(site: site);
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) => Center(child: Text(error.toString())),
             ),
           ),
         ),
@@ -78,10 +46,97 @@ class SchoolSubmissionDetailScreen extends StatelessWidget {
   }
 }
 
-class _StatePanel extends StatelessWidget {
-  const _StatePanel({required this.school});
+class _DetailBody extends StatelessWidget {
+  const _DetailBody({required this.site});
 
-  final SubmittedSchool school;
+  final Site site;
+
+  @override
+  Widget build(BuildContext context) {
+    final population = site.populationSummary;
+    final welfare = site.welfareAssessment;
+
+    return ListView(
+      padding: const EdgeInsets.all(18),
+      children: [
+        SubmittedSchoolCard(site: site, onTap: () {}),
+        const SizedBox(height: 16),
+        _StatePanel(site: site),
+        const SizedBox(height: 16),
+        _SectionCard(
+          title: 'School Details',
+          children: [
+            _DetailRow('School', site.name),
+            _DetailRow('Type', site.type),
+            _DetailRow('Operator', site.operatorName),
+            _DetailRow('Phone', site.phone),
+            _DetailRow(
+              'Location',
+              '${site.community}, ${site.lga}, ${site.state}',
+            ),
+            _DetailRow('Ward', site.ward),
+            _DetailRow('Landmark', site.landmark ?? 'Not provided'),
+            _DetailRow(
+              'Submitted',
+              DateFormat('MMM d, yyyy').format(site.createdAt),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _SectionCard(
+          title: 'Students',
+          children: [
+            _DetailRow('Total', '${population?.totalChildren ?? 0} children'),
+            _DetailRow('Resident', '${population?.residentChildren ?? 0}'),
+            _DetailRow(
+              'Non-resident',
+              '${population?.nonResidentChildren ?? 0}',
+            ),
+            _DetailRow('Boys', '${population?.boys ?? 0}'),
+            _DetailRow('Girls', '${population?.girls ?? 0}'),
+            _DetailRow(
+              'Age groups',
+              population?.ageGroups.isNotEmpty == true
+                  ? population!.ageGroups.join(', ')
+                  : 'Not specified',
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _SectionCard(
+          title: 'Welfare',
+          children: [
+            _DetailRow('Feeding', welfare?.feedingStatus ?? 'Unknown'),
+            _DetailRow('Shelter', welfare?.shelterStatus ?? 'Unknown'),
+            _DetailRow('Sanitation', welfare?.sanitationStatus ?? 'Unknown'),
+            _DetailRow('Water', welfare?.waterAccess ?? 'Unknown'),
+            _DetailRow('Health access', welfare?.healthAccess ?? 'Unknown'),
+            _DetailRow('Clothing', welfare?.clothingStatus ?? 'Unknown'),
+            _DetailRow('Notes', welfare?.notes ?? 'Not provided'),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _SectionCard(
+          title: 'Needs',
+          children: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final need in site.needs) NeedChip(label: need.label),
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _StatePanel extends StatelessWidget {
+  const _StatePanel({required this.site});
+
+  final Site site;
 
   @override
   Widget build(BuildContext context) {
@@ -91,54 +146,156 @@ class _StatePanel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (school.status == SubmittedSchoolStatus.approved) ...[
+            SubmissionStatusBadge(status: site.submissionStatus),
+            const SizedBox(height: 12),
+            if (site.submissionStatus == SubmissionReviewStatus.approved) ...[
               const VisibilityBanner(),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'This school has been verified and is visible to Helpers in the support app.',
-                style: TextStyle(color: AppColors.muted, fontSize: 12),
+                style: TextStyle(
+                  color: AppColors.secondaryText(context),
+                  fontSize: 12,
+                ),
               ),
-            ] else if (school.status ==
-                SubmittedSchoolStatus.pendingVerification) ...[
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF8E8),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFFDE3A2)),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.schedule_rounded, color: AppColors.amber),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Pending review — admin verification is still in progress.',
-                        style: TextStyle(
-                          color: AppColors.amber,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+            ] else if (site.submissionStatus ==
+                SubmissionReviewStatus.pendingVerification) ...[
+              _InfoBanner(
+                color: AppColors.amber,
+                background: AppColors.warningTint(context),
+                icon: Icons.schedule_rounded,
+                message:
+                    'Pending review. Admin verification is still in progress.',
               ),
             ] else ...[
               CorrectionAlert(
                 message:
-                    school.correctionMessage ??
+                    site.adminNotes ??
                     'Please update and resubmit this record.',
               ),
+              if (site.correctionIssues.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                for (final issue in site.correctionIssues) ...[
+                  _CorrectionIssueTile(issue: issue),
+                  const SizedBox(height: 8),
+                ],
+              ],
               const SizedBox(height: 14),
               ElevatedButton.icon(
-                onPressed: () => context.go('/sites/new'),
+                onPressed: () =>
+                    context.go('/sites/${site.id}/edit?correctionOnly=true'),
                 icon: const Icon(Icons.edit_outlined),
                 label: const Text('Edit & Resubmit'),
               ),
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({required this.title, required this.children});
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 14),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoBanner extends StatelessWidget {
+  const _InfoBanner({
+    required this.color,
+    required this.background,
+    required this.icon,
+    required this.message,
+  });
+
+  final Color color;
+  final Color background;
+  final IconData icon;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.38)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CorrectionIssueTile extends StatelessWidget {
+  const _CorrectionIssueTile({required this.issue});
+
+  final CorrectionIssue issue;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.softFill(context),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.border(context)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.report_problem_outlined, color: AppColors.danger),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              issue.message,
+              style: TextStyle(
+                color: AppColors.primaryText(context),
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -158,11 +315,11 @@ class _DetailRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 96,
+            width: 106,
             child: Text(
               label,
-              style: const TextStyle(
-                color: AppColors.muted,
+              style: TextStyle(
+                color: AppColors.secondaryText(context),
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
               ),

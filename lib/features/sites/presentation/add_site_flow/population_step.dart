@@ -72,14 +72,16 @@ class PopulationStep extends StatelessWidget {
               label: Text(ageGroup),
               selected: selected,
               showCheckmark: false,
-              backgroundColor: Colors.white,
+              backgroundColor: AppColors.elevatedSurface(context),
               selectedColor: AppColors.deepGreen,
               labelStyle: TextStyle(
-                color: selected ? Colors.white : AppColors.ink,
+                color: selected ? Colors.white : AppColors.primaryText(context),
                 fontWeight: FontWeight.w700,
               ),
               side: BorderSide(
-                color: selected ? AppColors.deepGreen : AppColors.line,
+                color: selected
+                    ? AppColors.deepGreen
+                    : AppColors.border(context),
               ),
               onSelected: (value) => onAgeGroupToggled(ageGroup, value),
             );

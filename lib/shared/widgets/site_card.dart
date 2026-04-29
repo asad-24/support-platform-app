@@ -35,14 +35,16 @@ class SiteCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           '${site.uniqueSiteId} • ${site.community}, ${site.lga}',
-                          style: const TextStyle(color: AppColors.muted),
+                          style: TextStyle(
+                            color: AppColors.secondaryText(context),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const Icon(
+                  Icon(
                     Icons.chevron_right_rounded,
-                    color: AppColors.muted,
+                    color: AppColors.secondaryText(context),
                   ),
                 ],
               ),

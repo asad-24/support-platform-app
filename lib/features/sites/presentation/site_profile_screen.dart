@@ -54,7 +54,7 @@ class SiteProfileScreen extends ConsumerWidget {
                   const SizedBox(height: 8),
                   Text(
                     '${site.uniqueSiteId} • ${site.community}, ${site.lga}, ${site.state}',
-                    style: const TextStyle(color: AppColors.muted),
+                    style: TextStyle(color: AppColors.secondaryText(context)),
                   ),
                   const SizedBox(height: 12),
                   Wrap(
@@ -217,8 +217,8 @@ class _Info extends StatelessWidget {
             width: 130,
             child: Text(
               label,
-              style: const TextStyle(
-                color: AppColors.muted,
+              style: TextStyle(
+                color: AppColors.secondaryText(context),
                 fontWeight: FontWeight.w700,
               ),
             ),

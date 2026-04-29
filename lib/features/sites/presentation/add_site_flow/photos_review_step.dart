@@ -61,11 +61,11 @@ class PhotosReviewStep extends StatelessWidget {
               'Assign a category to each photo for proper documentation.',
         ),
         if (photos.isEmpty)
-          const Padding(
-            padding: EdgeInsets.only(bottom: 14),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 14),
             child: Text(
               'No photos selected yet.',
-              style: TextStyle(color: AppColors.muted),
+              style: TextStyle(color: AppColors.secondaryText(context)),
             ),
           )
         else
@@ -103,9 +103,9 @@ class _PhotoDocumentationCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.elevatedSurface(context),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.line),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -121,8 +121,8 @@ class _PhotoDocumentationCard extends StatelessWidget {
                   children: [
                     Text(
                       'Photo ${index + 1}',
-                      style: const TextStyle(
-                        color: AppColors.ink,
+                      style: TextStyle(
+                        color: AppColors.primaryText(context),
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -131,8 +131,8 @@ class _PhotoDocumentationCard extends StatelessWidget {
                       photo.file.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.muted,
+                      style: TextStyle(
+                        color: AppColors.secondaryText(context),
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
@@ -224,18 +224,18 @@ class _SafeguardingPhotoNotice extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.paleGreen,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.line),
+        border: Border.all(color: AppColors.border(context)),
       ),
-      child: const Row(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline_rounded, color: AppColors.deepGreen),
-          SizedBox(width: 10),
+          const Icon(Icons.info_outline_rounded, color: AppColors.deepGreen),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               'Photos are stored securely and used only for welfare documentation. Avoid children faces where possible.',
               style: TextStyle(
-                color: AppColors.ink,
+                color: AppColors.primaryText(context),
                 fontWeight: FontWeight.w600,
               ),
             ),

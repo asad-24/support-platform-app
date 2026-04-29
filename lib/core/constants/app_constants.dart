@@ -8,4 +8,5 @@ class AppConstants {
     defaultValue: 'https://api.school-support-atlas.local',
   );
   static const draftBoxName = 'school_support_atlas_drafts';
+  static const settingsBoxName = 'school_support_atlas_settings';
 }

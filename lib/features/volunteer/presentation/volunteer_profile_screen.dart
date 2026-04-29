@@ -29,40 +29,43 @@ class VolunteerProfileScreen extends ConsumerWidget {
       user?.state,
     ].where((item) => item != null && item.trim().isNotEmpty).join(' · ');
 
-    return Scaffold(
-      backgroundColor: AppColors.dashboardBackground,
-      body: SafeArea(
-        bottom: false,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: Responsive.pageMaxWidth(context),
-            ),
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(18, 24, 18, 18),
-              children: [
-                VolunteerProfileHeaderCard(
-                  name: name,
-                  email: email,
-                  username: username,
-                  phone: phone,
-                  role: 'Field Volunteer',
-                  location: location.isEmpty
-                      ? 'Location not provided'
-                      : location,
-                  imagePath: user?.profileImagePath,
-                ),
-                const SizedBox(height: 18),
-                const ProfileMenuCard(),
-                const SizedBox(height: 18),
-                const SignOutButton(),
-                const SizedBox(height: 12),
-              ],
+    return VolunteerMainBackScope(
+      currentPath: '/volunteer/profile',
+      child: Scaffold(
+        backgroundColor: AppColors.screen(context),
+        body: SafeArea(
+          bottom: false,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: Responsive.pageMaxWidth(context),
+              ),
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(18, 24, 18, 18),
+                children: [
+                  VolunteerProfileHeaderCard(
+                    name: name,
+                    email: email,
+                    username: username,
+                    phone: phone,
+                    role: 'Field Volunteer',
+                    location: location.isEmpty
+                        ? 'Location not provided'
+                        : location,
+                    imagePath: user?.profileImagePath,
+                  ),
+                  const SizedBox(height: 18),
+                  const ProfileMenuCard(),
+                  const SizedBox(height: 18),
+                  const SignOutButton(),
+                  const SizedBox(height: 12),
+                ],
+              ),
             ),
           ),
         ),
+        bottomNavigationBar: const VolunteerBottomNavigation(currentIndex: 3),
       ),
-      bottomNavigationBar: const VolunteerBottomNavigation(currentIndex: 3),
     );
   }
 }
@@ -192,9 +195,9 @@ class ProfileMenuCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.elevatedSurface(context),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.line),
+        border: Border.all(color: AppColors.border(context)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -270,7 +273,7 @@ class ProfileMenuTile extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F4F8),
+                  color: AppColors.softFill(context),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: AppColors.onboardingGreen, size: 24),
@@ -281,8 +284,10 @@ class ProfileMenuTile extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(0, 21, 18, 21),
                   decoration: BoxDecoration(
                     border: showDivider
-                        ? const Border(
-                            bottom: BorderSide(color: AppColors.line),
+                        ? Border(
+                            bottom: BorderSide(
+                              color: AppColors.border(context),
+                            ),
                           )
                         : null,
                   ),
@@ -291,16 +296,16 @@ class ProfileMenuTile extends StatelessWidget {
                       Expanded(
                         child: Text(
                           label,
-                          style: const TextStyle(
-                            color: AppColors.ink,
+                          style: TextStyle(
+                            color: AppColors.primaryText(context),
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                       ),
-                      const Icon(
+                      Icon(
                         Icons.chevron_right_rounded,
-                        color: AppColors.muted,
+                        color: AppColors.secondaryText(context),
                         size: 24,
                       ),
                     ],
@@ -325,7 +330,7 @@ class SignOutButton extends ConsumerWidget {
       icon: const Icon(Icons.logout_rounded, size: 22),
       label: const Text('Change Role / Sign Out'),
       style: OutlinedButton.styleFrom(
-        backgroundColor: const Color(0xFFFFF6F6),
+        backgroundColor: AppColors.dangerTint(context),
         foregroundColor: AppColors.danger,
         side: BorderSide(color: AppColors.danger.withValues(alpha: 0.25)),
         minimumSize: const Size.fromHeight(56),
@@ -376,7 +381,7 @@ class VolunteerPlaceholderScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.dashboardBackground,
+      backgroundColor: AppColors.screen(context),
       body: SafeArea(
         bottom: false,
         child: Center(
@@ -390,9 +395,9 @@ class VolunteerPlaceholderScreen extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(22),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.elevatedSurface(context),
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppColors.line),
+                  border: Border.all(color: AppColors.border(context)),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -415,18 +420,18 @@ class VolunteerPlaceholderScreen extends StatelessWidget {
                     const SizedBox(height: 14),
                     Text(
                       title,
-                      style: const TextStyle(
-                        color: AppColors.ink,
+                      style: TextStyle(
+                        color: AppColors.primaryText(context),
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
                     const SizedBox(height: 6),
-                    const Text(
+                    Text(
                       'This section will be available soon.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: AppColors.muted,
+                        color: AppColors.secondaryText(context),
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),

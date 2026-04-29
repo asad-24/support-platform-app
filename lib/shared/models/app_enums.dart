@@ -34,6 +34,67 @@ enum VerificationStatus {
   }
 }
 
+enum SubmissionReviewStatus {
+  approved,
+  pendingVerification,
+  needsCorrection;
+
+  String get label => switch (this) {
+    SubmissionReviewStatus.approved => 'Submitted',
+    SubmissionReviewStatus.pendingVerification => 'Pending Verification',
+    SubmissionReviewStatus.needsCorrection => 'Needs Correction',
+  };
+
+  bool get isEditable => this == SubmissionReviewStatus.needsCorrection;
+
+  static SubmissionReviewStatus fromJson(String value) {
+    final normalized = value.trim();
+    return switch (normalized) {
+      'approved' || 'verified' || 'live' => SubmissionReviewStatus.approved,
+      'pending' ||
+      'pendingVerification' ||
+      'pending_verification' => SubmissionReviewStatus.pendingVerification,
+      'failed' ||
+      'rejected' ||
+      'needsCorrection' ||
+      'needs_correction' => SubmissionReviewStatus.needsCorrection,
+      _ => SubmissionReviewStatus.pendingVerification,
+    };
+  }
+
+  String toJson() => switch (this) {
+    SubmissionReviewStatus.pendingVerification => 'pendingVerification',
+    SubmissionReviewStatus.needsCorrection => 'needsCorrection',
+    SubmissionReviewStatus.approved => 'approved',
+  };
+}
+
+class CorrectionIssue {
+  const CorrectionIssue({
+    required this.fieldKey,
+    required this.stepIndex,
+    required this.message,
+  });
+
+  final String fieldKey;
+  final int stepIndex;
+  final String message;
+
+  factory CorrectionIssue.fromJson(Map<String, dynamic> json) {
+    return CorrectionIssue(
+      fieldKey: json['fieldKey'] as String? ?? '',
+      stepIndex: json['stepIndex'] as int? ?? 0,
+      message: json['message'] as String? ?? 'Please review this field.',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'fieldKey': fieldKey,
+    'stepIndex': stepIndex,
+    'message': message,
+  };
+}
+
 enum UrgencyLevel {
   low,
   medium,

@@ -17,7 +17,7 @@ class AddSiteFormSectionHeader extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(14),
-      decoration: _softGradientDecoration(),
+      decoration: _softGradientDecoration(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -31,8 +31,8 @@ class AddSiteFormSectionHeader extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             description,
-            style: const TextStyle(
-              color: AppColors.muted,
+            style: TextStyle(
+              color: AppColors.secondaryText(context),
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
@@ -75,8 +75,8 @@ class AddSiteSectionHeaderWithAction extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               description,
-              style: const TextStyle(
-                color: AppColors.muted,
+              style: TextStyle(
+                color: AppColors.secondaryText(context),
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
@@ -93,7 +93,7 @@ class AddSiteSectionHeaderWithAction extends StatelessWidget {
         return Container(
           margin: const EdgeInsets.only(bottom: 14),
           padding: const EdgeInsets.all(14),
-          decoration: _softGradientDecoration(),
+          decoration: _softGradientDecoration(context),
           child: compact
               ? Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -219,10 +219,15 @@ class AddSiteStepHeader extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Colors.white, AppColors.paleGreen.withValues(alpha: 0.74)],
+          colors: AppColors.isDark(context)
+              ? [
+                  AppColors.elevatedSurface(context),
+                  AppColors.greenTint(context),
+                ]
+              : [Colors.white, AppColors.paleGreen.withValues(alpha: 0.74)],
         ),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.line),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -247,8 +252,8 @@ class AddSiteStepHeader extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             subtitle,
-            style: const TextStyle(
-              color: AppColors.muted,
+            style: TextStyle(
+              color: AppColors.secondaryText(context),
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
@@ -268,16 +273,20 @@ class AddSiteStepCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Colors.white, Color(0xFFFBFDFC)],
+          colors: AppColors.isDark(context)
+              ? [AppColors.elevatedSurface(context), AppColors.surface(context)]
+              : const [Colors.white, Color(0xFFFBFDFC)],
         ),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.line),
+        border: Border.all(color: AppColors.border(context)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.ink.withValues(alpha: 0.05),
+            color: Colors.black.withValues(
+              alpha: AppColors.isDark(context) ? 0.18 : 0.05,
+            ),
             blurRadius: 22,
             offset: const Offset(0, 10),
           ),
@@ -301,8 +310,8 @@ class AddSiteReviewRow extends StatelessWidget {
         final compact = constraints.maxWidth < 360;
         final labelWidget = Text(
           label,
-          style: const TextStyle(
-            color: AppColors.muted,
+          style: TextStyle(
+            color: AppColors.secondaryText(context),
             fontWeight: FontWeight.w700,
           ),
         );
@@ -331,18 +340,20 @@ class AddSiteReviewRow extends StatelessWidget {
   }
 }
 
-BoxDecoration _softGradientDecoration() {
+BoxDecoration _softGradientDecoration(BuildContext context) {
   return BoxDecoration(
     gradient: LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
-      colors: [
-        AppColors.paleGreen,
-        AppColors.onboardingGreen.withValues(alpha: 0.08),
-      ],
+      colors: AppColors.isDark(context)
+          ? [AppColors.elevatedSurface(context), AppColors.greenTint(context)]
+          : [
+              AppColors.paleGreen,
+              AppColors.onboardingGreen.withValues(alpha: 0.08),
+            ],
     ),
     borderRadius: BorderRadius.circular(8),
-    border: Border.all(color: AppColors.line),
+    border: Border.all(color: AppColors.border(context)),
     boxShadow: [
       BoxShadow(
         color: AppColors.deepGreen.withValues(alpha: 0.06),

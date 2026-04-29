@@ -16,8 +16,8 @@ class AddSiteFieldHeading extends StatelessWidget {
   Widget build(BuildContext context) {
     return RichText(
       text: TextSpan(
-        style: const TextStyle(
-          color: AppColors.ink,
+        style: TextStyle(
+          color: AppColors.primaryText(context),
           fontSize: 14,
           fontWeight: FontWeight.w800,
         ),
@@ -168,16 +168,20 @@ class AddSiteOperatorContactCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Colors.white, Color(0xFFFBFDFC)],
+          colors: AppColors.isDark(context)
+              ? [AppColors.elevatedSurface(context), AppColors.surface(context)]
+              : const [Colors.white, Color(0xFFFBFDFC)],
         ),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.line),
+        border: Border.all(color: AppColors.border(context)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.ink.withValues(alpha: 0.04),
+            color: Colors.black.withValues(
+              alpha: AppColors.isDark(context) ? 0.18 : 0.04,
+            ),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -190,8 +194,8 @@ class AddSiteOperatorContactCard extends StatelessWidget {
             children: [
               Text(
                 'Operator ${index + 1}',
-                style: const TextStyle(
-                  color: AppColors.ink,
+                style: TextStyle(
+                  color: AppColors.primaryText(context),
                   fontWeight: FontWeight.w800,
                 ),
               ),

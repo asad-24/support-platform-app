@@ -110,7 +110,7 @@ class LocationStep extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.line),
+            border: Border.all(color: AppColors.border(context)),
           ),
           clipBehavior: Clip.antiAlias,
           child: !canShowMap
@@ -119,10 +119,10 @@ class LocationStep extends StatelessWidget {
                       'Add a Google Maps JavaScript API key for web to enable the map preview. You can still use current location and enter coordinates below.',
                 )
               : currentLocation == null
-              ? const Center(
+              ? Center(
                   child: Text(
                     'Getting current location...',
-                    style: TextStyle(color: AppColors.muted),
+                    style: TextStyle(color: AppColors.secondaryText(context)),
                   ),
                 )
               : GoogleMap(
@@ -153,8 +153,8 @@ class LocationStep extends StatelessWidget {
                 isFetchingLocation
                     ? 'Detecting current location...'
                     : 'Current location *',
-                style: const TextStyle(
-                  color: AppColors.ink,
+                style: TextStyle(
+                  color: AppColors.primaryText(context),
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
                 ),
@@ -213,11 +213,14 @@ class LocationStep extends StatelessWidget {
           heading: 'Landmark',
           hintText: 'Nearby landmark',
         ),
-        const Padding(
-          padding: EdgeInsets.only(bottom: 12),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
           child: Text(
             'Tap the map or use your current location to autofill the school coordinates.',
-            style: TextStyle(color: AppColors.muted, fontSize: 12),
+            style: TextStyle(
+              color: AppColors.secondaryText(context),
+              fontSize: 12,
+            ),
           ),
         ),
       ],

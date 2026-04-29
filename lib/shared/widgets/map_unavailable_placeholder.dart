@@ -18,7 +18,7 @@ class MapUnavailablePlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.elevatedSurface(context),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Center(
@@ -39,7 +39,10 @@ class MapUnavailablePlaceholder extends StatelessWidget {
                 constraints: const BoxConstraints(maxWidth: 320),
                 child: Text(
                   message,
-                  style: const TextStyle(color: AppColors.muted, height: 1.35),
+                  style: TextStyle(
+                    color: AppColors.secondaryText(context),
+                    height: 1.35,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),

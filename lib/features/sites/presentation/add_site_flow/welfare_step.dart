@@ -207,10 +207,12 @@ class _MealBox extends StatelessWidget {
         height: 48,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected ? AppColors.deepGreen : Colors.white,
+          color: selected
+              ? AppColors.deepGreen
+              : AppColors.elevatedSurface(context),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: selected ? AppColors.deepGreen : AppColors.line,
+            color: selected ? AppColors.deepGreen : AppColors.border(context),
             width: selected ? 1.6 : 1,
           ),
           boxShadow: selected
@@ -226,7 +228,7 @@ class _MealBox extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? Colors.white : AppColors.ink,
+            color: selected ? Colors.white : AppColors.primaryText(context),
             fontSize: 16,
             fontWeight: FontWeight.w800,
           ),
@@ -257,9 +259,9 @@ class _WelfareToggleField extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.elevatedSurface(context),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.line),
+            border: Border.all(color: AppColors.border(context)),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -270,8 +272,8 @@ class _WelfareToggleField extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
-                        color: AppColors.ink,
+                      style: TextStyle(
+                        color: AppColors.primaryText(context),
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
                       ),
@@ -279,8 +281,8 @@ class _WelfareToggleField extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       description,
-                      style: const TextStyle(
-                        color: AppColors.muted,
+                      style: TextStyle(
+                        color: AppColors.secondaryText(context),
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),

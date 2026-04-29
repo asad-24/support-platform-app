@@ -34,7 +34,7 @@ class EmptyState extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               message,
-              style: const TextStyle(color: AppColors.muted),
+              style: TextStyle(color: AppColors.secondaryText(context)),
               textAlign: TextAlign.center,
             ),
             if (action != null) ...[const SizedBox(height: 18), action!],

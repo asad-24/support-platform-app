@@ -50,6 +50,7 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: scheme,
       scaffoldBackgroundColor: AppColors.scaffold,
+      dividerColor: AppColors.line,
       textTheme: textTheme,
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.deepGreen,
@@ -115,6 +116,15 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         side: BorderSide.none,
       ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: Colors.white,
+        indicatorColor: AppColors.onboardingGreen.withValues(alpha: 0.10),
+      ),
+      dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+      ),
     );
   }
 
@@ -163,6 +173,7 @@ class AppTheme {
       brightness: Brightness.dark,
       colorScheme: scheme,
       scaffoldBackgroundColor: const Color(0xFF0F1412),
+      dividerColor: const Color(0xFF27312D),
       textTheme: textTheme,
       appBarTheme: AppBarTheme(
         backgroundColor: const Color(0xFF151A18),
@@ -224,6 +235,21 @@ class AppTheme {
       navigationBarTheme: const NavigationBarThemeData(
         backgroundColor: Color(0xFF151A18),
         indicatorColor: Color(0xFF123C33),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: const Color(0xFF202825),
+        selectedColor: const Color(0xFF123C33),
+        labelStyle: GoogleFonts.plusJakartaSans(
+          color: const Color(0xFFE7ECE9),
+          fontWeight: FontWeight.w600,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        side: const BorderSide(color: Color(0xFF27312D)),
+      ),
+      dialogTheme: const DialogThemeData(backgroundColor: Color(0xFF151A18)),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: Color(0xFF151A18),
+        surfaceTintColor: Color(0xFF151A18),
       ),
     );
   }

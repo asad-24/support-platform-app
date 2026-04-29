@@ -28,6 +28,11 @@ final draftsProvider = FutureProvider.autoDispose<List<SiteDraft>>((ref) {
   return ref.watch(localDraftStorageProvider).all();
 });
 
+final submittedSitesProvider = FutureProvider.autoDispose
+    .family<List<Site>, String>((ref, userId) {
+      return ref.watch(sitesRepositoryProvider).getSubmittedSites(userId);
+    });
+
 abstract class SitesRepository {
   Future<List<Site>> getSites({
     String? query,
@@ -35,6 +40,8 @@ abstract class SitesRepository {
     UrgencyLevel? urgencyLevel,
     NeedType? need,
   });
+
+  Future<List<Site>> getSubmittedSites(String userId);
 
   Future<Site> getSite(String id);
 
@@ -100,6 +107,13 @@ class MockSitesRepository implements SitesRepository {
   }
 
   @override
+  Future<List<Site>> getSubmittedSites(String userId) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    return _sites.where((site) => site.createdBy == userId).toList()
+      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+  }
+
+  @override
   Future<Site> createSite(Map<String, dynamic> payload) async {
     await Future<void>.delayed(const Duration(milliseconds: 700));
     final now = DateTime.now();
@@ -120,6 +134,7 @@ class MockSitesRepository implements SitesRepository {
       latitude: (payload['latitude'] as num?)?.toDouble() ?? 9.082,
       longitude: (payload['longitude'] as num?)?.toDouble() ?? 8.6753,
       verificationStatus: VerificationStatus.pending,
+      reviewStatus: SubmissionReviewStatus.pendingVerification,
       urgencyLevel: UrgencyLevel.fromJson(
         payload['urgencyLevel'] as String? ?? 'low',
       ),
@@ -172,18 +187,45 @@ class MockSitesRepository implements SitesRepository {
       latitude: (payload['latitude'] as num?)?.toDouble() ?? existing.latitude,
       longitude:
           (payload['longitude'] as num?)?.toDouble() ?? existing.longitude,
-      verificationStatus: existing.verificationStatus,
+      verificationStatus: existing.needsCorrection
+          ? VerificationStatus.pending
+          : existing.verificationStatus,
+      reviewStatus: existing.needsCorrection
+          ? SubmissionReviewStatus.pendingVerification
+          : existing.reviewStatus,
       urgencyLevel: payload['urgencyLevel'] == null
           ? existing.urgencyLevel
           : UrgencyLevel.fromJson(payload['urgencyLevel'] as String),
       createdBy: existing.createdBy,
       createdAt: existing.createdAt,
       updatedAt: DateTime.now(),
-      populationSummary: existing.populationSummary,
-      welfareAssessment: existing.welfareAssessment,
-      media: existing.media,
-      needs: existing.needs,
-      adminNotes: existing.adminNotes,
+      populationSummary: payload['populationSummary'] == null
+          ? existing.populationSummary
+          : PopulationSummary.fromJson(
+              Map<String, dynamic>.from(payload['populationSummary'] as Map),
+            ),
+      welfareAssessment: payload['welfareAssessment'] == null
+          ? existing.welfareAssessment
+          : WelfareAssessment.fromJson(
+              Map<String, dynamic>.from(payload['welfareAssessment'] as Map),
+            ),
+      media: (payload['media'] as List? ?? existing.media)
+          .map(
+            (item) => item is MediaFile
+                ? item
+                : MediaFile.fromJson(Map<String, dynamic>.from(item as Map)),
+          )
+          .toList(),
+      needs: (payload['needs'] as List? ?? existing.needs)
+          .map(
+            (item) =>
+                item is NeedType ? item : NeedType.fromJson(item as String),
+          )
+          .toList(),
+      adminNotes: existing.needsCorrection ? null : existing.adminNotes,
+      correctionIssues: existing.needsCorrection
+          ? const []
+          : existing.correctionIssues,
     );
     _sites[index] = updated;
     return updated;
@@ -261,6 +303,7 @@ class MockSitesRepository implements SitesRepository {
         latitude: 10.5222,
         longitude: 7.4383,
         verificationStatus: VerificationStatus.pending,
+        reviewStatus: SubmissionReviewStatus.pendingVerification,
         urgencyLevel: UrgencyLevel.high,
         createdBy: 'field-001',
         createdAt: now.subtract(const Duration(days: 8)),
@@ -308,6 +351,7 @@ class MockSitesRepository implements SitesRepository {
         latitude: 12.0001,
         longitude: 8.5167,
         verificationStatus: VerificationStatus.verified,
+        reviewStatus: SubmissionReviewStatus.approved,
         urgencyLevel: UrgencyLevel.medium,
         createdBy: 'field-001',
         createdAt: now.subtract(const Duration(days: 30)),
@@ -331,6 +375,70 @@ class MockSitesRepository implements SitesRepository {
           immediateInterventionNeeded: false,
         ),
         needs: const [NeedType.educationMaterials, NeedType.healthOutreach],
+      ),
+      Site(
+        id: 'site-003',
+        uniqueSiteId: 'SSA-KN-0003',
+        name: 'Makaranta Jibril',
+        type: 'Traditional Quranic School',
+        operatorName: 'Malam Jibril Musa',
+        phone: '+2348065432109',
+        state: 'Kano',
+        lga: 'Kumbotso',
+        ward: 'Panshekara',
+        community: 'Kumbotso',
+        landmark: 'Beside market road',
+        latitude: 11.8901,
+        longitude: 8.5042,
+        verificationStatus: VerificationStatus.rejected,
+        reviewStatus: SubmissionReviewStatus.needsCorrection,
+        urgencyLevel: UrgencyLevel.high,
+        createdBy: 'field-001',
+        createdAt: now.subtract(const Duration(days: 12)),
+        updatedAt: now.subtract(const Duration(hours: 8)),
+        populationSummary: const PopulationSummary(
+          totalChildren: 44,
+          residentChildren: 20,
+          nonResidentChildren: 24,
+          boys: 29,
+          girls: 15,
+          age0to5: 0,
+          age6to9: 13,
+          age10to14: 24,
+          age15plus: 7,
+          ageGroups: ['6-9', '10-14', '15+'],
+        ),
+        welfareAssessment: const WelfareAssessment(
+          feedingStatus: '1 meal per day',
+          shelterStatus: 'Shared sleeping space',
+          sanitationStatus: 'No functional toilet/latrine available',
+          waterAccess: 'Open well nearby',
+          healthAccess: 'No healthcare access',
+          clothingStatus: 'Inadequate clothing',
+          mealsPerDay: 1,
+          waterSource: 'Open well nearby',
+          hasToiletAccess: false,
+          hasAdequateClothing: false,
+          hasHealthcareAccess: false,
+          sleepingArrangement: 'Shared sleeping space',
+          hygieneCondition: 'Poor',
+          notes: 'Needs admin correction before publication.',
+        ),
+        needs: const [NeedType.feeding, NeedType.sanitation],
+        adminNotes:
+            'Admin review found incomplete location and welfare evidence.',
+        correctionIssues: const [
+          CorrectionIssue(
+            fieldKey: 'landmark',
+            stepIndex: 1,
+            message: 'Add a clearer nearby landmark for verification.',
+          ),
+          CorrectionIssue(
+            fieldKey: 'waterSource',
+            stepIndex: 4,
+            message: 'Clarify the water source and current access condition.',
+          ),
+        ],
       ),
     ];
   }

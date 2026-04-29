@@ -116,10 +116,14 @@ class _NeedButton extends StatelessWidget {
         constraints: const BoxConstraints(minHeight: 52),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? AppColors.paleGreen : Colors.white,
+          color: selected
+              ? AppColors.greenTint(context)
+              : AppColors.elevatedSurface(context),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: selected ? AppColors.onboardingGreen : AppColors.line,
+            color: selected
+                ? AppColors.onboardingGreen
+                : AppColors.border(context),
             width: selected ? 1.6 : 1,
           ),
           boxShadow: selected
@@ -136,7 +140,9 @@ class _NeedButton extends StatelessWidget {
           children: [
             Icon(
               _needIcon(need),
-              color: selected ? AppColors.deepGreen : AppColors.muted,
+              color: selected
+                  ? AppColors.onboardingGreen
+                  : AppColors.secondaryText(context),
               size: 20,
             ),
             const SizedBox(width: 10),
@@ -146,7 +152,9 @@ class _NeedButton extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: selected ? AppColors.deepGreen : AppColors.ink,
+                  color: selected
+                      ? AppColors.onboardingGreen
+                      : AppColors.primaryText(context),
                   fontWeight: FontWeight.w800,
                   fontSize: 13,
                 ),
@@ -253,10 +261,12 @@ class _UrgencyButton extends StatelessWidget {
         constraints: const BoxConstraints(minHeight: 58),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFFFF7D6) : Colors.white,
+          color: selected
+              ? AppColors.warningTint(context)
+              : AppColors.elevatedSurface(context),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: selected ? AppColors.amber : AppColors.line,
+            color: selected ? AppColors.amber : AppColors.border(context),
             width: selected ? 1.6 : 1,
           ),
         ),
@@ -265,7 +275,9 @@ class _UrgencyButton extends StatelessWidget {
           children: [
             Icon(
               _urgencyIcon(urgency),
-              color: selected ? AppColors.orange : AppColors.muted,
+              color: selected
+                  ? AppColors.orange
+                  : AppColors.secondaryText(context),
               size: 22,
             ),
             const SizedBox(width: 8),
@@ -275,7 +287,9 @@ class _UrgencyButton extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: selected ? AppColors.ink : AppColors.muted,
+                  color: selected
+                      ? AppColors.primaryText(context)
+                      : AppColors.secondaryText(context),
                   fontSize: 14,
                   fontWeight: FontWeight.w900,
                 ),

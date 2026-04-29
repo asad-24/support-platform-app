@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -27,10 +29,18 @@ import 'add_site_flow/shared_widgets.dart';
 import 'add_site_flow/welfare_step.dart';
 
 class AddSiteFlowScreen extends ConsumerStatefulWidget {
-  const AddSiteFlowScreen({super.key, this.siteId, this.initialStep = 0});
+  const AddSiteFlowScreen({
+    super.key,
+    this.siteId,
+    this.initialStep = 0,
+    this.draftId,
+    this.correctionOnly = false,
+  });
 
   final String? siteId;
   final int initialStep;
+  final String? draftId;
+  final bool correctionOnly;
 
   @override
   ConsumerState<AddSiteFlowScreen> createState() => _AddSiteFlowScreenState();
@@ -91,6 +101,8 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
   bool _isLoadingStates = true;
   bool _isFetchingLocation = false;
   bool _didAttemptAutoLocation = false;
+  String? _initialPayloadSignature;
+  List<CorrectionIssue> _correctionIssues = const [];
   String? _statesLoadError;
   LatLng? _selectedLocation;
 
@@ -142,6 +154,10 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
     _loadNigeriaStates();
     if (widget.siteId != null) {
       Future<void>.microtask(_loadSiteForEdit);
+    } else if (widget.draftId != null) {
+      Future<void>.microtask(_loadDraft);
+    } else {
+      Future<void>.microtask(_captureInitialPayloadSignature);
     }
   }
 
@@ -190,6 +206,11 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.siteId != null;
+    final title = widget.correctionOnly
+        ? 'Correct School'
+        : isEdit
+        ? 'Edit School'
+        : 'Add School';
     final isLast = _step == _flowSteps.length - 1;
 
     return PopScope(
@@ -200,37 +221,41 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: Colors.white,
-          foregroundColor: AppColors.deepGreen,
-          surfaceTintColor: Colors.white,
+          backgroundColor: AppColors.elevatedSurface(context),
+          foregroundColor: AppColors.isDark(context)
+              ? AppColors.onboardingGreen
+              : AppColors.deepGreen,
+          surfaceTintColor: AppColors.elevatedSurface(context),
           elevation: 0,
-          shadowColor: AppColors.line,
+          shadowColor: AppColors.border(context),
           centerTitle: true,
           leadingWidth: 64,
           leading: Padding(
             padding: const EdgeInsets.only(left: 12),
             child: IconButton.filled(
               tooltip: 'Back to home',
-              onPressed: _submitting || _leavingFlow
-                  ? null
-                  : _saveDraftAndGoHome,
+              onPressed: _submitting || _leavingFlow ? null : _handleHeaderBack,
               icon: const Icon(Icons.arrow_back_rounded),
               style: IconButton.styleFrom(
-                backgroundColor: AppColors.paleGreen,
-                disabledBackgroundColor: AppColors.line,
-                disabledForegroundColor: AppColors.muted,
+                backgroundColor: AppColors.greenTint(context),
+                disabledBackgroundColor: AppColors.border(context),
+                disabledForegroundColor: AppColors.secondaryText(context),
                 fixedSize: const Size.square(44),
-                foregroundColor: AppColors.deepGreen,
+                foregroundColor: AppColors.isDark(context)
+                    ? AppColors.onboardingGreen
+                    : AppColors.deepGreen,
                 shape: const CircleBorder(),
               ),
             ),
           ),
           title: Text(
-            isEdit ? 'Edit School' : 'Add School',
+            title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: AppColors.deepGreen,
+              color: AppColors.isDark(context)
+                  ? AppColors.onboardingGreen
+                  : AppColors.deepGreen,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -244,11 +269,13 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
                     : () => _saveDraft(syncPending: false),
                 icon: const Icon(Icons.save_outlined),
                 style: IconButton.styleFrom(
-                  backgroundColor: AppColors.paleGreen,
-                  disabledBackgroundColor: AppColors.line,
-                  disabledForegroundColor: AppColors.muted,
+                  backgroundColor: AppColors.greenTint(context),
+                  disabledBackgroundColor: AppColors.border(context),
+                  disabledForegroundColor: AppColors.secondaryText(context),
                   fixedSize: const Size.square(44),
-                  foregroundColor: AppColors.deepGreen,
+                  foregroundColor: AppColors.isDark(context)
+                      ? AppColors.onboardingGreen
+                      : AppColors.deepGreen,
                   shape: const CircleBorder(),
                 ),
               ),
@@ -261,11 +288,17 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  AppColors.paleGreen.withValues(alpha: 0.55),
-                  Colors.white,
-                  AppColors.scaffold,
-                ],
+                colors: AppColors.isDark(context)
+                    ? const [
+                        Color(0xFF10241F),
+                        Color(0xFF0F1412),
+                        Color(0xFF0F1412),
+                      ]
+                    : [
+                        AppColors.paleGreen.withValues(alpha: 0.55),
+                        Colors.white,
+                        AppColors.scaffold,
+                      ],
               ),
             ),
             child: Center(
@@ -316,8 +349,24 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
                                   title: _flowSteps[_step].title,
                                   subtitle: _flowSteps[_step].subtitle,
                                 ),
+                                if (_correctionMessagesForStep.isNotEmpty) ...[
+                                  const SizedBox(height: 14),
+                                  _CorrectionStepBanner(
+                                    messages: _correctionMessagesForStep,
+                                  ),
+                                ],
                                 const SizedBox(height: 14),
-                                AddSiteStepCard(child: _buildCurrentStep()),
+                                AddSiteStepCard(
+                                  child: AbsorbPointer(
+                                    absorbing: !_isCurrentStepEditable,
+                                    child: Opacity(
+                                      opacity: _isCurrentStepEditable
+                                          ? 1
+                                          : 0.72,
+                                      child: _buildCurrentStep(),
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -531,6 +580,15 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
       _needs
         ..clear()
         ..addAll(site.needs);
+      _correctionIssues = widget.correctionOnly
+          ? site.correctionIssues
+          : const [];
+      if (widget.correctionOnly && site.correctionIssues.isNotEmpty) {
+        _step = site.correctionIssues
+            .map((issue) => issue.stepIndex)
+            .reduce((value, element) => value < element ? value : element)
+            .clamp(0, _flowSteps.length - 1);
+      }
 
       if (population != null) {
         _totalChildren.text = '${population.totalChildren}';
@@ -583,6 +641,109 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
               ),
         );
     });
+    _captureInitialPayloadSignature();
+  }
+
+  Future<void> _loadDraft() async {
+    final drafts = await ref.read(localDraftStorageProvider).all();
+    SiteDraft? draft;
+    for (final item in drafts) {
+      if (item.id == widget.draftId) {
+        draft = item;
+        break;
+      }
+    }
+    final selectedDraft = draft;
+    if (selectedDraft == null || !mounted) {
+      _captureInitialPayloadSignature();
+      return;
+    }
+
+    setState(() {
+      _step = selectedDraft.currentStep.clamp(0, _flowSteps.length - 1);
+      _applyPayload(selectedDraft.payload);
+    });
+    _captureInitialPayloadSignature();
+  }
+
+  void _applyPayload(Map<String, dynamic> payload) {
+    _name.text = payload['name'] as String? ?? '';
+    _localName.text = payload['localName'] as String? ?? '';
+    _type.text = payload['type'] as String? ?? '';
+    _state.text = payload['state'] as String? ?? '';
+    _lga.text = payload['lga'] as String? ?? '';
+    _ward.text = payload['ward'] as String? ?? '';
+    _community.text = payload['community'] as String? ?? '';
+    _landmark.text = payload['landmark'] as String? ?? '';
+    _operator.text = payload['operatorName'] as String? ?? '';
+    _phone.text = payload['phone'] as String? ?? '';
+    _lat.text = '${payload['latitude'] ?? '9.0820'}';
+    _lng.text = '${payload['longitude'] ?? '8.6753'}';
+    _selectedLocation = LatLng(
+      double.tryParse(_lat.text) ?? 9.082,
+      double.tryParse(_lng.text) ?? 8.6753,
+    );
+    _urgency = UrgencyLevel.fromJson(
+      payload['urgencyLevel'] as String? ?? 'low',
+    );
+    _needs
+      ..clear()
+      ..addAll(
+        (payload['needs'] as List? ?? const []).map(
+          (item) => NeedType.fromJson(item as String),
+        ),
+      );
+
+    final population = Map<String, dynamic>.from(
+      payload['populationSummary'] as Map? ?? const {},
+    );
+    _totalChildren.text = '${population['totalChildren'] ?? 0}';
+    _residentChildren.text = '${population['residentChildren'] ?? 0}';
+    _nonResidentChildren.text = '${population['nonResidentChildren'] ?? 0}';
+    _boys.text = '${population['boys'] ?? 0}';
+    _girls.text = '${population['girls'] ?? 0}';
+    _age0to5.text = '${population['age0to5'] ?? 0}';
+    _age6to9.text = '${population['age6to9'] ?? 0}';
+    _age10to14.text = '${population['age10to14'] ?? 0}';
+    _age15plus.text = '${population['age15plus'] ?? 0}';
+    _populationNotes.text = population['notes'] as String? ?? '';
+    _studentAgeGroups
+      ..clear()
+      ..addAll(
+        (population['ageGroups'] as List? ?? const []).map((item) => '$item'),
+      );
+
+    final welfare = Map<String, dynamic>.from(
+      payload['welfareAssessment'] as Map? ?? const {},
+    );
+    _feeding.text = welfare['mealsPerDay']?.toString() ?? '';
+    _shelter.text = welfare['sleepingArrangement'] as String? ?? '';
+    _sanitation.text = '${welfare['hasToiletAccess'] ?? false}';
+    _water.text = welfare['waterSource'] as String? ?? '';
+    _health.text = '${welfare['hasHealthcareAccess'] ?? false}';
+    _clothing.text = '${welfare['hasAdequateClothing'] ?? false}';
+    _hygiene.text = welfare['hygieneCondition'] as String? ?? '';
+    _safetyRisks.text = welfare['safetyRisks'] as String? ?? '';
+    _urgencyReason.text = welfare['urgencyReason'] as String? ?? '';
+    _welfareNotes.text = welfare['notes'] as String? ?? '';
+    _immediateIntervention =
+        welfare['immediateInterventionNeeded'] as bool? ?? false;
+
+    _photos
+      ..clear()
+      ..addAll(
+        (payload['media'] as List? ?? const [])
+            .map((item) => Map<String, dynamic>.from(item as Map))
+            .where((item) => (item['localPath'] as String?)?.isNotEmpty == true)
+            .map(
+              (item) => SitePhotoDraft(
+                file: XFile(item['localPath'] as String),
+                category: MediaType.fromJson(
+                  item['type'] as String? ?? 'other',
+                ),
+              ),
+            ),
+      );
   }
 
   String _normalizeSchoolType(String rawType) {
@@ -614,7 +775,7 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
 
   void _continue() {
     if (!_formKey.currentState!.validate()) return;
-    if (_step == 2 && !_validatePhotos()) return;
+    if (_step == 2 && !_shouldSkipPhotoValidation && !_validatePhotos()) return;
     setState(() {
       _movingForward = true;
       _step += 1;
@@ -643,7 +804,55 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
       _goBack();
       return;
     }
-    _saveDraftAndGoHome();
+    _attemptLeaveFlow();
+  }
+
+  void _handleHeaderBack() {
+    if (_step > 0) {
+      _goBack();
+      return;
+    }
+    _attemptLeaveFlow();
+  }
+
+  Future<void> _attemptLeaveFlow() async {
+    if (_leavingFlow) return;
+    if (!_hasUnsavedChanges) {
+      _discardAndGoHome();
+      return;
+    }
+
+    final action = await showDialog<_LeaveAction>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Save this record?'),
+        content: const Text(
+          'You have changes in this school record. Save them as a draft or discard them before leaving.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(_LeaveAction.cancel),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(_LeaveAction.discard),
+            child: const Text('Discard'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(_LeaveAction.saveDraft),
+            child: const Text('Save as Draft'),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted || action == null || action == _LeaveAction.cancel) return;
+    if (action == _LeaveAction.saveDraft) {
+      await _saveDraftAndGoHome();
+      return;
+    }
+    _discardAndGoHome();
   }
 
   Future<void> _saveDraftAndGoHome() async {
@@ -653,6 +862,12 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
     if (!mounted) return;
     await Future<void>.delayed(const Duration(milliseconds: 650));
     if (!mounted) return;
+    context.go(_homePath);
+  }
+
+  void _discardAndGoHome() {
+    if (_leavingFlow) return;
+    setState(() => _leavingFlow = true);
     context.go(_homePath);
   }
 
@@ -852,10 +1067,12 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
     bool showMessage = true,
   }) async {
     final draft = SiteDraft(
-      id: widget.siteId ?? _uuid.v4(),
+      id: widget.draftId ?? widget.siteId ?? _uuid.v4(),
       updatedAt: DateTime.now(),
       payload: _payload(),
       syncPending: syncPending,
+      currentStep: _step,
+      totalSteps: _flowSteps.length,
     );
     await ref.read(localDraftStorageProvider).save(draft);
     ref.invalidate(draftsProvider);
@@ -869,7 +1086,7 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
   }
 
   Future<void> _saveForSyncLater() async {
-    if (!_validatePhotos()) return;
+    if (!_shouldSkipPhotoValidation && !_validatePhotos()) return;
     await _saveDraft(syncPending: true);
   }
 
@@ -920,7 +1137,7 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
 
   Future<void> _confirmSubmit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (!_validatePhotos()) return;
+    if (!_shouldSkipPhotoValidation && !_validatePhotos()) return;
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -961,6 +1178,14 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
       ref
         ..invalidate(sitesProvider)
         ..invalidate(dashboardSummaryProvider);
+      final session = ref.read(authControllerProvider).valueOrNull?.session;
+      if (session != null) {
+        ref.invalidate(submittedSitesProvider(session.user.id));
+      }
+      if (widget.draftId != null) {
+        await ref.read(localDraftStorageProvider).delete(widget.draftId!);
+        ref.invalidate(draftsProvider);
+      }
       if (!mounted) return;
 
       await showDialog<void>(
@@ -1090,5 +1315,102 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
 
   String _boolLabel(TextEditingController controller) {
     return _parseBoolController(controller) ? 'Yes' : 'No';
+  }
+
+  bool get _hasUnsavedChanges {
+    final initial = _initialPayloadSignature;
+    if (initial == null) return false;
+    return initial != _payloadSignature();
+  }
+
+  List<String> get _correctionMessagesForStep {
+    return _correctionIssues
+        .where((issue) => issue.stepIndex == _step)
+        .map((issue) => issue.message)
+        .toList();
+  }
+
+  bool get _isCurrentStepEditable {
+    if (!widget.correctionOnly || _correctionIssues.isEmpty) return true;
+    return _correctionIssues.any((issue) => issue.stepIndex == _step);
+  }
+
+  bool get _shouldSkipPhotoValidation {
+    return widget.correctionOnly &&
+        !_correctionIssues.any((issue) => issue.stepIndex == 2);
+  }
+
+  void _captureInitialPayloadSignature() {
+    if (!mounted) return;
+    _initialPayloadSignature = _payloadSignature();
+  }
+
+  String _payloadSignature() {
+    return jsonEncode(_normalizedPayload(_payload()));
+  }
+
+  Map<String, dynamic> _normalizedPayload(Map<String, dynamic> payload) {
+    final normalized = Map<String, dynamic>.from(payload);
+    normalized['media'] = (payload['media'] as List? ?? const []).map((item) {
+      final media = Map<String, dynamic>.from(item as Map);
+      media.remove('id');
+      media.remove('timestamp');
+      media.remove('siteId');
+      return media;
+    }).toList();
+    return normalized;
+  }
+}
+
+enum _LeaveAction { cancel, saveDraft, discard }
+
+class _CorrectionStepBanner extends StatelessWidget {
+  const _CorrectionStepBanner({required this.messages});
+
+  final List<String> messages;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.dangerTint(context),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.danger.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.report_problem_outlined, color: AppColors.danger),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Admin correction needed',
+                  style: TextStyle(
+                    color: AppColors.danger,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          for (final message in messages)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                message,
+                style: const TextStyle(
+                  color: AppColors.danger,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
