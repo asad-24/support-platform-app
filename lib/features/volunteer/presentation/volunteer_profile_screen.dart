@@ -53,6 +53,7 @@ class VolunteerProfileScreen extends ConsumerWidget {
                         ? 'Location not provided'
                         : location,
                     imagePath: user?.profileImagePath,
+                    onEditProfile: () => context.go('/volunteer/profile/edit'),
                   ),
                   const SizedBox(height: 18),
                   const ProfileMenuCard(),
@@ -79,6 +80,7 @@ class VolunteerProfileHeaderCard extends StatelessWidget {
     required this.phone,
     required this.role,
     required this.location,
+    required this.onEditProfile,
     this.imagePath,
   });
 
@@ -88,6 +90,7 @@ class VolunteerProfileHeaderCard extends StatelessWidget {
   final String phone;
   final String role;
   final String location;
+  final VoidCallback onEditProfile;
   final String? imagePath;
 
   @override
@@ -95,12 +98,20 @@ class VolunteerProfileHeaderCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 28, 18, 24),
       decoration: BoxDecoration(
-        color: AppColors.onboardingGreen,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.onboardingGreen, AppColors.onboardingCardGreen],
+        ),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         children: [
-          _ProfileAvatar(initials: _initials(name), imagePath: imagePath),
+          _ProfileAvatar(
+            initials: _initials(name),
+            imagePath: imagePath,
+            onTap: onEditProfile,
+          ),
           const SizedBox(height: 18),
           FittedBox(
             fit: BoxFit.scaleDown,
@@ -163,18 +174,15 @@ class VolunteerProfileHeaderCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 28),
-          const Row(
-            children: [
-              Expanded(
-                child: _ProfileStat(value: '4', label: 'Schools Mapped'),
-              ),
-              Expanded(
-                child: _ProfileStat(value: '2', label: 'Approved'),
-              ),
-              Expanded(
-                child: _ProfileStat(value: '2025', label: 'Active Since'),
-              ),
-            ],
+          const _ProfileStat(value: '2025', label: 'Active Since'),
+          const SizedBox(height: 2),
+          Text(
+            'Volunteer account',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.78),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
@@ -212,21 +220,6 @@ class ProfileMenuCard extends StatelessWidget {
             icon: Icons.person_rounded,
             label: 'Edit Profile',
             onTap: () => context.go('/volunteer/profile/edit'),
-          ),
-          ProfileMenuTile(
-            icon: Icons.map_outlined,
-            label: 'My Submitted Schools',
-            onTap: () => context.go('/volunteer/submitted-schools'),
-          ),
-          ProfileMenuTile(
-            icon: Icons.edit_outlined,
-            label: 'Draft Records',
-            onTap: () => context.go('/volunteer/drafts'),
-          ),
-          ProfileMenuTile(
-            icon: Icons.cloud_upload_outlined,
-            label: 'Sync Uploads',
-            onTap: () => context.go('/sync'),
           ),
           ProfileMenuTile(
             icon: Icons.settings_outlined,
@@ -328,7 +321,7 @@ class SignOutButton extends ConsumerWidget {
     return OutlinedButton.icon(
       onPressed: () => _confirmSignOut(context, ref),
       icon: const Icon(Icons.logout_rounded, size: 22),
-      label: const Text('Change Role / Sign Out'),
+      label: const Text('Sign Out'),
       style: OutlinedButton.styleFrom(
         backgroundColor: AppColors.dangerTint(context),
         foregroundColor: AppColors.danger,
@@ -345,7 +338,7 @@ class SignOutButton extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Sign out?'),
-        content: const Text('You can choose another role or sign in again.'),
+        content: const Text('You will need to sign in again to continue.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -368,159 +361,88 @@ class SignOutButton extends ConsumerWidget {
   }
 }
 
-class VolunteerPlaceholderScreen extends StatelessWidget {
-  const VolunteerPlaceholderScreen({
-    super.key,
-    required this.title,
-    required this.icon,
+class _ProfileAvatar extends StatelessWidget {
+  const _ProfileAvatar({
+    required this.initials,
+    required this.onTap,
+    this.imagePath,
   });
 
-  final String title;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.screen(context),
-      body: SafeArea(
-        bottom: false,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: Responsive.pageMaxWidth(context),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(
-                  color: AppColors.elevatedSurface(context),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppColors.border(context)),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: AppColors.onboardingGreen.withValues(
-                          alpha: 0.10,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(
-                        icon,
-                        color: AppColors.onboardingGreen,
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      title,
-                      style: TextStyle(
-                        color: AppColors.primaryText(context),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'This section will be available soon.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: AppColors.secondaryText(context),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-      bottomNavigationBar: const VolunteerBottomNavigation(currentIndex: 3),
-    );
-  }
-}
-
-class _ProfileAvatar extends StatelessWidget {
-  const _ProfileAvatar({required this.initials, this.imagePath});
-
   final String initials;
+  final VoidCallback onTap;
   final String? imagePath;
 
   @override
   Widget build(BuildContext context) {
     final hasImage = imagePath != null && imagePath!.isNotEmpty;
 
-    return SizedBox(
-      width: 96,
-      height: 96,
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: Container(
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: AppColors.onboardingCardGreen,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.35),
-                  width: 4,
+    return InkWell(
+      customBorder: const CircleBorder(),
+      onTap: onTap,
+      child: SizedBox(
+        width: 96,
+        height: 96,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Container(
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.onboardingCardGreen,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.35),
+                    width: 4,
+                  ),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: hasImage
+                    ? FutureBuilder<Uint8List>(
+                        future: XFile(imagePath!).readAsBytes(),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData) {
+                            return Image.memory(
+                              snapshot.data!,
+                              width: 96,
+                              height: 96,
+                              fit: BoxFit.cover,
+                            );
+                          }
+                          return const CircularProgressIndicator(
+                            color: Colors.white,
+                          );
+                        },
+                      )
+                    : Text(
+                        initials.toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+              ),
+            ),
+            Positioned(
+              right: 2,
+              bottom: 4,
+              child: Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: AppColors.deepGreen,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 3),
+                ),
+                child: const Icon(
+                  Icons.edit_rounded,
+                  color: Colors.white,
+                  size: 15,
                 ),
               ),
-              clipBehavior: Clip.antiAlias,
-              child: hasImage
-                  ? FutureBuilder<Uint8List>(
-                      future: XFile(imagePath!).readAsBytes(),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          return Image.memory(
-                            snapshot.data!,
-                            width: 96,
-                            height: 96,
-                            fit: BoxFit.cover,
-                          );
-                        }
-                        return const CircularProgressIndicator(
-                          color: Colors.white,
-                        );
-                      },
-                    )
-                  : Text(
-                      initials.toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 26,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
             ),
-          ),
-          Positioned(
-            right: 2,
-            bottom: 4,
-            child: Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: AppColors.deepGreen,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 3),
-              ),
-              child: const Icon(
-                Icons.edit_rounded,
-                color: Colors.white,
-                size: 15,
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

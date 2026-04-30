@@ -37,7 +37,7 @@ class VolunteerHomeScreen extends ConsumerWidget {
                       Expanded(
                         child: VolunteerStatCard(
                           value: '4',
-                          label: 'Submitted',
+                          label: 'Total',
                           color: AppColors.onboardingGreen,
                         ),
                       ),
@@ -86,7 +86,7 @@ class VolunteerHomeScreen extends ConsumerWidget {
                         onTap: () => context.go('/sites/new'),
                       ),
                       QuickActionCard(
-                        title: 'My Submitted\nSchools',
+                        title: 'My\nSchools',
                         icon: Icons.map_outlined,
                         iconColor: AppColors.onboardingGreen,
                         iconBackground: AppColors.onboardingGreen.withValues(
@@ -100,6 +100,13 @@ class VolunteerHomeScreen extends ConsumerWidget {
                         iconColor: const Color(0xFF1586C7),
                         iconBackground: const Color(0xFFEAF6FF),
                         onTap: () => context.go('/volunteer/drafts'),
+                      ),
+                      QuickActionCard(
+                        title: 'Notifications',
+                        icon: Icons.notifications_none_rounded,
+                        iconColor: const Color(0xFFC47A05),
+                        iconBackground: const Color(0xFFFFF4D8),
+                        onTap: () => context.go('/volunteer/notifications'),
                       ),
                       QuickActionCard(
                         title: 'My\nProfile',
@@ -154,7 +161,11 @@ class VolunteerHeaderCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.onboardingGreen,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.onboardingGreen, AppColors.onboardingCardGreen],
+        ),
         borderRadius: BorderRadius.circular(22),
       ),
       child: Column(
@@ -235,31 +246,6 @@ class VolunteerHeaderCard extends StatelessWidget {
               const SizedBox(width: 10),
               _VolunteerAvatar(name: userName),
             ],
-          ),
-          const SizedBox(height: 15),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-            decoration: BoxDecoration(
-              color: AppColors.onboardingCardGreen,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.info_outline_rounded, color: Colors.white, size: 21),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    '1 submission needs correction — please review',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      height: 1.16,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),
@@ -435,7 +421,11 @@ class VolunteerBottomNavigation extends StatelessWidget {
         Icons.map_outlined,
         '/volunteer/submitted-schools',
       ),
-      _VolunteerNavItem('Drafts', Icons.edit_outlined, '/volunteer/drafts'),
+      _VolunteerNavItem(
+        'Notifications',
+        Icons.notifications_none_rounded,
+        '/volunteer/notifications',
+      ),
       _VolunteerNavItem(
         'Profile',
         Icons.person_outline_rounded,
@@ -443,22 +433,41 @@ class VolunteerBottomNavigation extends StatelessWidget {
       ),
     ];
 
-    return NavigationBar(
-      selectedIndex: currentIndex,
-      height: 68,
-      backgroundColor: AppColors.elevatedSurface(context),
-      indicatorColor: AppColors.onboardingGreen.withValues(alpha: 0.18),
-      onDestinationSelected: (index) {
-        if (index != currentIndex) context.go(items[index].path);
-      },
-      destinations: [
-        for (final item in items)
-          NavigationDestination(
-            icon: Icon(item.icon),
-            selectedIcon: Icon(item.icon, color: AppColors.onboardingGreen),
-            label: item.label,
+    const radius = Radius.circular(26);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColors.elevatedSurface(context),
+        borderRadius: const BorderRadius.vertical(top: radius),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(
+              alpha: AppColors.isDark(context) ? 0.24 : 0.08,
+            ),
+            offset: const Offset(0, -4),
+            blurRadius: 18,
           ),
-      ],
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: radius),
+        child: NavigationBar(
+          selectedIndex: currentIndex,
+          height: 68,
+          backgroundColor: AppColors.elevatedSurface(context),
+          indicatorColor: AppColors.onboardingGreen.withValues(alpha: 0.18),
+          onDestinationSelected: (index) {
+            if (index != currentIndex) context.go(items[index].path);
+          },
+          destinations: [
+            for (final item in items)
+              NavigationDestination(
+                icon: Icon(item.icon),
+                selectedIcon: Icon(item.icon, color: AppColors.onboardingGreen),
+                label: item.label,
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../shared/models/user_access_role.dart';
 import '../../../shared/widgets/app_logo.dart';
+import '../auth_validators.dart';
 import 'auth_controller.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -18,13 +19,13 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController(text: 'password');
+  final _identifierController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _identifierController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -76,23 +77,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         const SizedBox(height: 24),
                         TextFormField(
-                          controller: _emailController,
+                          controller: _identifierController,
                           keyboardType: TextInputType.emailAddress,
+                          autofillHints: const <String>[],
                           decoration: const InputDecoration(
-                            labelText: 'Email or phone',
+                            labelText: 'Email or username',
                             prefixIcon: Icon(Icons.person_outline_rounded),
                           ),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Enter your email or phone';
-                            }
-                            return null;
-                          },
+                          validator: AuthValidators.loginIdentifierError,
                         ),
                         const SizedBox(height: 14),
                         TextFormField(
                           controller: _passwordController,
                           obscureText: _obscurePassword,
+                          autofillHints: const <String>[],
                           decoration: InputDecoration(
                             labelText: 'Password',
                             prefixIcon: const Icon(Icons.lock_outline_rounded),
@@ -110,12 +108,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                             ),
                           ),
-                          validator: (value) {
-                            if (value == null || value.length < 6) {
-                              return 'Password must be at least 6 characters';
-                            }
-                            return null;
-                          },
+                          validator: AuthValidators.passwordError,
                         ),
                         const SizedBox(height: 22),
                         ElevatedButton.icon(
@@ -157,7 +150,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref
         .read(authControllerProvider.notifier)
         .login(
-          email: _emailController.text.trim(),
+          identifier: _identifierController.text.trim(),
           password: _passwordController.text,
           accessRole: widget.selectedRole,
         );

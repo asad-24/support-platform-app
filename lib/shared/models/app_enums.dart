@@ -40,7 +40,7 @@ enum SubmissionReviewStatus {
   needsCorrection;
 
   String get label => switch (this) {
-    SubmissionReviewStatus.approved => 'Submitted',
+    SubmissionReviewStatus.approved => 'Approved',
     SubmissionReviewStatus.pendingVerification => 'Pending Verification',
     SubmissionReviewStatus.needsCorrection => 'Needs Correction',
   };

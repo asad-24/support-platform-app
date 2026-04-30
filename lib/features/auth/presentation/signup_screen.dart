@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../shared/models/user_access_role.dart';
 import '../../../shared/widgets/app_logo.dart';
+import '../auth_validators.dart';
 import 'auth_controller.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
@@ -20,7 +21,7 @@ class SignupScreen extends ConsumerStatefulWidget {
 class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
-  final _emailOrPhoneController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _checkingUsername = false;
@@ -29,7 +30,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   @override
   void dispose() {
     _usernameController.dispose();
-    _emailOrPhoneController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -102,15 +103,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             }
                           },
                           validator: (value) {
-                            final username = value?.trim() ?? '';
-                            if (username.length < 3) {
-                              return 'Username must be at least 3 characters';
-                            }
-                            if (!RegExp(
-                              r'^[a-zA-Z0-9_]+$',
-                            ).hasMatch(username)) {
-                              return 'Use letters, numbers, or underscore only';
-                            }
+                            final usernameError = AuthValidators.usernameError(
+                              value,
+                            );
+                            if (usernameError != null) return usernameError;
                             if (_usernameError != null) {
                               return _usernameError;
                             }
@@ -119,25 +115,21 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         ),
                         const SizedBox(height: 14),
                         TextFormField(
-                          controller: _emailOrPhoneController,
+                          controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
+                          autofillHints: const <String>[],
                           decoration: const InputDecoration(
                             labelText: 'Email',
                             prefixIcon: Icon(Icons.mail_outline_rounded),
                           ),
-                          validator: (value) {
-                            final email = value?.trim() ?? '';
-                            if (!email.contains('@') || !email.contains('.')) {
-                              return 'Enter a valid email';
-                            }
-                            return null;
-                          },
+                          validator: AuthValidators.emailError,
                         ),
                         const SizedBox(height: 14),
                         TextFormField(
                           controller: _passwordController,
                           obscureText: _obscurePassword,
+                          autofillHints: const <String>[],
                           decoration: InputDecoration(
                             labelText: 'Password',
                             prefixIcon: const Icon(Icons.lock_outline_rounded),
@@ -155,12 +147,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               ),
                             ),
                           ),
-                          validator: (value) {
-                            if (value == null || value.length < 6) {
-                              return 'Password must be at least 6 characters';
-                            }
-                            return null;
-                          },
+                          validator: AuthValidators.passwordError,
                         ),
                         const SizedBox(height: 22),
                         ElevatedButton.icon(
@@ -224,7 +211,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         .read(authControllerProvider.notifier)
         .signup(
           username: _usernameController.text.trim(),
-          emailOrPhone: _emailOrPhoneController.text.trim(),
+          email: _emailController.text.trim(),
           password: _passwordController.text,
           accessRole: widget.selectedRole,
         );

@@ -16,6 +16,8 @@ import '../../features/sites/presentation/site_profile_screen.dart';
 import '../../features/sites/presentation/sync_screen.dart';
 import '../../features/volunteer/presentation/volunteer_home_screen.dart';
 import '../../features/volunteer/presentation/volunteer_draft_records_screen.dart';
+import '../../features/volunteer/presentation/volunteer_help_support_screen.dart';
+import '../../features/volunteer/presentation/volunteer_notifications_screen.dart';
 import '../../features/volunteer/presentation/volunteer_profile_screen.dart';
 import '../../features/volunteer/presentation/volunteer_profile_setup_screen.dart';
 import '../../features/volunteer/presentation/volunteer_settings_screen.dart';
@@ -80,6 +82,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const VolunteerDraftRecordsScreen(),
       ),
       GoRoute(
+        path: '/volunteer/notifications',
+        builder: (context, state) => const VolunteerNotificationsScreen(),
+      ),
+      GoRoute(
         path: '/volunteer/profile',
         builder: (context, state) => const VolunteerProfileScreen(),
       ),
@@ -98,10 +104,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/volunteer/help',
-        builder: (context, state) => const VolunteerPlaceholderScreen(
-          title: 'Help & Support',
-          icon: Icons.help_outline_rounded,
-        ),
+        builder: (context, state) => const VolunteerHelpSupportScreen(),
       ),
       GoRoute(
         path: '/dashboard/helper',

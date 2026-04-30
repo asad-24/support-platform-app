@@ -7,6 +7,7 @@ import '../../../core/storage/storage_providers.dart';
 import '../../../shared/models/app_enums.dart';
 import '../../../shared/models/user.dart';
 import '../../../shared/models/user_access_role.dart';
+import '../auth_validators.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return MockAuthRepository(ref.watch(secureTokenStorageProvider));
@@ -18,14 +19,14 @@ abstract class AuthRepository {
   Future<bool> isUsernameAvailable(String username);
 
   Future<AuthSession> login({
-    required String email,
+    required String identifier,
     required String password,
     required UserAccessRole accessRole,
   });
 
   Future<AuthSession> signup({
     required String username,
-    required String emailOrPhone,
+    required String email,
     required String password,
     required UserAccessRole accessRole,
   });
@@ -69,18 +70,24 @@ class MockAuthRepository implements AuthRepository {
 
   @override
   Future<AuthSession> login({
-    required String email,
+    required String identifier,
     required String password,
     required UserAccessRole accessRole,
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 500));
-    if (email.trim().isEmpty || password.length < 6) {
+    if (!AuthValidators.isValidLoginIdentifier(identifier) ||
+        !AuthValidators.isValidPassword(password)) {
       throw const AppException(
-        'Use a valid email and a password of at least 6 characters.',
+        'Use a valid email or username and a strong password.',
       );
     }
 
-    final role = email.toLowerCase().contains('admin')
+    final normalizedIdentifier = identifier.trim().toLowerCase();
+    final isEmail = normalizedIdentifier.contains('@');
+    final email = isEmail
+        ? identifier.trim()
+        : '$normalizedIdentifier@school-support-atlas.local';
+    final role = normalizedIdentifier.contains('admin')
         ? UserRole.admin
         : UserRole.fieldWorker;
     final session = AuthSession(
@@ -96,7 +103,9 @@ class MockAuthRepository implements AuthRepository {
             : 'Helper User',
         email: email,
         role: role,
-        username: role == UserRole.admin ? 'admin' : 'ibrahim',
+        username: isEmail
+            ? (role == UserRole.admin ? 'admin' : 'ibrahim')
+            : normalizedIdentifier,
         phone: accessRole == UserAccessRole.volunteer ? '+2348012345678' : null,
         state: accessRole == UserAccessRole.volunteer ? 'Kano' : null,
         lga: accessRole == UserAccessRole.volunteer ? 'Nassarawa' : null,
@@ -121,18 +130,17 @@ class MockAuthRepository implements AuthRepository {
   @override
   Future<AuthSession> signup({
     required String username,
-    required String emailOrPhone,
+    required String email,
     required String password,
     required UserAccessRole accessRole,
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 600));
     final normalizedUsername = username.trim().toLowerCase();
     if (normalizedUsername.length < 3 ||
-        emailOrPhone.trim().isEmpty ||
-        !emailOrPhone.trim().contains('@') ||
-        password.length < 6) {
+        !AuthValidators.isValidEmail(email) ||
+        !AuthValidators.isValidPassword(password)) {
       throw const AppException(
-        'Enter a username, valid email, and a password of at least 6 characters.',
+        'Enter a username, valid email, and a strong password.',
       );
     }
     if (!await isUsernameAvailable(normalizedUsername)) {
@@ -146,7 +154,7 @@ class MockAuthRepository implements AuthRepository {
       user: User(
         id: '${accessRole.name}-${_uuid.v4().substring(0, 8)}',
         name: '',
-        email: emailOrPhone.trim(),
+        email: email.trim(),
         role: UserRole.fieldWorker,
         username: normalizedUsername,
         profileComplete: accessRole != UserAccessRole.volunteer,

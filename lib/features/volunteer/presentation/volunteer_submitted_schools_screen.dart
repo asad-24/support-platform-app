@@ -13,13 +13,30 @@ import 'volunteer_home_screen.dart';
 
 enum SubmittedSchoolsFilter {
   all('All'),
-  submitted('Submitted'),
+  approved('Approved'),
   pendingVerification('Pending Verification'),
   needsCorrection('Needs Correction');
 
   const SubmittedSchoolsFilter(this.label);
 
   final String label;
+}
+
+List<Site> filterSubmittedSchoolsForVolunteer(
+  List<Site> sites,
+  SubmittedSchoolsFilter filter,
+) {
+  return sites.where((site) {
+    return switch (filter) {
+      SubmittedSchoolsFilter.all => true,
+      SubmittedSchoolsFilter.approved =>
+        site.submissionStatus == SubmissionReviewStatus.approved,
+      SubmittedSchoolsFilter.pendingVerification =>
+        site.submissionStatus == SubmissionReviewStatus.pendingVerification,
+      SubmittedSchoolsFilter.needsCorrection =>
+        site.submissionStatus == SubmissionReviewStatus.needsCorrection,
+    };
+  }).toList();
 }
 
 class VolunteerSubmittedSchoolsScreen extends ConsumerStatefulWidget {
@@ -88,23 +105,13 @@ class _SubmittedSchoolsBody extends StatelessWidget {
           (site) => site.submissionStatus == SubmissionReviewStatus.approved,
         )
         .length;
-    final filtered = sites.where((site) {
-      return switch (filter) {
-        SubmittedSchoolsFilter.all => true,
-        SubmittedSchoolsFilter.submitted =>
-          site.submissionStatus == SubmissionReviewStatus.approved,
-        SubmittedSchoolsFilter.pendingVerification =>
-          site.submissionStatus == SubmissionReviewStatus.pendingVerification,
-        SubmittedSchoolsFilter.needsCorrection =>
-          site.submissionStatus == SubmissionReviewStatus.needsCorrection,
-      };
-    }).toList();
+    final filtered = filterSubmittedSchoolsForVolunteer(sites, filter);
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(18, 28, 18, 18),
       children: [
         Text(
-          'My Submitted Schools',
+          'My Schools',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontSize: 22,
             fontWeight: FontWeight.w900,
@@ -112,7 +119,7 @@ class _SubmittedSchoolsBody extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          '${sites.length} submissions · $approvedCount submitted & live',
+          '${sites.length} submissions · $approvedCount approved & live',
           style: TextStyle(
             color: AppColors.secondaryText(context),
             fontSize: 13,
@@ -170,17 +177,7 @@ class _SubmissionFilterTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     int countFor(SubmittedSchoolsFilter filter) {
-      return sites.where((site) {
-        return switch (filter) {
-          SubmittedSchoolsFilter.all => true,
-          SubmittedSchoolsFilter.submitted =>
-            site.submissionStatus == SubmissionReviewStatus.approved,
-          SubmittedSchoolsFilter.pendingVerification =>
-            site.submissionStatus == SubmissionReviewStatus.pendingVerification,
-          SubmittedSchoolsFilter.needsCorrection =>
-            site.submissionStatus == SubmissionReviewStatus.needsCorrection,
-        };
-      }).length;
+      return filterSubmittedSchoolsForVolunteer(sites, filter).length;
     }
 
     return SingleChildScrollView(

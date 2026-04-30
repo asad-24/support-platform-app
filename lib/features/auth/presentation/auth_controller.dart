@@ -25,7 +25,7 @@ class AuthController extends AsyncNotifier<AuthState> {
   }
 
   Future<void> login({
-    required String email,
+    required String identifier,
     required String password,
     required UserAccessRole accessRole,
   }) async {
@@ -33,14 +33,18 @@ class AuthController extends AsyncNotifier<AuthState> {
     state = await AsyncValue.guard(() async {
       final session = await ref
           .read(authRepositoryProvider)
-          .login(email: email, password: password, accessRole: accessRole);
+          .login(
+            identifier: identifier,
+            password: password,
+            accessRole: accessRole,
+          );
       return AuthState(session: session);
     });
   }
 
   Future<void> signup({
     required String username,
-    required String emailOrPhone,
+    required String email,
     required String password,
     required UserAccessRole accessRole,
   }) async {
@@ -50,7 +54,7 @@ class AuthController extends AsyncNotifier<AuthState> {
           .read(authRepositoryProvider)
           .signup(
             username: username,
-            emailOrPhone: emailOrPhone,
+            email: email,
             password: password,
             accessRole: accessRole,
           );
