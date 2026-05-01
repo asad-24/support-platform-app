@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../shared/models/user_access_role.dart';
 import '../../../shared/widgets/app_logo.dart';
@@ -125,14 +126,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           label: const Text('Sign in'),
                         ),
                         const SizedBox(height: 16),
-                        TextButton(
-                          onPressed: authState.isLoading
-                              ? null
-                              : () => context.go(
-                                  '/signup/${widget.selectedRole.name}',
-                                ),
-                          child: const Text("Don't have an account? Sign up"),
-                        ),
+                        if (widget.selectedRole == UserAccessRole.volunteer)
+                          TextButton.icon(
+                            onPressed: authState.isLoading
+                                ? null
+                                : () => context.go('/volunteer/register'),
+                            icon: const Icon(Icons.how_to_reg_rounded),
+                            label: const Text('Register as Volunteer'),
+                          )
+                        else
+                          Text(
+                            'Access is created by an administrator.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: AppColors.secondaryText(context),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                       ],
                     ),
                   ),

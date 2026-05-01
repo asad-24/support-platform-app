@@ -241,6 +241,7 @@ class _VolunteerProfileSetupScreenState
               heading: 'Volunteer name',
               hintText: 'Enter volunteer name',
               required: true,
+              enabled: !widget.editMode,
               prefixIcon: const Icon(Icons.badge_outlined),
             ),
           ],

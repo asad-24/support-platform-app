@@ -18,6 +18,10 @@ abstract class AuthRepository {
 
   Future<bool> isUsernameAvailable(String username);
 
+  Future<VolunteerApplicationResult> submitVolunteerApplication(
+    VolunteerApplication application,
+  );
+
   Future<AuthSession> login({
     required String identifier,
     required String password,
@@ -41,7 +45,85 @@ abstract class AuthRepository {
     String? profileImagePath,
   });
 
+  Future<void> changePassword({
+    required AuthSession session,
+    required String currentPassword,
+    required String newPassword,
+  });
+
   Future<void> logout();
+}
+
+class VolunteerApplication {
+  const VolunteerApplication({
+    required this.fullName,
+    required this.email,
+    required this.phone,
+    required this.dateOfBirth,
+    required this.gender,
+    required this.state,
+    required this.lga,
+    required this.address,
+    required this.educationLevel,
+    required this.occupation,
+    required this.skills,
+    required this.volunteerExperience,
+    required this.availability,
+    required this.volunteeringMode,
+    required this.motivation,
+    required this.emergencyContactName,
+    required this.emergencyContactPhone,
+  });
+
+  final String fullName;
+  final String email;
+  final String phone;
+  final String dateOfBirth;
+  final String gender;
+  final String state;
+  final String lga;
+  final String address;
+  final String educationLevel;
+  final String occupation;
+  final String skills;
+  final String volunteerExperience;
+  final String availability;
+  final String volunteeringMode;
+  final String motivation;
+  final String emergencyContactName;
+  final String emergencyContactPhone;
+
+  Map<String, dynamic> toJson() => {
+    'fullName': fullName,
+    'email': email,
+    'phone': phone,
+    'dateOfBirth': dateOfBirth,
+    'gender': gender,
+    'state': state,
+    'lga': lga,
+    'address': address,
+    'educationLevel': educationLevel,
+    'occupation': occupation,
+    'skills': skills,
+    'volunteerExperience': volunteerExperience,
+    'availability': availability,
+    'volunteeringMode': volunteeringMode,
+    'motivation': motivation,
+    'emergencyContactName': emergencyContactName,
+    'emergencyContactPhone': emergencyContactPhone,
+  };
+}
+
+class VolunteerApplicationResult {
+  const VolunteerApplicationResult({
+    required this.requestId,
+    required this.submittedAt,
+    required this.status,
+  });
+
+  final String requestId;
+  final DateTime submittedAt;
+  final String status;
 }
 
 class MockAuthRepository implements AuthRepository {
@@ -66,6 +148,28 @@ class MockAuthRepository implements AuthRepository {
     await Future<void>.delayed(const Duration(milliseconds: 320));
     final normalized = username.trim().toLowerCase();
     return normalized.length >= 3 && !_reservedUsernames.contains(normalized);
+  }
+
+  @override
+  Future<VolunteerApplicationResult> submitVolunteerApplication(
+    VolunteerApplication application,
+  ) async {
+    await Future<void>.delayed(const Duration(milliseconds: 700));
+    final values = application.toJson().values.map((value) => '$value'.trim());
+    final allRequiredFilled = values.every((value) => value.isNotEmpty);
+    if (!allRequiredFilled ||
+        !AuthValidators.isValidEmail(application.email) ||
+        application.fullName.trim().length < 2 ||
+        application.phone.trim().length < 7 ||
+        application.emergencyContactPhone.trim().length < 7) {
+      throw const AppException('Complete all required volunteer details.');
+    }
+
+    return VolunteerApplicationResult(
+      requestId: 'volunteer-request-${_uuid.v4().substring(0, 8)}',
+      submittedAt: DateTime.now(),
+      status: 'pending',
+    );
   }
 
   @override
@@ -111,6 +215,37 @@ class MockAuthRepository implements AuthRepository {
         lga: accessRole == UserAccessRole.volunteer ? 'Nassarawa' : null,
         address: accessRole == UserAccessRole.volunteer
             ? 'Nassarawa LGA, Kano State'
+            : null,
+        dateOfBirth: accessRole == UserAccessRole.volunteer
+            ? '1994-05-14'
+            : null,
+        gender: accessRole == UserAccessRole.volunteer ? 'Male' : null,
+        educationLevel: accessRole == UserAccessRole.volunteer
+            ? 'Tertiary'
+            : null,
+        occupation: accessRole == UserAccessRole.volunteer
+            ? 'Community volunteer'
+            : null,
+        skills: accessRole == UserAccessRole.volunteer
+            ? 'Community outreach, data collection, Hausa and English'
+            : null,
+        volunteerExperience: accessRole == UserAccessRole.volunteer
+            ? 'Two years supporting school mapping and welfare outreach.'
+            : null,
+        availability: accessRole == UserAccessRole.volunteer
+            ? 'Weekends and selected weekdays'
+            : null,
+        volunteeringMode: accessRole == UserAccessRole.volunteer
+            ? 'Field visits'
+            : null,
+        motivation: accessRole == UserAccessRole.volunteer
+            ? 'Improve support visibility for underserved learning centres.'
+            : null,
+        emergencyContactName: accessRole == UserAccessRole.volunteer
+            ? 'Amina Sule'
+            : null,
+        emergencyContactPhone: accessRole == UserAccessRole.volunteer
+            ? '+2348091112233'
             : null,
         profileComplete: true,
         permissions: role == UserRole.admin
@@ -199,6 +334,22 @@ class MockAuthRepository implements AuthRepository {
     );
     await _tokenStorage.saveSession(updated);
     return updated;
+  }
+
+  @override
+  Future<void> changePassword({
+    required AuthSession session,
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+    if (!AuthValidators.isValidPassword(currentPassword) ||
+        !AuthValidators.isValidPassword(newPassword) ||
+        currentPassword == newPassword) {
+      throw const AppException(
+        'Use your current password and choose a different strong password.',
+      );
+    }
   }
 
   @override

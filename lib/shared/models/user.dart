@@ -11,6 +11,17 @@ class User {
     this.state,
     this.lga,
     this.address,
+    this.dateOfBirth,
+    this.gender,
+    this.educationLevel,
+    this.occupation,
+    this.skills,
+    this.volunteerExperience,
+    this.availability,
+    this.volunteeringMode,
+    this.motivation,
+    this.emergencyContactName,
+    this.emergencyContactPhone,
     this.profileImagePath,
     this.profileComplete = true,
     this.permissions = const [],
@@ -25,6 +36,17 @@ class User {
   final String? state;
   final String? lga;
   final String? address;
+  final String? dateOfBirth;
+  final String? gender;
+  final String? educationLevel;
+  final String? occupation;
+  final String? skills;
+  final String? volunteerExperience;
+  final String? availability;
+  final String? volunteeringMode;
+  final String? motivation;
+  final String? emergencyContactName;
+  final String? emergencyContactPhone;
   final String? profileImagePath;
   final bool profileComplete;
   final List<String> permissions;
@@ -40,6 +62,17 @@ class User {
       state: json['state'] as String?,
       lga: json['lga'] as String?,
       address: json['address'] as String?,
+      dateOfBirth: json['dateOfBirth'] as String?,
+      gender: json['gender'] as String?,
+      educationLevel: json['educationLevel'] as String?,
+      occupation: json['occupation'] as String?,
+      skills: json['skills'] as String?,
+      volunteerExperience: json['volunteerExperience'] as String?,
+      availability: json['availability'] as String?,
+      volunteeringMode: json['volunteeringMode'] as String?,
+      motivation: json['motivation'] as String?,
+      emergencyContactName: json['emergencyContactName'] as String?,
+      emergencyContactPhone: json['emergencyContactPhone'] as String?,
       profileImagePath: json['profileImagePath'] as String?,
       profileComplete: json['profileComplete'] as bool? ?? true,
       permissions: List<String>.from(json['permissions'] as List? ?? const []),
@@ -56,6 +89,17 @@ class User {
     String? state,
     String? lga,
     String? address,
+    String? dateOfBirth,
+    String? gender,
+    String? educationLevel,
+    String? occupation,
+    String? skills,
+    String? volunteerExperience,
+    String? availability,
+    String? volunteeringMode,
+    String? motivation,
+    String? emergencyContactName,
+    String? emergencyContactPhone,
     String? profileImagePath,
     bool? profileComplete,
     List<String>? permissions,
@@ -70,6 +114,18 @@ class User {
       state: state ?? this.state,
       lga: lga ?? this.lga,
       address: address ?? this.address,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      gender: gender ?? this.gender,
+      educationLevel: educationLevel ?? this.educationLevel,
+      occupation: occupation ?? this.occupation,
+      skills: skills ?? this.skills,
+      volunteerExperience: volunteerExperience ?? this.volunteerExperience,
+      availability: availability ?? this.availability,
+      volunteeringMode: volunteeringMode ?? this.volunteeringMode,
+      motivation: motivation ?? this.motivation,
+      emergencyContactName: emergencyContactName ?? this.emergencyContactName,
+      emergencyContactPhone:
+          emergencyContactPhone ?? this.emergencyContactPhone,
       profileImagePath: profileImagePath ?? this.profileImagePath,
       profileComplete: profileComplete ?? this.profileComplete,
       permissions: permissions ?? this.permissions,
@@ -86,6 +142,17 @@ class User {
     'state': state,
     'lga': lga,
     'address': address,
+    'dateOfBirth': dateOfBirth,
+    'gender': gender,
+    'educationLevel': educationLevel,
+    'occupation': occupation,
+    'skills': skills,
+    'volunteerExperience': volunteerExperience,
+    'availability': availability,
+    'volunteeringMode': volunteeringMode,
+    'motivation': motivation,
+    'emergencyContactName': emergencyContactName,
+    'emergencyContactPhone': emergencyContactPhone,
     'profileImagePath': profileImagePath,
     'profileComplete': profileComplete,
     'permissions': permissions,

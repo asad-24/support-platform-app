@@ -22,6 +22,18 @@ class AuthValidators {
     return null;
   }
 
+  static String? requiredFieldError(String? value, String label) {
+    if ((value ?? '').trim().isEmpty) return '$label is required';
+    return null;
+  }
+
+  static String? phoneError(String? value) {
+    final phone = value?.trim() ?? '';
+    if (phone.isEmpty) return 'Phone number is required';
+    if (phone.length < 7) return 'Enter a valid phone number';
+    return null;
+  }
+
   static String? passwordError(String? value) {
     final password = value ?? '';
     if (password.length < 8) {
@@ -60,6 +72,12 @@ class AuthValidators {
   static bool isValidEmail(String value) => emailError(value) == null;
 
   static bool isValidPassword(String value) => passwordError(value) == null;
+
+  static String? confirmPasswordError(String? value, String password) {
+    if ((value ?? '').isEmpty) return 'Confirm your password';
+    if (value != password) return 'Passwords do not match';
+    return null;
+  }
 
   static bool isValidLoginIdentifier(String value) {
     return loginIdentifierError(value) == null;

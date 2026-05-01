@@ -7,15 +7,26 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
+import '../../../shared/models/app_enums.dart';
 import '../../auth/presentation/auth_controller.dart';
+import '../../sites/data/sites_repository.dart';
 import 'volunteer_home_screen.dart';
+import 'volunteer_reward_widgets.dart';
 
 class VolunteerProfileScreen extends ConsumerWidget {
   const VolunteerProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authControllerProvider).valueOrNull?.session?.user;
+    final session = ref.watch(authControllerProvider).valueOrNull?.session;
+    final user = session?.user;
+    final userId = user?.id ?? 'field-001';
+    final submittedSites = ref.watch(submittedSitesProvider(userId));
+    final approvedCount = (submittedSites.valueOrNull ?? const [])
+        .where(
+          (site) => site.submissionStatus == SubmissionReviewStatus.approved,
+        )
+        .length;
     final name = (user?.name.trim().isNotEmpty ?? false)
         ? user!.name
         : 'Ibrahim Sule';
@@ -52,6 +63,7 @@ class VolunteerProfileScreen extends ConsumerWidget {
                     location: location.isEmpty
                         ? 'Location not provided'
                         : location,
+                    approvedCount: approvedCount,
                     imagePath: user?.profileImagePath,
                     onEditProfile: () => context.go('/volunteer/profile/edit'),
                   ),
@@ -80,6 +92,7 @@ class VolunteerProfileHeaderCard extends StatelessWidget {
     required this.phone,
     required this.role,
     required this.location,
+    required this.approvedCount,
     required this.onEditProfile,
     this.imagePath,
   });
@@ -90,6 +103,7 @@ class VolunteerProfileHeaderCard extends StatelessWidget {
   final String phone;
   final String role;
   final String location;
+  final int approvedCount;
   final VoidCallback onEditProfile;
   final String? imagePath;
 
@@ -183,6 +197,11 @@ class VolunteerProfileHeaderCard extends StatelessWidget {
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
+          ),
+          const SizedBox(height: 16),
+          VolunteerRewardBadge(
+            approvedCount: approvedCount,
+            onDarkBackground: true,
           ),
         ],
       ),

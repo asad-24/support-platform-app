@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
+import '../../../shared/models/app_enums.dart';
 import '../../auth/presentation/auth_controller.dart';
+import '../../sites/data/sites_repository.dart';
+import 'volunteer_reward_widgets.dart';
 
 class VolunteerHomeScreen extends ConsumerWidget {
   const VolunteerHomeScreen({super.key});
@@ -12,9 +15,29 @@ class VolunteerHomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(authControllerProvider).valueOrNull?.session;
+    final userId = session?.user.id ?? 'field-001';
+    final submittedSites = ref.watch(submittedSitesProvider(userId));
+    final sites = submittedSites.valueOrNull ?? const [];
+    final totalCount = sites.length;
+    final approvedCount = sites
+        .where(
+          (site) => site.submissionStatus == SubmissionReviewStatus.approved,
+        )
+        .length;
+    final pendingCount = sites
+        .where(
+          (site) =>
+              site.submissionStatus ==
+              SubmissionReviewStatus.pendingVerification,
+        )
+        .length;
     final userName = (session?.user.name.trim().isNotEmpty ?? false)
         ? session!.user.name
         : 'Ibrahim Sule';
+    final location = [
+      session?.user.lga,
+      session?.user.state,
+    ].where((item) => item != null && item.trim().isNotEmpty).join(' · ');
 
     return VolunteerMainBackScope(
       currentPath: '/volunteer/home',
@@ -30,13 +53,21 @@ class VolunteerHomeScreen extends ConsumerWidget {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
                 children: [
-                  VolunteerHeaderCard(userName: userName),
+                  VolunteerHeaderCard(
+                    userName: userName,
+                    location: location.isEmpty
+                        ? 'Location not provided'
+                        : location,
+                    approvedCount: approvedCount,
+                  ),
                   const SizedBox(height: 14),
-                  const Row(
+                  Row(
                     children: [
                       Expanded(
                         child: VolunteerStatCard(
-                          value: '4',
+                          value: submittedSites.isLoading
+                              ? '...'
+                              : '$totalCount',
                           label: 'Total',
                           color: AppColors.onboardingGreen,
                         ),
@@ -44,15 +75,19 @@ class VolunteerHomeScreen extends ConsumerWidget {
                       SizedBox(width: 9),
                       Expanded(
                         child: VolunteerStatCard(
-                          value: '2',
+                          value: submittedSites.isLoading
+                              ? '...'
+                              : '$approvedCount',
                           label: 'Approved',
-                          color: Color(0xFF18A66D),
+                          color: const Color(0xFF18A66D),
                         ),
                       ),
                       SizedBox(width: 9),
                       Expanded(
                         child: VolunteerStatCard(
-                          value: '1',
+                          value: submittedSites.isLoading
+                              ? '...'
+                              : '$pendingCount',
                           label: 'Pending',
                           color: AppColors.orange,
                         ),
@@ -152,9 +187,16 @@ class VolunteerMainBackScope extends StatelessWidget {
 }
 
 class VolunteerHeaderCard extends StatelessWidget {
-  const VolunteerHeaderCard({super.key, required this.userName});
+  const VolunteerHeaderCard({
+    super.key,
+    required this.userName,
+    required this.location,
+    required this.approvedCount,
+  });
 
   final String userName;
+  final String location;
+  final int approvedCount;
 
   @override
   Widget build(BuildContext context) {
@@ -232,9 +274,9 @@ class VolunteerHeaderCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 9),
-                    const Text(
-                      'Field Volunteer · Kano State',
-                      style: TextStyle(
+                    Text(
+                      'Field Volunteer · $location',
+                      style: const TextStyle(
                         color: AppColors.mutedOnGreen,
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
@@ -246,6 +288,11 @@ class VolunteerHeaderCard extends StatelessWidget {
               const SizedBox(width: 10),
               _VolunteerAvatar(name: userName),
             ],
+          ),
+          const SizedBox(height: 14),
+          VolunteerRewardBadge(
+            approvedCount: approvedCount,
+            onDarkBackground: true,
           ),
         ],
       ),

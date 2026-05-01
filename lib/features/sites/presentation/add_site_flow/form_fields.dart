@@ -44,6 +44,8 @@ class AddSiteLabeledTextField extends StatelessWidget {
     this.maxLines = 1,
     this.keyboardType,
     this.prefixIcon,
+    this.validator,
+    this.enabled,
   });
 
   final TextEditingController controller;
@@ -53,6 +55,8 @@ class AddSiteLabeledTextField extends StatelessWidget {
   final int maxLines;
   final TextInputType? keyboardType;
   final Widget? prefixIcon;
+  final FormFieldValidator<String>? validator;
+  final bool? enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -65,20 +69,23 @@ class AddSiteLabeledTextField extends StatelessWidget {
           const SizedBox(height: 8),
           TextFormField(
             controller: controller,
+            enabled: enabled,
             maxLines: maxLines,
             keyboardType: keyboardType,
             decoration: InputDecoration(
               hintText: hintText,
               prefixIcon: prefixIcon,
             ),
-            validator: required
-                ? (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return '$heading is required';
-                    }
-                    return null;
-                  }
-                : null,
+            validator:
+                validator ??
+                (required
+                    ? (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return '$heading is required';
+                        }
+                        return null;
+                      }
+                    : null),
           ),
         ],
       ),

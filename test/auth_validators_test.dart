@@ -43,5 +43,26 @@ void main() {
       expect(AuthValidators.passwordError('Password!'), isNotNull);
       expect(AuthValidators.passwordError('Password1'), isNotNull);
     });
+
+    test('validates required volunteer application fields', () {
+      expect(AuthValidators.requiredFieldError('', 'Full name'), isNotNull);
+      expect(
+        AuthValidators.requiredFieldError('Amina Yusuf', 'Full name'),
+        isNull,
+      );
+      expect(AuthValidators.phoneError('08012345678'), isNull);
+      expect(AuthValidators.phoneError('123'), isNotNull);
+    });
+
+    test('validates password confirmation', () {
+      expect(
+        AuthValidators.confirmPasswordError('Atlas2026#', 'Atlas2026#'),
+        isNull,
+      );
+      expect(
+        AuthValidators.confirmPasswordError('Atlas2027#', 'Atlas2026#'),
+        isNotNull,
+      );
+    });
   });
 }

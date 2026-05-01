@@ -66,6 +66,14 @@ class AuthController extends AsyncNotifier<AuthState> {
     return ref.read(authRepositoryProvider).isUsernameAvailable(username);
   }
 
+  Future<VolunteerApplicationResult> submitVolunteerApplication(
+    VolunteerApplication application,
+  ) {
+    return ref
+        .read(authRepositoryProvider)
+        .submitVolunteerApplication(application);
+  }
+
   Future<void> completeVolunteerProfile({
     required String name,
     required String phone,
@@ -91,6 +99,21 @@ class AuthController extends AsyncNotifier<AuthState> {
           );
       return AuthState(session: updatedSession);
     });
+  }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final session = state.valueOrNull?.session;
+    if (session == null) return;
+    await ref
+        .read(authRepositoryProvider)
+        .changePassword(
+          session: session,
+          currentPassword: currentPassword,
+          newPassword: newPassword,
+        );
   }
 
   Future<void> logout() async {

@@ -6,6 +6,7 @@ import '../../features/auth/presentation/auth_controller.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/signup_screen.dart';
 import '../../features/auth/presentation/splash_screen.dart';
+import '../../features/auth/presentation/volunteer_application_screen.dart';
 import '../../features/dashboard/presentation/home_screen.dart';
 import '../../features/export/presentation/export_screen.dart';
 import '../../features/map/presentation/map_screen.dart';
@@ -46,7 +47,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: '/volunteer/register',
+        builder: (context, state) => const VolunteerApplicationScreen(),
+      ),
+      GoRoute(
         path: '/signup/:role',
+        redirect: (context, state) {
+          final role = UserAccessRole.fromRoute(state.pathParameters['role']);
+          return role == UserAccessRole.volunteer
+              ? '/volunteer/register'
+              : null;
+        },
         builder: (context, state) => SignupScreen(
           selectedRole: UserAccessRole.fromRoute(state.pathParameters['role']),
         ),
@@ -155,7 +166,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final location = state.matchedLocation;
       final isAuthRoute =
-          location.startsWith('/login') || location.startsWith('/signup');
+          location.startsWith('/login') ||
+          location.startsWith('/signup') ||
+          location == '/volunteer/register';
 
       if (auth.isLoading) {
         return location == '/splash' ? null : '/splash';
