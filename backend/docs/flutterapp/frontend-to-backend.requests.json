@@ -1,0 +1,371 @@
+{
+  "metadata": {
+    "app": "Support Atlas",
+    "direction": "frontend-to-backend",
+    "format": "json-only",
+    "dateFormat": "ISO-8601",
+    "authHeader": "Authorization: Bearer <accessToken>"
+  },
+  "commonHeaders": {
+    "Accept": "application/json",
+    "Content-Type": "application/json",
+    "Authorization": "Bearer mock-access-token"
+  },
+  "requests": {
+    "login": {
+      "method": "POST",
+      "path": "/auth/login",
+      "authRequired": false,
+      "body": {
+        "identifier": "ibrahim@example.com",
+        "password": "Password1!",
+        "accessRole": "volunteer"
+      }
+    },
+    "refreshToken": {
+      "method": "POST",
+      "path": "/auth/refresh",
+      "authRequired": false,
+      "body": {
+        "refreshToken": "mock-refresh-token"
+      }
+    },
+    "logout": {
+      "method": "POST",
+      "path": "/auth/logout",
+      "authRequired": true,
+      "body": {
+        "refreshToken": "mock-refresh-token"
+      }
+    },
+    "usernameAvailable": {
+      "method": "GET",
+      "path": "/auth/username-available",
+      "authRequired": false,
+      "query": {
+        "username": "helper_user"
+      }
+    },
+    "signup": {
+      "method": "POST",
+      "path": "/auth/signup",
+      "authRequired": false,
+      "note": "Volunteer self-signup is disabled. This is for legacy/helper/admin-created flows only.",
+      "body": {
+        "username": "helper_user",
+        "email": "helper@example.com",
+        "password": "Password1!",
+        "accessRole": "helper"
+      }
+    },
+    "changePassword": {
+      "method": "POST",
+      "path": "/auth/change-password",
+      "authRequired": true,
+      "body": {
+        "currentPassword": "Password1!",
+        "newPassword": "Atlas2026#"
+      }
+    },
+    "submitVolunteerApplication": {
+      "method": "POST",
+      "path": "/volunteer-applications",
+      "authRequired": false,
+      "body": {
+        "fullName": "Ibrahim Sule",
+        "email": "ibrahim.sule@example.com",
+        "phone": "+2348012345678",
+        "dateOfBirth": "1994-05-14",
+        "gender": "Male",
+        "state": "Kano",
+        "lga": "Nassarawa",
+        "address": "Nassarawa LGA, Kano State",
+        "educationLevel": "Tertiary",
+        "occupation": "Community volunteer",
+        "skills": "Community outreach, data collection, Hausa and English",
+        "volunteerExperience": "Two years supporting school mapping and welfare outreach.",
+        "availability": "Weekends and selected weekdays",
+        "volunteeringMode": "Field visits",
+        "motivation": "Improve support visibility for underserved learning centres.",
+        "emergencyContactName": "Amina Sule",
+        "emergencyContactPhone": "+2348091112233"
+      }
+    },
+    "getCurrentUser": {
+      "method": "GET",
+      "path": "/users/me",
+      "authRequired": true
+    },
+    "updateVolunteerProfile": {
+      "method": "PATCH",
+      "path": "/users/me/volunteer-profile",
+      "authRequired": true,
+      "body": {
+        "phone": "+2348012345678",
+        "state": "Kano",
+        "lga": "Nassarawa",
+        "address": "Nassarawa LGA, Kano State",
+        "profileImagePath": "https://cdn.example.com/profiles/field-001.jpg"
+      }
+    },
+    "listSites": {
+      "method": "GET",
+      "path": "/sites",
+      "authRequired": true,
+      "query": {
+        "query": "Sabon Gari",
+        "verificationStatus": "verified",
+        "urgencyLevel": "medium",
+        "need": "feeding"
+      }
+    },
+    "getSite": {
+      "method": "GET",
+      "path": "/sites/:id",
+      "authRequired": true,
+      "params": {
+        "id": "site-002"
+      }
+    },
+    "createSite": {
+      "method": "POST",
+      "path": "/sites",
+      "authRequired": true,
+      "body": {
+        "name": "Sabon Gari Quranic School",
+        "localName": "Makarantar Sabon Gari",
+        "type": "Almajiri-style centre",
+        "operatorName": "Malam Ibrahim Sani",
+        "phone": "+2348098765432",
+        "operatorContacts": [
+          {
+            "name": "Malam Ibrahim Sani",
+            "phone": "+2348098765432"
+          },
+          {
+            "name": "Auwal Musa",
+            "phone": "+2348088887777"
+          }
+        ],
+        "country": "Nigeria",
+        "state": "Kano",
+        "lga": "Fagge",
+        "ward": "Sabon Gari",
+        "community": "Kantin Kwari",
+        "landmark": "Near central market",
+        "latitude": 12.0001,
+        "longitude": 8.5167,
+        "urgencyLevel": "medium",
+        "createdBy": "field-001",
+        "populationSummary": {
+          "totalChildren": 43,
+          "residentChildren": 25,
+          "nonResidentChildren": 18,
+          "boys": 39,
+          "girls": 4,
+          "ageGroups": [
+            "6-9",
+            "10-14"
+          ],
+          "age0to5": 0,
+          "age6to9": 18,
+          "age10to14": 22,
+          "age15plus": 3,
+          "notes": "Aggregate counts only. No child-identifiable data captured."
+        },
+        "welfareAssessment": {
+          "feedingStatus": "2 meals per day",
+          "shelterStatus": "Shared sleeping room",
+          "sanitationStatus": "Functional toilet/latrine available",
+          "waterAccess": "Borehole",
+          "healthAccess": "Healthcare access available",
+          "clothingStatus": "Adequate clothing",
+          "mealsPerDay": 2,
+          "waterSource": "Borehole",
+          "hasToiletAccess": true,
+          "hasAdequateClothing": true,
+          "hasHealthcareAccess": true,
+          "sleepingArrangement": "Shared sleeping room",
+          "hygieneCondition": "Fair",
+          "safetyRisks": "No immediate safety risks reported",
+          "immediateInterventionNeeded": false,
+          "urgencyReason": "",
+          "followUpDate": "2026-06-01T09:00:00.000Z",
+          "notes": "Follow up during next field visit."
+        },
+        "needs": [
+          "feeding",
+          "educationMaterials",
+          "healthOutreach"
+        ],
+        "media": [
+          {
+            "id": "media-pending-001",
+            "siteId": "pending",
+            "fileUrl": null,
+            "localPath": "/local/path/photo.jpg",
+            "type": "entrance",
+            "timestamp": "2026-05-01T10:00:00.000Z",
+            "latitude": 12.0001,
+            "longitude": 8.5167,
+            "uploadedBy": "field-001"
+          }
+        ]
+      }
+    },
+    "updateSite": {
+      "method": "PUT",
+      "path": "/sites/:id",
+      "authRequired": true,
+      "params": {
+        "id": "site-002"
+      },
+      "query": {
+        "correctionOnly": "true"
+      },
+      "body": {
+        "name": "Sabon Gari Quranic School",
+        "localName": "Makarantar Sabon Gari",
+        "type": "Almajiri-style centre",
+        "operatorName": "Malam Ibrahim Sani",
+        "phone": "+2348098765432",
+        "country": "Nigeria",
+        "state": "Kano",
+        "lga": "Fagge",
+        "ward": "Sabon Gari",
+        "community": "Kantin Kwari",
+        "landmark": "Near Kantin Kwari market main gate",
+        "latitude": 12.0001,
+        "longitude": 8.5167,
+        "urgencyLevel": "medium",
+        "populationSummary": {
+          "totalChildren": 43,
+          "residentChildren": 25,
+          "nonResidentChildren": 18,
+          "boys": 39,
+          "girls": 4,
+          "ageGroups": [
+            "6-9",
+            "10-14"
+          ],
+          "age0to5": 0,
+          "age6to9": 18,
+          "age10to14": 22,
+          "age15plus": 3,
+          "notes": "Updated aggregate count."
+        },
+        "welfareAssessment": {
+          "feedingStatus": "2 meals per day",
+          "shelterStatus": "Shared sleeping room",
+          "sanitationStatus": "Functional toilet/latrine available",
+          "waterAccess": "Borehole",
+          "healthAccess": "Healthcare access available",
+          "clothingStatus": "Adequate clothing",
+          "mealsPerDay": 2,
+          "waterSource": "Borehole",
+          "hasToiletAccess": true,
+          "hasAdequateClothing": true,
+          "hasHealthcareAccess": true,
+          "sleepingArrangement": "Shared sleeping room",
+          "hygieneCondition": "Fair",
+          "safetyRisks": "No immediate safety risks reported",
+          "immediateInterventionNeeded": false,
+          "urgencyReason": "",
+          "followUpDate": "2026-06-01T09:00:00.000Z",
+          "notes": "Corrected landmark after admin request."
+        },
+        "needs": [
+          "feeding",
+          "educationMaterials"
+        ],
+        "media": []
+      }
+    },
+    "uploadSiteMedia": {
+      "method": "POST",
+      "path": "/sites/:id/media",
+      "authRequired": true,
+      "params": {
+        "id": "site-002"
+      },
+      "body": {
+        "id": "media-001",
+        "siteId": "site-002",
+        "fileName": "entrance.jpg",
+        "contentType": "image/jpeg",
+        "fileDataBase64": "/9j/4AAQSkZJRgABAQAAAQABAAD...",
+        "type": "entrance",
+        "timestamp": "2026-05-01T10:00:00.000Z",
+        "latitude": 12.0001,
+        "longitude": 8.5167,
+        "uploadedBy": "field-001"
+      }
+    },
+    "submitAssessment": {
+      "method": "POST",
+      "path": "/sites/:id/assessment",
+      "authRequired": true,
+      "params": {
+        "id": "site-002"
+      },
+      "body": {
+        "feedingStatus": "2 meals per day",
+        "shelterStatus": "Shared sleeping room",
+        "sanitationStatus": "Functional toilet/latrine available",
+        "waterAccess": "Borehole",
+        "healthAccess": "Healthcare access available",
+        "clothingStatus": "Adequate clothing",
+        "mealsPerDay": 2,
+        "waterSource": "Borehole",
+        "hasToiletAccess": true,
+        "hasAdequateClothing": true,
+        "hasHealthcareAccess": true,
+        "sleepingArrangement": "Shared sleeping room",
+        "hygieneCondition": "Fair",
+        "safetyRisks": "No immediate safety risks reported",
+        "immediateInterventionNeeded": false,
+        "urgencyReason": "",
+        "followUpDate": "2026-06-01T09:00:00.000Z",
+        "notes": "Assessment submitted from field visit."
+      }
+    },
+    "getSubmittedSites": {
+      "method": "GET",
+      "path": "/users/:userId/submitted-sites",
+      "authRequired": true,
+      "params": {
+        "userId": "field-001"
+      },
+      "query": {
+        "reviewStatus": "approved"
+      }
+    },
+    "getDashboardSummary": {
+      "method": "GET",
+      "path": "/dashboard/summary",
+      "authRequired": true
+    },
+    "exportSites": {
+      "method": "GET",
+      "path": "/exports/sites",
+      "authRequired": true,
+      "query": {
+        "format": "csv"
+      }
+    },
+    "getNigeriaStatesAndLgas": {
+      "method": "GET",
+      "path": "/locations/nigeria/states-lgas",
+      "authRequired": false
+    },
+    "retryAfterRefresh": {
+      "method": "ANY",
+      "path": "original_failed_request",
+      "authRequired": true,
+      "headers": {
+        "Authorization": "Bearer new-access-token"
+      },
+      "note": "Frontend retries the original request once after /auth/refresh succeeds."
+    }
+  }
+}

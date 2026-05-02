@@ -1,0 +1,758 @@
+{
+  "metadata": {
+    "app": "Support Atlas",
+    "direction": "backend-to-frontend",
+    "format": "json-only",
+    "dateFormat": "ISO-8601"
+  },
+  "responses": {
+    "loginSuccess": {
+      "status": 200,
+      "body": {
+        "accessToken": "mock-access-token",
+        "refreshToken": "mock-refresh-token",
+        "accessRole": "volunteer",
+        "user": {
+          "id": "field-001",
+          "name": "Ibrahim Sule",
+          "email": "ibrahim.sule@example.com",
+          "role": "fieldWorker",
+          "username": "ibrahim",
+          "phone": "+2348012345678",
+          "state": "Kano",
+          "lga": "Nassarawa",
+          "address": "Nassarawa LGA, Kano State",
+          "dateOfBirth": "1994-05-14",
+          "gender": "Male",
+          "educationLevel": "Tertiary",
+          "occupation": "Community volunteer",
+          "skills": "Community outreach, data collection, Hausa and English",
+          "volunteerExperience": "Two years supporting school mapping and welfare outreach.",
+          "availability": "Weekends and selected weekdays",
+          "volunteeringMode": "Field visits",
+          "motivation": "Improve support visibility for underserved learning centres.",
+          "emergencyContactName": "Amina Sule",
+          "emergencyContactPhone": "+2348091112233",
+          "profileImagePath": "https://cdn.example.com/profiles/field-001.jpg",
+          "profileComplete": true,
+          "permissions": [
+            "sites:create",
+            "sites:update:assigned"
+          ]
+        }
+      }
+    },
+    "refreshTokenSuccess": {
+      "status": 200,
+      "body": {
+        "accessToken": "new-access-token",
+        "refreshToken": "new-refresh-token"
+      }
+    },
+    "logoutSuccess": {
+      "status": 200,
+      "body": {
+        "success": true
+      }
+    },
+    "usernameAvailableSuccess": {
+      "status": 200,
+      "body": {
+        "username": "helper_user",
+        "available": true
+      }
+    },
+    "signupSuccess": {
+      "status": 201,
+      "body": {
+        "accessToken": "mock-access-token",
+        "refreshToken": "mock-refresh-token",
+        "accessRole": "helper",
+        "user": {
+          "id": "helper-001",
+          "name": "Helper User",
+          "email": "helper@example.com",
+          "role": "fieldWorker",
+          "username": "helper_user",
+          "phone": null,
+          "state": null,
+          "lga": null,
+          "address": null,
+          "dateOfBirth": null,
+          "gender": null,
+          "educationLevel": null,
+          "occupation": null,
+          "skills": null,
+          "volunteerExperience": null,
+          "availability": null,
+          "volunteeringMode": null,
+          "motivation": null,
+          "emergencyContactName": null,
+          "emergencyContactPhone": null,
+          "profileImagePath": null,
+          "profileComplete": true,
+          "permissions": [
+            "sites:read",
+            "support:offer"
+          ]
+        }
+      }
+    },
+    "changePasswordSuccess": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "message": "Password changed."
+      }
+    },
+    "volunteerApplicationSubmitted": {
+      "status": 201,
+      "body": {
+        "requestId": "volunteer-request-12345678",
+        "status": "pending",
+        "submittedAt": "2026-05-01T10:00:00.000Z",
+        "message": "Your registration request is pending admin review."
+      }
+    },
+    "currentUser": {
+      "status": 200,
+      "body": {
+        "id": "field-001",
+        "name": "Ibrahim Sule",
+        "email": "ibrahim.sule@example.com",
+        "role": "fieldWorker",
+        "username": "ibrahim",
+        "phone": "+2348012345678",
+        "state": "Kano",
+        "lga": "Nassarawa",
+        "address": "Nassarawa LGA, Kano State",
+        "dateOfBirth": "1994-05-14",
+        "gender": "Male",
+        "educationLevel": "Tertiary",
+        "occupation": "Community volunteer",
+        "skills": "Community outreach, data collection, Hausa and English",
+        "volunteerExperience": "Two years supporting school mapping and welfare outreach.",
+        "availability": "Weekends and selected weekdays",
+        "volunteeringMode": "Field visits",
+        "motivation": "Improve support visibility for underserved learning centres.",
+        "emergencyContactName": "Amina Sule",
+        "emergencyContactPhone": "+2348091112233",
+        "profileImagePath": "https://cdn.example.com/profiles/field-001.jpg",
+        "profileComplete": true,
+        "permissions": [
+          "sites:create",
+          "sites:update:assigned"
+        ]
+      }
+    },
+    "volunteerProfileUpdated": {
+      "status": 200,
+      "body": {
+        "id": "field-001",
+        "name": "Ibrahim Sule",
+        "email": "ibrahim.sule@example.com",
+        "role": "fieldWorker",
+        "username": "ibrahim",
+        "phone": "+2348012345678",
+        "state": "Kano",
+        "lga": "Nassarawa",
+        "address": "Nassarawa LGA, Kano State",
+        "dateOfBirth": "1994-05-14",
+        "gender": "Male",
+        "educationLevel": "Tertiary",
+        "occupation": "Community volunteer",
+        "skills": "Community outreach, data collection, Hausa and English",
+        "volunteerExperience": "Two years supporting school mapping and welfare outreach.",
+        "availability": "Weekends and selected weekdays",
+        "volunteeringMode": "Field visits",
+        "motivation": "Improve support visibility for underserved learning centres.",
+        "emergencyContactName": "Amina Sule",
+        "emergencyContactPhone": "+2348091112233",
+        "profileImagePath": "https://cdn.example.com/profiles/field-001.jpg",
+        "profileComplete": true,
+        "permissions": [
+          "sites:create",
+          "sites:update:assigned"
+        ]
+      }
+    },
+    "siteList": {
+      "status": 200,
+      "body": {
+        "items": [
+          {
+            "id": "site-002",
+            "uniqueSiteId": "SSA-KN-0002",
+            "name": "Sabon Gari Quranic School",
+            "localName": "Makarantar Sabon Gari",
+            "type": "Almajiri-style centre",
+            "operatorName": "Malam Ibrahim Sani",
+            "phone": "+2348098765432",
+            "country": "Nigeria",
+            "state": "Kano",
+            "lga": "Fagge",
+            "ward": "Sabon Gari",
+            "community": "Kantin Kwari",
+            "landmark": "Near central market",
+            "latitude": 12.0001,
+            "longitude": 8.5167,
+            "verificationStatus": "verified",
+            "urgencyLevel": "medium",
+            "createdBy": "field-001",
+            "createdAt": "2026-04-01T10:00:00.000Z",
+            "updatedAt": "2026-04-27T10:00:00.000Z",
+            "populationSummary": {
+              "totalChildren": 43,
+              "residentChildren": 25,
+              "nonResidentChildren": 18,
+              "age0to5": 0,
+              "age6to9": 18,
+              "age10to14": 22,
+              "age15plus": 3,
+              "boys": 39,
+              "girls": 4,
+              "ageGroups": [
+                "6-9",
+                "10-14"
+              ],
+              "notes": "Aggregate counts only. No child-identifiable data captured."
+            },
+            "welfareAssessment": {
+              "feedingStatus": "2 meals per day",
+              "shelterStatus": "Shared sleeping room",
+              "sanitationStatus": "Functional toilet/latrine available",
+              "waterAccess": "Borehole",
+              "healthAccess": "Healthcare access available",
+              "clothingStatus": "Adequate clothing",
+              "mealsPerDay": 2,
+              "waterSource": "Borehole",
+              "hasToiletAccess": true,
+              "hasAdequateClothing": true,
+              "hasHealthcareAccess": true,
+              "sleepingArrangement": "Shared sleeping room",
+              "hygieneCondition": "Fair",
+              "safetyRisks": "No immediate safety risks reported",
+              "immediateInterventionNeeded": false,
+              "urgencyReason": "",
+              "followUpDate": "2026-06-01T09:00:00.000Z",
+              "notes": "Follow up during next field visit."
+            },
+            "media": [
+              {
+                "id": "media-001",
+                "siteId": "site-002",
+                "fileUrl": "https://cdn.example.com/sites/site-002/entrance.jpg",
+                "localPath": null,
+                "type": "entrance",
+                "timestamp": "2026-05-01T10:00:00.000Z",
+                "latitude": 12.0001,
+                "longitude": 8.5167,
+                "uploadedBy": "field-001"
+              }
+            ],
+            "needs": [
+              "feeding",
+              "educationMaterials",
+              "healthOutreach"
+            ],
+            "adminNotes": null,
+            "reviewStatus": "approved",
+            "correctionIssues": []
+          }
+        ],
+        "total": 1
+      }
+    },
+    "siteDetail": {
+      "status": 200,
+      "body": {
+        "id": "site-002",
+        "uniqueSiteId": "SSA-KN-0002",
+        "name": "Sabon Gari Quranic School",
+        "localName": "Makarantar Sabon Gari",
+        "type": "Almajiri-style centre",
+        "operatorName": "Malam Ibrahim Sani",
+        "phone": "+2348098765432",
+        "country": "Nigeria",
+        "state": "Kano",
+        "lga": "Fagge",
+        "ward": "Sabon Gari",
+        "community": "Kantin Kwari",
+        "landmark": "Near central market",
+        "latitude": 12.0001,
+        "longitude": 8.5167,
+        "verificationStatus": "verified",
+        "urgencyLevel": "medium",
+        "createdBy": "field-001",
+        "createdAt": "2026-04-01T10:00:00.000Z",
+        "updatedAt": "2026-04-27T10:00:00.000Z",
+        "populationSummary": {
+          "totalChildren": 43,
+          "residentChildren": 25,
+          "nonResidentChildren": 18,
+          "age0to5": 0,
+          "age6to9": 18,
+          "age10to14": 22,
+          "age15plus": 3,
+          "boys": 39,
+          "girls": 4,
+          "ageGroups": [
+            "6-9",
+            "10-14"
+          ],
+          "notes": "Aggregate counts only. No child-identifiable data captured."
+        },
+        "welfareAssessment": {
+          "feedingStatus": "2 meals per day",
+          "shelterStatus": "Shared sleeping room",
+          "sanitationStatus": "Functional toilet/latrine available",
+          "waterAccess": "Borehole",
+          "healthAccess": "Healthcare access available",
+          "clothingStatus": "Adequate clothing",
+          "mealsPerDay": 2,
+          "waterSource": "Borehole",
+          "hasToiletAccess": true,
+          "hasAdequateClothing": true,
+          "hasHealthcareAccess": true,
+          "sleepingArrangement": "Shared sleeping room",
+          "hygieneCondition": "Fair",
+          "safetyRisks": "No immediate safety risks reported",
+          "immediateInterventionNeeded": false,
+          "urgencyReason": "",
+          "followUpDate": "2026-06-01T09:00:00.000Z",
+          "notes": "Follow up during next field visit."
+        },
+        "media": [
+          {
+            "id": "media-001",
+            "siteId": "site-002",
+            "fileUrl": "https://cdn.example.com/sites/site-002/entrance.jpg",
+            "localPath": null,
+            "type": "entrance",
+            "timestamp": "2026-05-01T10:00:00.000Z",
+            "latitude": 12.0001,
+            "longitude": 8.5167,
+            "uploadedBy": "field-001"
+          }
+        ],
+        "needs": [
+          "feeding",
+          "educationMaterials",
+          "healthOutreach"
+        ],
+        "adminNotes": null,
+        "reviewStatus": "approved",
+        "correctionIssues": []
+      }
+    },
+    "siteCreated": {
+      "status": 201,
+      "body": {
+        "id": "site-010",
+        "uniqueSiteId": "SSA-2650001",
+        "name": "Sabon Gari Quranic School",
+        "localName": "Makarantar Sabon Gari",
+        "type": "Almajiri-style centre",
+        "operatorName": "Malam Ibrahim Sani",
+        "phone": "+2348098765432",
+        "country": "Nigeria",
+        "state": "Kano",
+        "lga": "Fagge",
+        "ward": "Sabon Gari",
+        "community": "Kantin Kwari",
+        "landmark": "Near central market",
+        "latitude": 12.0001,
+        "longitude": 8.5167,
+        "verificationStatus": "pending",
+        "urgencyLevel": "medium",
+        "createdBy": "field-001",
+        "createdAt": "2026-05-01T10:00:00.000Z",
+        "updatedAt": "2026-05-01T10:00:00.000Z",
+        "populationSummary": {
+          "totalChildren": 43,
+          "residentChildren": 25,
+          "nonResidentChildren": 18,
+          "age0to5": 0,
+          "age6to9": 18,
+          "age10to14": 22,
+          "age15plus": 3,
+          "boys": 39,
+          "girls": 4,
+          "ageGroups": [
+            "6-9",
+            "10-14"
+          ],
+          "notes": "Aggregate counts only. No child-identifiable data captured."
+        },
+        "welfareAssessment": {
+          "feedingStatus": "2 meals per day",
+          "shelterStatus": "Shared sleeping room",
+          "sanitationStatus": "Functional toilet/latrine available",
+          "waterAccess": "Borehole",
+          "healthAccess": "Healthcare access available",
+          "clothingStatus": "Adequate clothing",
+          "mealsPerDay": 2,
+          "waterSource": "Borehole",
+          "hasToiletAccess": true,
+          "hasAdequateClothing": true,
+          "hasHealthcareAccess": true,
+          "sleepingArrangement": "Shared sleeping room",
+          "hygieneCondition": "Fair",
+          "safetyRisks": "No immediate safety risks reported",
+          "immediateInterventionNeeded": false,
+          "urgencyReason": "",
+          "followUpDate": "2026-06-01T09:00:00.000Z",
+          "notes": "Follow up during next field visit."
+        },
+        "media": [],
+        "needs": [
+          "feeding",
+          "educationMaterials",
+          "healthOutreach"
+        ],
+        "adminNotes": null,
+        "reviewStatus": "pendingVerification",
+        "correctionIssues": []
+      }
+    },
+    "siteUpdated": {
+      "status": 200,
+      "body": {
+        "id": "site-003",
+        "uniqueSiteId": "SSA-KN-0003",
+        "name": "Gwale Learning Centre",
+        "localName": null,
+        "type": "Informal learning centre",
+        "operatorName": "Malam Haruna",
+        "phone": "+2348077777777",
+        "country": "Nigeria",
+        "state": "Kano",
+        "lga": "Gwale",
+        "ward": "Dorayi",
+        "community": "Dorayi",
+        "landmark": "Beside Dorayi primary health centre",
+        "latitude": 11.978,
+        "longitude": 8.49,
+        "verificationStatus": "pending",
+        "urgencyLevel": "high",
+        "createdBy": "field-001",
+        "createdAt": "2026-04-18T10:00:00.000Z",
+        "updatedAt": "2026-05-01T10:00:00.000Z",
+        "populationSummary": {
+          "totalChildren": 61,
+          "residentChildren": 40,
+          "nonResidentChildren": 21,
+          "age0to5": 3,
+          "age6to9": 24,
+          "age10to14": 28,
+          "age15plus": 6,
+          "boys": 58,
+          "girls": 3,
+          "ageGroups": [
+            "6-9",
+            "10-14",
+            "15+"
+          ],
+          "notes": "Corrected aggregate totals."
+        },
+        "welfareAssessment": {
+          "feedingStatus": "1 meal per day",
+          "shelterStatus": "Overcrowded room",
+          "sanitationStatus": "No functional toilet/latrine available",
+          "waterAccess": "Vendor water",
+          "healthAccess": "No healthcare access",
+          "clothingStatus": "Inadequate clothing",
+          "mealsPerDay": 1,
+          "waterSource": "Vendor water",
+          "hasToiletAccess": false,
+          "hasAdequateClothing": false,
+          "hasHealthcareAccess": false,
+          "sleepingArrangement": "Overcrowded room",
+          "hygieneCondition": "Poor",
+          "safetyRisks": "Open drainage nearby",
+          "immediateInterventionNeeded": true,
+          "urgencyReason": "Food, sanitation, and health outreach needed.",
+          "followUpDate": "2026-05-15T09:00:00.000Z",
+          "notes": "Resubmitted after correction request."
+        },
+        "media": [],
+        "needs": [
+          "feeding",
+          "sanitation",
+          "healthOutreach"
+        ],
+        "adminNotes": null,
+        "reviewStatus": "pendingVerification",
+        "correctionIssues": []
+      }
+    },
+    "mediaUploaded": {
+      "status": 201,
+      "body": {
+        "id": "media-001",
+        "siteId": "site-002",
+        "fileUrl": "https://cdn.example.com/sites/site-002/entrance.jpg",
+        "localPath": null,
+        "type": "entrance",
+        "timestamp": "2026-05-01T10:00:00.000Z",
+        "latitude": 12.0001,
+        "longitude": 8.5167,
+        "uploadedBy": "field-001"
+      }
+    },
+    "assessmentSubmitted": {
+      "status": 201,
+      "body": {
+        "feedingStatus": "2 meals per day",
+        "shelterStatus": "Shared sleeping room",
+        "sanitationStatus": "Functional toilet/latrine available",
+        "waterAccess": "Borehole",
+        "healthAccess": "Healthcare access available",
+        "clothingStatus": "Adequate clothing",
+        "mealsPerDay": 2,
+        "waterSource": "Borehole",
+        "hasToiletAccess": true,
+        "hasAdequateClothing": true,
+        "hasHealthcareAccess": true,
+        "sleepingArrangement": "Shared sleeping room",
+        "hygieneCondition": "Fair",
+        "safetyRisks": "No immediate safety risks reported",
+        "immediateInterventionNeeded": false,
+        "urgencyReason": "",
+        "followUpDate": "2026-06-01T09:00:00.000Z",
+        "notes": "Assessment submitted from field visit."
+      }
+    },
+    "submittedSites": {
+      "status": 200,
+      "body": {
+        "items": [
+          {
+            "id": "site-002",
+            "uniqueSiteId": "SSA-KN-0002",
+            "name": "Sabon Gari Quranic School",
+            "localName": "Makarantar Sabon Gari",
+            "type": "Almajiri-style centre",
+            "operatorName": "Malam Ibrahim Sani",
+            "phone": "+2348098765432",
+            "country": "Nigeria",
+            "state": "Kano",
+            "lga": "Fagge",
+            "ward": "Sabon Gari",
+            "community": "Kantin Kwari",
+            "landmark": "Near central market",
+            "latitude": 12.0001,
+            "longitude": 8.5167,
+            "verificationStatus": "verified",
+            "urgencyLevel": "medium",
+            "createdBy": "field-001",
+            "createdAt": "2026-04-01T10:00:00.000Z",
+            "updatedAt": "2026-04-27T10:00:00.000Z",
+            "populationSummary": {
+              "totalChildren": 43,
+              "residentChildren": 25,
+              "nonResidentChildren": 18,
+              "age0to5": 0,
+              "age6to9": 18,
+              "age10to14": 22,
+              "age15plus": 3,
+              "boys": 39,
+              "girls": 4,
+              "ageGroups": [
+                "6-9",
+                "10-14"
+              ],
+              "notes": "Aggregate counts only."
+            },
+            "welfareAssessment": {
+              "feedingStatus": "2 meals per day",
+              "shelterStatus": "Shared sleeping room",
+              "sanitationStatus": "Functional toilet/latrine available",
+              "waterAccess": "Borehole",
+              "healthAccess": "Healthcare access available",
+              "clothingStatus": "Adequate clothing",
+              "mealsPerDay": 2,
+              "waterSource": "Borehole",
+              "hasToiletAccess": true,
+              "hasAdequateClothing": true,
+              "hasHealthcareAccess": true,
+              "sleepingArrangement": "Shared sleeping room",
+              "hygieneCondition": "Fair",
+              "safetyRisks": "No immediate safety risks reported",
+              "immediateInterventionNeeded": false,
+              "urgencyReason": "",
+              "followUpDate": "2026-06-01T09:00:00.000Z",
+              "notes": "Follow up during next field visit."
+            },
+            "media": [],
+            "needs": [
+              "feeding",
+              "educationMaterials"
+            ],
+            "adminNotes": null,
+            "reviewStatus": "approved",
+            "correctionIssues": []
+          },
+          {
+            "id": "site-003",
+            "uniqueSiteId": "SSA-KN-0003",
+            "name": "Gwale Learning Centre",
+            "localName": null,
+            "type": "Informal learning centre",
+            "operatorName": "Malam Haruna",
+            "phone": "+2348077777777",
+            "country": "Nigeria",
+            "state": "Kano",
+            "lga": "Gwale",
+            "ward": "Dorayi",
+            "community": "Dorayi",
+            "landmark": null,
+            "latitude": 11.978,
+            "longitude": 8.49,
+            "verificationStatus": "rejected",
+            "urgencyLevel": "high",
+            "createdBy": "field-001",
+            "createdAt": "2026-04-18T10:00:00.000Z",
+            "updatedAt": "2026-04-30T10:00:00.000Z",
+            "populationSummary": {
+              "totalChildren": 61,
+              "residentChildren": 40,
+              "nonResidentChildren": 21,
+              "age0to5": 3,
+              "age6to9": 24,
+              "age10to14": 28,
+              "age15plus": 6,
+              "boys": 58,
+              "girls": 3,
+              "ageGroups": [
+                "6-9",
+                "10-14",
+                "15+"
+              ],
+              "notes": "Needs admin correction before publication."
+            },
+            "welfareAssessment": {
+              "feedingStatus": "1 meal per day",
+              "shelterStatus": "Overcrowded room",
+              "sanitationStatus": "No functional toilet/latrine available",
+              "waterAccess": "Vendor water",
+              "healthAccess": "No healthcare access",
+              "clothingStatus": "Inadequate clothing",
+              "mealsPerDay": 1,
+              "waterSource": "Vendor water",
+              "hasToiletAccess": false,
+              "hasAdequateClothing": false,
+              "hasHealthcareAccess": false,
+              "sleepingArrangement": "Overcrowded room",
+              "hygieneCondition": "Poor",
+              "safetyRisks": "Open drainage nearby",
+              "immediateInterventionNeeded": true,
+              "urgencyReason": "Food, sanitation, and health outreach needed.",
+              "followUpDate": "2026-05-15T09:00:00.000Z",
+              "notes": "Needs clarification."
+            },
+            "media": [],
+            "needs": [
+              "feeding",
+              "sanitation",
+              "healthOutreach"
+            ],
+            "adminNotes": "Add a clearer nearby landmark for verification.",
+            "reviewStatus": "needsCorrection",
+            "correctionIssues": [
+              {
+                "fieldKey": "landmark",
+                "stepIndex": 0,
+                "message": "Add a clearer nearby landmark for verification."
+              }
+            ]
+          }
+        ],
+        "total": 2
+      }
+    },
+    "dashboardSummary": {
+      "status": 200,
+      "body": {
+        "totalSites": 25,
+        "estimatedChildren": 1840,
+        "pendingVerification": 7,
+        "verifiedSites": 16,
+        "highUrgencySites": 9
+      }
+    },
+    "exportSites": {
+      "status": 200,
+      "body": {
+        "fileName": "sites-export-2026-05-01.csv",
+        "contentType": "text/csv",
+        "data": "uniqueSiteId,name,state,lga,community,verificationStatus,urgencyLevel,estimatedChildren\nSSA-KN-0002,Sabon Gari Quranic School,Kano,Fagge,Kantin Kwari,verified,medium,43"
+      }
+    },
+    "nigeriaStatesAndLgas": {
+      "status": 200,
+      "body": {
+        "items": [
+          {
+            "name": "Kano",
+            "lgas": [
+              "Fagge",
+              "Gwale",
+              "Nassarawa"
+            ]
+          },
+          {
+            "name": "Kaduna",
+            "lgas": [
+              "Kaduna North",
+              "Kaduna South"
+            ]
+          }
+        ]
+      }
+    },
+    "unauthorizedError": {
+      "status": 401,
+      "body": {
+        "error": {
+          "code": "UNAUTHORIZED",
+          "message": "Authentication is required.",
+          "fields": {}
+        }
+      }
+    },
+    "validationError": {
+      "status": 422,
+      "body": {
+        "error": {
+          "code": "VALIDATION_ERROR",
+          "message": "Please correct the highlighted fields.",
+          "fields": {
+            "email": "Enter a valid email address",
+            "phone": "Enter a valid phone number"
+          }
+        }
+      }
+    },
+    "notFoundError": {
+      "status": 404,
+      "body": {
+        "error": {
+          "code": "NOT_FOUND",
+          "message": "The requested resource was not found.",
+          "fields": {}
+        }
+      }
+    },
+    "serverError": {
+      "status": 500,
+      "body": {
+        "error": {
+          "code": "SERVER_ERROR",
+          "message": "Something went wrong. Try again.",
+          "fields": {}
+        }
+      }
+    }
+  }
+}

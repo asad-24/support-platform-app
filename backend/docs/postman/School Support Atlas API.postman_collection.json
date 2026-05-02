@@ -1,0 +1,1151 @@
+{
+  "info": {
+    "_postman_id": "8fcd2ff9-5f7b-49ec-9a64-school-support-atlas",
+    "name": "School Support Atlas API",
+    "description": "Postman collection for testing auth, volunteer mobile app APIs, admin dashboard APIs, and public approved school APIs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000"
+    },
+    {
+      "key": "volunteer_email",
+      "value": "volunteer.postman@example.com"
+    },
+    {
+      "key": "volunteer_password",
+      "value": "secret123"
+    },
+    {
+      "key": "admin_email",
+      "value": "admin@schoolsupportatlas.local"
+    },
+    {
+      "key": "admin_password",
+      "value": "admin123"
+    },
+    {
+      "key": "volunteer_token",
+      "value": ""
+    },
+    {
+      "key": "admin_token",
+      "value": ""
+    },
+    {
+      "key": "school_id",
+      "value": ""
+    },
+    {
+      "key": "volunteer_id",
+      "value": ""
+    },
+    {
+      "key": "notification_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 Auth",
+      "item": [
+        {
+          "name": "Volunteer Sign Up",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/sign-up",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "sign-up"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Volunteer\",\n  \"email\": \"{{volunteer_email}}\",\n  \"password\": \"{{volunteer_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"response has success true\", function () { pm.expect(json.success).to.eql(true); });",
+                  "pm.collectionVariables.set(\"volunteer_token\", json.data.access_token);",
+                  "pm.collectionVariables.set(\"volunteer_id\", json.data.user.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Volunteer Sign In",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/sign-in",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "sign-in"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{volunteer_email}}\",\n  \"password\": \"{{volunteer_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"response has success true\", function () { pm.expect(json.success).to.eql(true); });",
+                  "pm.collectionVariables.set(\"volunteer_token\", json.data.access_token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin Sign In",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/sign-in",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "sign-in"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"response has success true\", function () { pm.expect(json.success).to.eql(true); });",
+                  "pm.collectionVariables.set(\"admin_token\", json.data.access_token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Me - Volunteer",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{volunteer_token}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"response has success true\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Me - Admin",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"response has success true\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 Volunteer App",
+      "item": [
+        {
+          "name": "Dashboard Blocked Before Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{volunteer_token}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/volunteer/dashboard",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "volunteer",
+                "dashboard"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 403\", function () { pm.response.to.have.status(403); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"profile incomplete\", function () { pm.expect(json.code).to.eql(\"PROFILE_INCOMPLETE\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create or Update Volunteer Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{volunteer_token}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/volunteer/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "volunteer",
+                "profile"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Postman Volunteer\",\n  \"phone\": \"+2348012345678\",\n  \"state\": \"Kano\",\n  \"lga\": \"Nasarawa\",\n  \"community\": \"Tudun Wada\",\n  \"address\": \"Near central mosque\",\n  \"bio\": \"Testing via Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"response has success true\", function () { pm.expect(json.success).to.eql(true); });",
+                  "pm.test(\"profile completed\", function () { pm.expect(json.data.profile_completed).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Volunteer Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{volunteer_token}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/volunteer/dashboard",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "volunteer",
+                "dashboard"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"response has success true\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Draft School",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{volunteer_token}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/volunteer/schools/drafts",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "volunteer",
+                "schools",
+                "drafts"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"school\": {\n    \"school_name\": \"Draft Quranic School\",\n    \"school_type\": \"traditional_quranic_school\",\n    \"urgency\": \"medium\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"response has success true\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit School",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{volunteer_token}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/volunteer/schools",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "volunteer",
+                "schools"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"school\": {\n    \"school_name\": \"Al-Huda Quranic School\",\n    \"school_type\": \"traditional_quranic_school\",\n    \"urgency\": \"high\"\n  },\n  \"operators\": [\n    {\n      \"name\": \"Mallam Musa\",\n      \"phone\": \"+2348012345678\"\n    }\n  ],\n  \"location\": {\n    \"latitude\": 12.0022,\n    \"longitude\": 8.5919,\n    \"country\": \"Nigeria\",\n    \"state\": \"Kano\",\n    \"lga\": \"Nasarawa\",\n    \"community\": \"Tudun Wada\",\n    \"address\": \"Behind main market\"\n  },\n  \"children_stats\": {\n    \"total_children\": 120,\n    \"residential_children\": 80,\n    \"non_residential_children\": 40,\n    \"boys_count\": 90,\n    \"girls_count\": 30\n  },\n  \"welfare\": {\n    \"has_clean_water\": false,\n    \"has_sanitation\": false,\n    \"has_healthcare\": false,\n    \"has_educational_materials\": true,\n    \"safety_child_labor\": true,\n    \"additional_notes\": \"Needs clean water and sanitation support.\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"response has success true\", function () { pm.expect(json.success).to.eql(true); });",
+                  "pm.collectionVariables.set(\"school_id\", json.data.school.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List My Schools",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{volunteer_token}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/volunteer/schools",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "volunteer",
+                "schools"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"response has success true\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get My School",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{volunteer_token}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/volunteer/schools/{{school_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "volunteer",
+                "schools",
+                "{{school_id}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"response has success true\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add School Photo Metadata",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{volunteer_token}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/volunteer/schools/{{school_id}}/photos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "volunteer",
+                "schools",
+                "{{school_id}}",
+                "photos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"file_url\": \"/uploads/schools/postman-test.jpg\",\n  \"category\": \"entrance\",\n  \"caption\": \"Entrance photo test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"response has success true\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 Admin Dashboard",
+      "item": [
+        {
+          "name": "Admin Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/dashboard",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "dashboard"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"response has success true\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/notifications",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "notifications"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"response has success true\", function () { pm.expect(json.success).to.eql(true); });",
+                  "if (json.data.items && json.data.items.length) pm.collectionVariables.set(\"notification_id\", json.data.items[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mark Notification Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/notifications/{{notification_id}}/read",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "notifications",
+                "{{notification_id}}",
+                "read"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"response has success true\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Volunteers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/volunteers",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "volunteers"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"response has success true\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Selected Volunteer",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/volunteers/{{volunteer_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "volunteers",
+                "{{volunteer_id}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"response has success true\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Selected Volunteer Schools",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/volunteers/{{volunteer_id}}/schools",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "volunteers",
+                "{{volunteer_id}}",
+                "schools"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"response has success true\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List All Schools",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/schools",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "schools"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"response has success true\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get School Admin Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/schools/{{school_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "schools",
+                "{{school_id}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"response has success true\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Approve School",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/schools/{{school_id}}/approve",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "schools",
+                "{{school_id}}",
+                "approve"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comment\": \"Verified and approved from Postman.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"response has success true\", function () { pm.expect(json.success).to.eql(true); });",
+                  "pm.test(\"school approved\", function () { pm.expect(json.data.school.status).to.eql(\"approved\"); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 Public Approved Schools",
+      "item": [
+        {
+          "name": "List Approved Schools",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/schools",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "schools"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"response has success true\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Approved School",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/schools/{{school_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "schools",
+                "{{school_id}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"response has success true\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 Role Separation Tests",
+      "item": [
+        {
+          "name": "Admin Cannot Access Volunteer Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/volunteer/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "volunteer",
+                "profile"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 403\", function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Volunteer Cannot Access Admin Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{volunteer_token}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/dashboard",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "dashboard"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 403\", function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
