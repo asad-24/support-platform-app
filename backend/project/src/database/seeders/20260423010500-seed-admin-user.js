@@ -13,6 +13,10 @@ function adminDefaults() {
 /** @type {import('sequelize-cli').Seeder} */
 module.exports = {
   async up(queryInterface) {
+    if (String(process.env.SEED_DEFAULT_ADMIN || '').toLowerCase() !== 'true') {
+      return;
+    }
+
     const now = new Date();
     const defaults = adminDefaults();
     const { salt, hash } = hashPassword(defaults.password);

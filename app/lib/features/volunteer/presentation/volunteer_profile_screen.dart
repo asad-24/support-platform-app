@@ -429,22 +429,45 @@ class _ProfileAvatar extends StatelessWidget {
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: hasImage
-                    ? FutureBuilder<Uint8List>(
-                        future: XFile(imagePath!).readAsBytes(),
-                        builder: (context, snapshot) {
-                          if (snapshot.hasData) {
-                            return Image.memory(
-                              snapshot.data!,
-                              width: 96,
-                              height: 96,
-                              fit: BoxFit.cover,
-                            );
-                          }
-                          return const CircularProgressIndicator(
-                            color: Colors.white,
-                          );
-                        },
-                      )
+                    ? imagePath!.startsWith('http')
+                        ? Image.network(
+                            imagePath!,
+                            width: 96,
+                            height: 96,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return const CircularProgressIndicator(
+                                color: Colors.white,
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              return Text(
+                                initials.toUpperCase(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              );
+                            },
+                          )
+                        : FutureBuilder<Uint8List>(
+                            future: XFile(imagePath!).readAsBytes(),
+                            builder: (context, snapshot) {
+                              if (snapshot.hasData) {
+                                return Image.memory(
+                                  snapshot.data!,
+                                  width: 96,
+                                  height: 96,
+                                  fit: BoxFit.cover,
+                                );
+                              }
+                              return const CircularProgressIndicator(
+                                color: Colors.white,
+                              );
+                            },
+                          )
                     : Text(
                         initials.toUpperCase(),
                         style: const TextStyle(

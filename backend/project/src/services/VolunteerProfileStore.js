@@ -8,10 +8,11 @@ function readString(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
-function pick(body, camel, snake = null) {
+function pick(body, ...keys) {
   if (!body || typeof body !== 'object') return undefined;
-  if (body[camel] !== undefined) return body[camel];
-  if (snake && body[snake] !== undefined) return body[snake];
+  for (const key of keys) {
+    if (body[key] !== undefined) return body[key];
+  }
   return undefined;
 }
 
@@ -20,7 +21,7 @@ function normalizePayload(body = {}) {
   const map = [
     ['fullName', 'full_name'],
     ['phone', 'phone'],
-    ['profilePhotoUrl', 'profile_photo_url'],
+    ['profilePhotoUrl', 'profile_photo_url', 'profileImagePath'],
     ['state', 'state'],
     ['lga', 'lga'],
     ['community', 'community'],
@@ -39,8 +40,8 @@ function normalizePayload(body = {}) {
     ['emergencyContactPhone', 'emergency_contact_phone'],
   ];
 
-  for (const [camel, snake] of map) {
-    const value = pick(body, camel, snake);
+  for (const [camel, ...keys] of map) {
+    const value = pick(body, camel, ...keys);
     if (value !== undefined) payload[camel] = typeof value === 'string' ? value.trim() : value;
   }
 

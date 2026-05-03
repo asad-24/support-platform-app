@@ -1,6 +1,9 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/errors/app_exception.dart';
+import '../../../core/network/api_client.dart';
 import '../../../core/storage/storage_providers.dart';
 import '../../../shared/models/app_enums.dart';
 import '../../../shared/models/dashboard_summary.dart';
@@ -11,7 +14,7 @@ import '../../../shared/models/site_draft.dart';
 import '../../../shared/models/welfare_assessment.dart';
 
 final sitesRepositoryProvider = Provider<SitesRepository>((ref) {
-  return MockSitesRepository();
+  return ApiSitesRepository(ref.watch(dioProvider));
 });
 
 final sitesProvider = FutureProvider.autoDispose<List<Site>>((ref) {
@@ -47,7 +50,11 @@ abstract class SitesRepository {
 
   Future<Site> createSite(Map<String, dynamic> payload);
 
-  Future<Site> updateSite(String id, Map<String, dynamic> payload);
+  Future<Site> updateSite(
+    String id,
+    Map<String, dynamic> payload, {
+    bool correctionOnly = false,
+  });
 
   Future<MediaFile> uploadMedia(String siteId, MediaFile file);
 
@@ -59,6 +66,179 @@ abstract class SitesRepository {
   Future<DashboardSummary> getDashboardSummary();
 
   Future<String> exportSitesCsv();
+}
+
+class ApiSitesRepository implements SitesRepository {
+  ApiSitesRepository(this._dio);
+
+  final Dio _dio;
+
+  @override
+  Future<List<Site>> getSites({
+    String? query,
+    VerificationStatus? verificationStatus,
+    UrgencyLevel? urgencyLevel,
+    NeedType? need,
+  }) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/sites',
+        queryParameters: _cleanQuery({
+          'query': query,
+          'verificationStatus': verificationStatus?.name,
+          'urgencyLevel': urgencyLevel?.name,
+          'need': need?.toJson(),
+        }),
+      );
+      return _sitesFromListResponse(response.data);
+    } catch (error) {
+      throw _exceptionFrom(error);
+    }
+  }
+
+  @override
+  Future<List<Site>> getSubmittedSites(String userId) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/users/$userId/submitted-sites',
+      );
+      return _sitesFromListResponse(response.data);
+    } catch (error) {
+      throw _exceptionFrom(error);
+    }
+  }
+
+  @override
+  Future<Site> getSite(String id) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>('/sites/$id');
+      return Site.fromJson(response.data ?? const {});
+    } catch (error) {
+      throw _exceptionFrom(error);
+    }
+  }
+
+  @override
+  Future<Site> createSite(Map<String, dynamic> payload) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/sites',
+        data: payload,
+      );
+      return Site.fromJson(response.data ?? const {});
+    } catch (error) {
+      throw _exceptionFrom(error);
+    }
+  }
+
+  @override
+  Future<Site> updateSite(
+    String id,
+    Map<String, dynamic> payload, {
+    bool correctionOnly = false,
+  }) async {
+    try {
+      final response = await _dio.put<Map<String, dynamic>>(
+        '/sites/$id',
+        queryParameters: correctionOnly ? {'correctionOnly': 'true'} : null,
+        data: payload,
+      );
+      return Site.fromJson(response.data ?? const {});
+    } catch (error) {
+      throw _exceptionFrom(error);
+    }
+  }
+
+  @override
+  Future<MediaFile> uploadMedia(String siteId, MediaFile file) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/sites/$siteId/media',
+        data: file.toJson(),
+      );
+      return MediaFile.fromJson(response.data ?? const {});
+    } catch (error) {
+      throw _exceptionFrom(error);
+    }
+  }
+
+  @override
+  Future<WelfareAssessment> submitAssessment(
+    String siteId,
+    WelfareAssessment assessment,
+  ) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/sites/$siteId/assessment',
+        data: assessment.toJson(),
+      );
+      return WelfareAssessment.fromJson(response.data ?? const {});
+    } catch (error) {
+      throw _exceptionFrom(error);
+    }
+  }
+
+  @override
+  Future<DashboardSummary> getDashboardSummary() async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/dashboard/summary',
+      );
+      final data = response.data ?? const {};
+      return DashboardSummary(
+        totalSites: (data['totalSites'] as num?)?.toInt() ?? 0,
+        estimatedChildren: (data['estimatedChildren'] as num?)?.toInt() ?? 0,
+        pendingVerification:
+            (data['pendingVerification'] as num?)?.toInt() ?? 0,
+        verifiedSites: (data['verifiedSites'] as num?)?.toInt() ?? 0,
+        highUrgencySites: (data['highUrgencySites'] as num?)?.toInt() ?? 0,
+      );
+    } catch (error) {
+      throw _exceptionFrom(error);
+    }
+  }
+
+  @override
+  Future<String> exportSitesCsv() async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>('/exports/sites');
+      return response.data?['data'] as String? ?? '';
+    } catch (error) {
+      throw _exceptionFrom(error);
+    }
+  }
+
+  List<Site> _sitesFromListResponse(Map<String, dynamic>? data) {
+    final items = data?['items'] as List? ?? const [];
+    return items
+        .map((item) => Site.fromJson(Map<String, dynamic>.from(item as Map)))
+        .toList();
+  }
+
+  Map<String, dynamic> _cleanQuery(Map<String, dynamic> values) {
+    return Map<String, dynamic>.fromEntries(
+      values.entries.where((entry) {
+        final value = entry.value;
+        return value != null && '$value'.trim().isNotEmpty;
+      }),
+    );
+  }
+
+  AppException _exceptionFrom(Object error) {
+    if (error is! DioException) return AppException(error.toString());
+    final data = error.response?.data;
+    if (data is Map && data['error'] is Map) {
+      final err = Map<String, dynamic>.from(data['error'] as Map);
+      return AppException(
+        err['message'] as String? ?? 'Request failed.',
+        code: err['code'] as String?,
+      );
+    }
+    if (data is Map && data['error'] is String) {
+      return AppException(data['error'] as String);
+    }
+    return AppException(error.message ?? 'Request failed.');
+  }
 }
 
 class MockSitesRepository implements SitesRepository {
@@ -166,7 +346,11 @@ class MockSitesRepository implements SitesRepository {
   }
 
   @override
-  Future<Site> updateSite(String id, Map<String, dynamic> payload) async {
+  Future<Site> updateSite(
+    String id,
+    Map<String, dynamic> payload, {
+    bool correctionOnly = false,
+  }) async {
     await Future<void>.delayed(const Duration(milliseconds: 400));
     final index = _sites.indexWhere((site) => site.id == id);
     final existing = _sites[index];

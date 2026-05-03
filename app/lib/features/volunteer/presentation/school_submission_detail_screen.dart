@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../features/sites/data/sites_repository.dart';
+import '../../../features/auth/presentation/auth_controller.dart';
 import '../../../shared/models/app_enums.dart';
 import '../../../shared/models/site.dart';
 import 'volunteer_home_screen.dart';
@@ -18,7 +19,10 @@ class SchoolSubmissionDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sites = ref.watch(sitesProvider);
+    final session = ref.watch(authControllerProvider).valueOrNull?.session;
+    final sites = session?.user.role == UserRole.fieldWorker
+        ? ref.watch(submittedSitesProvider(session!.user.id))
+        : ref.watch(sitesProvider);
 
     return Scaffold(
       backgroundColor: AppColors.screen(context),

@@ -84,7 +84,6 @@ async function createUser({ name, email, username, password, role }) {
 }
 
 async function authenticate({ email, password, role }) {
-  await ensureDefaultAdmin();
   const normalizedEmail = normalizeEmail(email);
   const user = await User.findOne({ where: { email: normalizedEmail } });
   if (!user) return null;
@@ -105,7 +104,6 @@ async function authenticate({ email, password, role }) {
 }
 
 async function authenticateMobile({ identifier, password, accessRole }) {
-  await ensureDefaultAdmin();
   const normalizedIdentifier = String(identifier || '').trim().toLowerCase();
   const user = await User.findOne({
     where: {

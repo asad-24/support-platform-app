@@ -1174,7 +1174,11 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
       final repository = ref.read(sitesRepositoryProvider);
       final site = widget.siteId == null
           ? await repository.createSite(_payload())
-          : await repository.updateSite(widget.siteId!, _payload());
+          : await repository.updateSite(
+              widget.siteId!,
+              _payload(),
+              correctionOnly: widget.correctionOnly,
+            );
       ref
         ..invalidate(sitesProvider)
         ..invalidate(dashboardSummaryProvider);
@@ -1188,6 +1192,7 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
       }
       if (!mounted) return;
 
+      setState(() => _submitting = false);
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(

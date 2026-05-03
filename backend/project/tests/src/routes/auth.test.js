@@ -11,6 +11,7 @@ const path = require('path');
 
 const bind_routes = require('@core/util/functions/bind_routes');
 const User = require('@src/models/User');
+const AuthStore = require('@src/services/AuthStore');
 const { sequelize } = require('@core/util/classes/Model');
 
 function httpRequest(baseUrl, method, urlPath, { headers = {}, body } = {}) {
@@ -224,7 +225,7 @@ describe('auth routes', () => {
     expect(typeof res.body.data.access_token).toBe('string');
   });
 
-  test('POST /auth/sign-in allows the default admin account to sign in', async () => {
+  test('POST /auth/sign-in does not create a default admin account', async () => {
     const admin = await User.findOne({ where: { email: DEFAULT_ADMIN_EMAIL } });
     expect(admin).toBeNull();
 
@@ -235,20 +236,11 @@ describe('auth routes', () => {
       },
     });
 
-    expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({
-      success: true,
-      data: {
-        user: {
-          email: DEFAULT_ADMIN_EMAIL,
-          role: 'admin',
-        },
-      },
-    });
+    expect(res.status).toBe(401);
+    expect(res.body).toMatchObject({ success: false, error: 'Invalid email or password' });
 
     const storedAdmin = await User.findOne({ where: { email: DEFAULT_ADMIN_EMAIL } });
-    expect(storedAdmin).not.toBeNull();
-    expect(storedAdmin.role).toBe('admin');
+    expect(storedAdmin).toBeNull();
   });
 
   test('POST /auth/sign-in accepts the typo volumtier and stores volunteer', async () => {
@@ -342,6 +334,13 @@ describe('auth routes', () => {
   });
 
   test('POST /auth/admin/users lets an admin create admin or volunteer users', async () => {
+    await AuthStore.createUser({
+      name: 'System Admin',
+      email: DEFAULT_ADMIN_EMAIL,
+      password: DEFAULT_ADMIN_PASSWORD,
+      role: 'admin',
+    });
+
     const signIn = await httpRequest(baseUrl, 'POST', '/auth/sign-in', {
       body: {
         email: DEFAULT_ADMIN_EMAIL,

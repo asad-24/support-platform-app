@@ -11,6 +11,7 @@ const path = require('path');
 
 const bind_routes = require('@core/util/functions/bind_routes');
 const { sequelize } = require('@core/util/classes/Model');
+const AuthStore = require('@src/services/AuthStore');
 
 function httpRequest(baseUrl, method, urlPath, { headers = {}, body } = {}) {
   return new Promise((resolve, reject) => {
@@ -83,6 +84,12 @@ describe('volunteer and admin routes', () => {
   }
 
   async function signInAdmin() {
+    await AuthStore.createUser({
+      name: 'System Admin',
+      email: 'admin@schoolsupportatlas.local',
+      password: 'admin123',
+      role: 'admin',
+    });
     const res = await httpRequest(baseUrl, 'POST', '/auth/sign-in', {
       body: { email: 'admin@schoolsupportatlas.local', password: 'admin123' },
     });

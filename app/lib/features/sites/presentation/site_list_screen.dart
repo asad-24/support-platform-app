@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
+import '../../../features/auth/presentation/auth_controller.dart';
 import '../../../shared/models/app_enums.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/site_card.dart';
@@ -24,7 +25,10 @@ class _SiteListScreenState extends ConsumerState<SiteListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final sites = ref.watch(sitesProvider);
+    final session = ref.watch(authControllerProvider).valueOrNull?.session;
+    final sites = session?.user.role == UserRole.fieldWorker
+        ? ref.watch(submittedSitesProvider(session!.user.id))
+        : ref.watch(sitesProvider);
 
     return Scaffold(
       appBar: AppBar(

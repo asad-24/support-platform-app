@@ -21,12 +21,46 @@ class _VolunteerShellLayoutState extends State<VolunteerShellLayout> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: true,
+      canPop: false, // Prevent default back behavior
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        // Navigator pops if it can, otherwise prevents app closure
-        if (Navigator.of(context).canPop()) {
-          Navigator.of(context).pop();
+        
+        // Handle back navigation within volunteer shell
+        final router = GoRouter.of(context);
+        final currentLocation = widget.currentRoute;
+        
+        if (currentLocation == '/volunteer/profile/edit') {
+          // From profile edit -> profile
+          router.go('/volunteer/profile');
+        } else if (currentLocation == '/volunteer/settings') {
+          // From settings -> profile
+          router.go('/volunteer/profile');
+        } else if (currentLocation == '/volunteer/submitted-schools') {
+          // From submitted schools -> home
+          router.go('/volunteer/home');
+        } else if (currentLocation.startsWith('/volunteer/submitted-schools/')) {
+          // From school detail -> submitted schools
+          router.go('/volunteer/submitted-schools');
+        } else if (currentLocation == '/volunteer/drafts') {
+          // From drafts -> home
+          router.go('/volunteer/home');
+        } else if (currentLocation == '/volunteer/notifications') {
+          // From notifications -> home
+          router.go('/volunteer/home');
+        } else if (currentLocation == '/volunteer/help') {
+          // From help -> home
+          router.go('/volunteer/home');
+        } else if (currentLocation == '/volunteer/profile/setup') {
+          // From profile setup -> home
+          router.go('/volunteer/home');
+        } else {
+          // Default: try to go to home, or let system handle
+          if (currentLocation != '/volunteer/home') {
+            router.go('/volunteer/home');
+          } else {
+            // If already at home, allow app closure
+            Navigator.of(context).pop();
+          }
         }
       },
       child: widget.child,
@@ -54,11 +88,32 @@ class _SitesShellLayoutState extends State<SitesShellLayout> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: true,
+      canPop: false, // Prevent default back behavior
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        if (Navigator.of(context).canPop()) {
-          Navigator.of(context).pop();
+        
+        // Handle back navigation within sites shell
+        final router = GoRouter.of(context);
+        final currentLocation = widget.currentRoute;
+        
+        if (currentLocation.startsWith('/sites/') && currentLocation.contains('/edit')) {
+          // From site edit -> site profile
+          final siteId = currentLocation.split('/')[2];
+          router.go('/sites/$siteId');
+        } else if (currentLocation.startsWith('/sites/') && !currentLocation.contains('/new')) {
+          // From site profile -> sites list
+          router.go('/sites');
+        } else if (currentLocation == '/sites/new') {
+          // From new site -> sites list
+          router.go('/sites');
+        } else {
+          // Default: go to sites list
+          if (currentLocation != '/sites') {
+            router.go('/sites');
+          } else {
+            // If already at sites, allow app closure
+            Navigator.of(context).pop();
+          }
         }
       },
       child: widget.child,

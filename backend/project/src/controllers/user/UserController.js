@@ -1,5 +1,6 @@
 const AuthStore = require('@src/services/AuthStore');
 const ProfileStore = require('@src/services/VolunteerProfileStore');
+const FlutterSchoolStore = require('@src/services/FlutterSchoolStore');
 
 function permissionsFor(role) {
   if (role === 'volunteer') return ['sites:create', 'sites:update:assigned'];
@@ -83,6 +84,28 @@ exports.update_volunteer_profile = async (req, res) => {
   if (!profileBody.fullName && !profileBody.full_name) {
     profileBody.fullName = req.auth.user.name;
   }
+
+  // Handle profile image upload
+  if (req.file) {
+    // Generate URL for the uploaded file
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+    profileBody.profileImagePath = `${baseUrl}/uploads/${req.file.filename}`;
+  }
+
   await ProfileStore.upsertForUser(req.auth.user.id, profileBody);
   res.json(await flutterUser(req.auth.user));
+};
+
+exports.submitted_sites = async (req, res) => {
+  try {
+    res.json(await FlutterSchoolStore.listSubmittedSites(req.params.userId, req.query, req.auth.user));
+  } catch (error) {
+    if (error.body) return res.status(error.status || 500).json(error.body);
+    return res.status(error.status || 500).json({
+      error: {
+        code: error.status === 404 ? 'NOT_FOUND' : 'REQUEST_FAILED',
+        message: error.message || 'Request failed.',
+      },
+    });
+  }
 };

@@ -13,7 +13,9 @@ class SchoolLocation extends Model {
         country: { type: DataTypes.STRING, allowNull: false, defaultValue: 'Nigeria' },
         state: { type: DataTypes.STRING, allowNull: true },
         lga: { type: DataTypes.STRING, allowNull: true },
+        ward: { type: DataTypes.STRING, allowNull: true },
         community: { type: DataTypes.STRING, allowNull: true },
+        landmark: { type: DataTypes.STRING, allowNull: true },
         address: { type: DataTypes.TEXT, allowNull: true },
       },
       { sequelize, tableName: 'school_locations', modelName: 'SchoolLocation' }

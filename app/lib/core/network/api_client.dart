@@ -16,6 +16,22 @@ final dioProvider = Provider<Dio>((ref) {
     ),
   );
 
+  dio.interceptors.add(
+    LogInterceptor(
+      requestBody: true,
+      responseBody: true,
+      error: true,
+      logPrint: (object) {
+        assert(() {
+          // Visible only in debug/profile console output. Helps verify that
+          // add-school calls are reaching the API instead of local mocks.
+          // ignore: avoid_print
+          print(object);
+          return true;
+        }());
+      },
+    ),
+  );
   dio.interceptors.add(AuthInterceptor(dio, tokenStorage));
   return dio;
 });

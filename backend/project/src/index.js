@@ -15,6 +15,9 @@ const corsOrigins = String(config('server.corsOrigins', ''))
 app.use(cors({ origin: corsOrigins.length ? corsOrigins : true, credentials: true }));
 app.use(express.json());
 
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 debug('server: binding routes');
 bind_routes(app, routes, {
   controllers_base_dir: path.resolve(__dirname, 'controllers'),

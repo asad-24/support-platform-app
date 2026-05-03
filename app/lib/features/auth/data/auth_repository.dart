@@ -252,16 +252,23 @@ class ApiAuthRepository implements AuthRepository {
     String? profileImagePath,
   }) async {
     try {
+      final formData = FormData.fromMap({
+        'fullName': name,
+        'phone': phone,
+        'state': state,
+        'lga': lga,
+        'address': address,
+      });
+
+      // Add profile image if provided
+      if (profileImagePath != null && profileImagePath.isNotEmpty) {
+        final file = await MultipartFile.fromFile(profileImagePath, filename: 'profile_image.jpg');
+        formData.files.add(MapEntry('profileImage', file));
+      }
+
       final response = await _dio.patch<Map<String, dynamic>>(
         '/users/me/volunteer-profile',
-        data: {
-          'fullName': name,
-          'phone': phone,
-          'state': state,
-          'lga': lga,
-          'address': address,
-          'profileImagePath': profileImagePath,
-        },
+        data: formData,
       );
       final updated = session.copyWith(
         user: User.fromJson(response.data ?? {}),

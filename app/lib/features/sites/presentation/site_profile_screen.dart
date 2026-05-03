@@ -19,9 +19,11 @@ class SiteProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sites = ref.watch(sitesProvider);
     final session = ref.watch(authControllerProvider).valueOrNull?.session;
     final canSeeSafeguarding = session?.user.role == UserRole.admin;
+    final sites = session?.user.role == UserRole.fieldWorker
+        ? ref.watch(submittedSitesProvider(session!.user.id))
+        : ref.watch(sitesProvider);
 
     return Scaffold(
       appBar: AppBar(

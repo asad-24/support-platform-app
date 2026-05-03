@@ -40,12 +40,18 @@ module.exports = {
     await addColumn(queryInterface, 'users', 'username', {
       type: Sequelize.STRING,
       allowNull: true,
+    });
+    await queryInterface.addIndex('users', ['username'], {
       unique: true,
+      name: 'users_username_unique',
     });
     await addColumn(queryInterface, 'users', 'refresh_token', {
       type: Sequelize.STRING,
       allowNull: true,
+    });
+    await queryInterface.addIndex('users', ['refresh_token'], {
       unique: true,
+      name: 'users_refresh_token_unique',
     });
     await addColumn(queryInterface, 'users', 'refresh_token_created_at', {
       type: Sequelize.DATE,
@@ -119,6 +125,8 @@ module.exports = {
       await removeColumn(queryInterface, 'volunteer_profiles', column);
     }
 
+    await queryInterface.removeIndex('users', 'users_refresh_token_unique');
+    await queryInterface.removeIndex('users', 'users_username_unique');
     await removeColumn(queryInterface, 'users', 'refresh_token_created_at');
     await removeColumn(queryInterface, 'users', 'refresh_token');
     await removeColumn(queryInterface, 'users', 'username');

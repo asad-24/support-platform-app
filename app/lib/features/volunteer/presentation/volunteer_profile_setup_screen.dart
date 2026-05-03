@@ -32,6 +32,12 @@ class _VolunteerProfileSetupScreenState
     FlowStepMeta(title: 'Address', subtitle: 'Nigeria location and photo.'),
   ];
 
+  static const _editSteps = [
+    FlowStepMeta(title: 'Contact Info', subtitle: 'Update name and phone.'),
+    FlowStepMeta(title: 'Address', subtitle: 'Update location.'),
+    FlowStepMeta(title: 'Photo', subtitle: 'Update profile picture.'),
+  ];
+
   final _formKey = GlobalKey<FormState>();
   final _locationsService = NigeriaLocationsService();
   final _picker = ImagePicker();
@@ -97,7 +103,8 @@ class _VolunteerProfileSetupScreenState
     });
 
     final authState = ref.watch(authControllerProvider);
-    final isLast = _step == _steps.length - 1;
+    final steps = widget.editMode ? _editSteps : _steps;
+    final isLast = _step == steps.length - 1;
 
     return Scaffold(
       appBar: AppBar(
@@ -147,7 +154,7 @@ class _VolunteerProfileSetupScreenState
                       padding: const EdgeInsets.fromLTRB(16, 18, 16, 12),
                       child: AddSiteFlowTimeline(
                         currentStep: _step,
-                        steps: _steps,
+                        steps: steps,
                       ),
                     ),
                     Expanded(
@@ -174,9 +181,9 @@ class _VolunteerProfileSetupScreenState
                             children: [
                               AddSiteStepHeader(
                                 stepNumber: _step + 1,
-                                totalSteps: _steps.length,
-                                title: _steps[_step].title,
-                                subtitle: _steps[_step].subtitle,
+                                totalSteps: steps.length,
+                                title: steps[_step].title,
+                                subtitle: steps[_step].subtitle,
                               ),
                               const SizedBox(height: 14),
                               AddSiteStepCard(child: _buildStep()),
@@ -227,6 +234,147 @@ class _VolunteerProfileSetupScreenState
   }
 
   Widget _buildStep() {
+    if (widget.editMode) {
+      switch (_step) {
+        case 0:
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const AddSiteFormSectionHeader(
+                title: 'Volunteer Name',
+                description: 'Your registered name (not editable).',
+              ),
+              AddSiteLabeledTextField(
+                controller: _name,
+                heading: 'Volunteer name',
+                hintText: 'Enter volunteer name',
+                required: true,
+                enabled: false, // Make it read-only in edit mode
+                prefixIcon: const Icon(Icons.badge_outlined),
+              ),
+              const SizedBox(height: 18),
+              const AddSiteFormSectionHeader(
+                title: 'Phone Number',
+                description: 'Update your reachable Nigerian phone number.',
+              ),
+              AddSiteLabeledTextField(
+                controller: _phone,
+                heading: 'Phone number',
+                hintText: 'e.g 0803-456-7890',
+                required: true,
+                keyboardType: TextInputType.phone,
+                prefixIcon: const Icon(Icons.call_outlined),
+              ),
+            ],
+          );
+        case 1:
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const AddSiteFormSectionHeader(
+                title: 'Address',
+                description: 'Update your Nigerian location.',
+              ),
+              if (_loadingLocations)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (_locationsError != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _locationsError!,
+                        style: const TextStyle(color: AppColors.danger),
+                      ),
+                      const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        onPressed: _loadLocations,
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Column(
+                  children: [
+                    AddSiteLabeledDropdown<String>(
+                      value: _state.text.isEmpty ? null : _state.text,
+                      heading: 'State',
+                      hintText: 'Select state',
+                      required: true,
+                      items: _states
+                          .map(
+                            (state) => DropdownMenuItem(
+                              value: state.name,
+                              child: Text(state.name),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _state.text = value ?? '';
+                          _lga.text = '';
+                        });
+                      },
+                      prefixIcon: const Icon(Icons.map_outlined),
+                    ),
+                    const SizedBox(height: 16),
+                    AddSiteLabeledDropdown<String>(
+                      value: _lga.text.isEmpty ? null : _lga.text,
+                      heading: 'LGA',
+                      hintText: 'Select LGA',
+                      required: true,
+                      items: _states
+                          .where((state) => state.name == _state.text)
+                          .expand((state) => state.lgas)
+                          .map(
+                            (lga) => DropdownMenuItem(
+                              value: lga,
+                              child: Text(lga),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() => _lga.text = value ?? '');
+                      },
+                      prefixIcon: const Icon(Icons.location_city_outlined),
+                    ),
+                    const SizedBox(height: 16),
+                    AddSiteLabeledTextField(
+                      controller: _address,
+                      heading: 'Address',
+                      hintText: 'e.g Behind the market, Lagos Island',
+                      required: true,
+                      prefixIcon: const Icon(Icons.home_outlined),
+                    ),
+                  ],
+                ),
+            ],
+          );
+        default:
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const AddSiteFormSectionHeader(
+                title: 'Profile Picture',
+                description: 'Update your profile picture.',
+              ),
+              Center(
+                child: _ProfileImagePicker(
+                  image: _profileImage,
+                  initials: _initials(_name.text),
+                  onPick: _pickProfileImage,
+                ),
+              ),
+            ],
+          );
+      }
+    }
     switch (_step) {
       case 0:
         return Column(
@@ -360,16 +508,31 @@ class _VolunteerProfileSetupScreenState
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    await ref
-        .read(authControllerProvider.notifier)
-        .completeVolunteerProfile(
-          name: _name.text.trim(),
-          phone: _phone.text.trim(),
-          stateName: _state.text.trim(),
-          lga: _lga.text.trim(),
-          address: _address.text.trim(),
-          profileImagePath: _profileImage?.path,
-        );
+    if (widget.editMode) {
+      await ref
+          .read(authControllerProvider.notifier)
+          .completeVolunteerProfile(
+            name: _name.text, // Keep existing
+            phone: _phone.text.trim(),
+            stateName: _state.text, // Keep existing
+            lga: _lga.text, // Keep existing
+            address: _address.text, // Keep existing
+            profileImagePath: _profileImage?.path,
+          );
+    } else {
+      await ref
+          .read(authControllerProvider.notifier)
+          .completeVolunteerProfile(
+            name: _name.text.trim(),
+            phone: _phone.text.trim(),
+            stateName: _state.text.trim(),
+            lga: _lga.text.trim(),
+            address: _address.text.trim(),
+            profileImagePath: _profileImage?.path,
+          );
+    }
+    if (!mounted) return;
+    context.go('/volunteer/home');
   }
 
   Future<void> _pickProfileImage() async {
