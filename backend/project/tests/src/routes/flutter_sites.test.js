@@ -1,16 +1,21 @@
-process.env.DB_DIALECT = 'sqlite';
-process.env.DB_STORAGE = ':memory:';
+process.env.MONGODB_TEST_DB_NAME = 'support_platform_app_test';
 process.env.DB_LOGGING = 'false';
+jest.setTimeout(60000);
 
 const http = require('node:http');
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
+
+process.env.STORAGE_LOCAL_ROOT = path.join(__dirname, '..', '..', '..', '.tmp', 'uploads-sites-test');
 
 const bind_routes = require('@core/util/functions/bind_routes');
 const { sequelize } = require('@core/util/classes/Model');
+const FileStorage = require('@src/services/FileStorage');
 const AuthStore = require('@src/services/AuthStore');
 const User = require('@src/models/User');
 const School = require('@src/models/School');
+const SchoolPhoto = require('@src/models/SchoolPhoto');
 
 function httpRequest(baseUrl, method, urlPath, { headers = {}, body } = {}) {
   return new Promise((resolve, reject) => {
@@ -41,6 +46,64 @@ function httpRequest(baseUrl, method, urlPath, { headers = {}, body } = {}) {
 
     req.on('error', reject);
     if (payload) req.write(payload);
+    req.end();
+  });
+}
+
+function multipartBody({ fields = {}, files = [] }) {
+  const boundary = `----ssa-test-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const chunks = [];
+  const push = (value) => chunks.push(Buffer.isBuffer(value) ? value : Buffer.from(String(value)));
+
+  for (const [name, value] of Object.entries(fields)) {
+    push(`--${boundary}\r\n`);
+    push(`Content-Disposition: form-data; name="${name}"\r\n\r\n`);
+    push(`${value}\r\n`);
+  }
+
+  for (const file of files) {
+    push(`--${boundary}\r\n`);
+    push(`Content-Disposition: form-data; name="${file.name}"; filename="${file.filename}"\r\n`);
+    push(`Content-Type: ${file.contentType}\r\n\r\n`);
+    push(file.content);
+    push('\r\n');
+  }
+
+  push(`--${boundary}--\r\n`);
+  return { boundary, body: Buffer.concat(chunks) };
+}
+
+function httpMultipartRequest(baseUrl, method, urlPath, { headers = {}, fields = {}, files = [] } = {}) {
+  return new Promise((resolve, reject) => {
+    const url = new URL(urlPath, baseUrl);
+    const { boundary, body } = multipartBody({ fields, files });
+    const options = {
+      method,
+      hostname: url.hostname,
+      port: url.port,
+      path: url.pathname + (url.search || ''),
+      headers: {
+        'content-type': `multipart/form-data; boundary=${boundary}`,
+        'content-length': body.length,
+        ...headers,
+      },
+    };
+
+    const req = http.request(options, (res) => {
+      let data = '';
+      res.setEncoding('utf8');
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        try {
+          resolve({ status: res.statusCode, headers: res.headers, body: data ? JSON.parse(data) : null });
+        } catch (_) {
+          resolve({ status: res.statusCode, headers: res.headers, body: data });
+        }
+      });
+    });
+
+    req.on('error', reject);
+    req.write(body);
     req.end();
   });
 }
@@ -124,8 +187,10 @@ describe('flutter site contract routes', () => {
 
   beforeAll(async () => {
     await sequelize.sync({ force: true });
+    fs.rmSync(FileStorage.uploadRoot(), { recursive: true, force: true });
     app = express();
     app.use(express.json());
+    app.use('/uploads', express.static(FileStorage.uploadRoot()));
     bind_routes(app, undefined, {
       controllers_base_dir: path.join(process.cwd(), 'src', 'controllers'),
       middlewares_base_dir: path.join(process.cwd(), 'src', 'middlewares'),
@@ -140,6 +205,7 @@ describe('flutter site contract routes', () => {
 
   beforeEach(async () => {
     await sequelize.sync({ force: true });
+    fs.rmSync(FileStorage.uploadRoot(), { recursive: true, force: true });
     volunteer = await AuthStore.createUser({
       name: 'Field Volunteer',
       username: 'field_volunteer',
@@ -303,6 +369,42 @@ describe('flutter site contract routes', () => {
       uploadedBy: String(volunteer.user.id),
     });
     expect(media.body.fileUrl).toContain('/sites/');
+
+    const uploadedMedia = await httpMultipartRequest(baseUrl, 'POST', `/sites/${pending.body.id}/media`, {
+      headers: volunteerAuth(),
+      fields: {
+        id: 'media-upload-001',
+        type: 'sanitation',
+        caption: 'Sanitation block',
+        latitude: '12.5',
+        longitude: '8.7',
+      },
+      files: [{
+        name: 'media',
+        filename: 'school-photo.jpg',
+        contentType: 'image/jpeg',
+        content: Buffer.from('school-image-bytes'),
+      }],
+    });
+    expect(uploadedMedia.status).toBe(201);
+    expect(uploadedMedia.body).toMatchObject({
+      id: 'media-upload-001',
+      siteId: pending.body.id,
+      fileUrl: expect.stringMatching(/^http:\/\/.+\/uploads\/schools\/\d+\/school-photo-/),
+      localPath: expect.stringMatching(/^uploads\/schools\/\d+\/school-photo-/),
+      type: 'sanitation',
+      latitude: 12.5,
+      longitude: 8.7,
+    });
+
+    const storedPhoto = await SchoolPhoto.findOne({ where: { clientId: 'media-upload-001' } });
+    expect(storedPhoto.fileUrl).toBe(uploadedMedia.body.fileUrl);
+    expect(storedPhoto.localPath).toBe(uploadedMedia.body.localPath);
+
+    const imagePath = new URL(uploadedMedia.body.fileUrl).pathname;
+    const image = await httpRequest(baseUrl, 'GET', imagePath);
+    expect(image.status).toBe(200);
+    expect(image.body).toBe('school-image-bytes');
 
     const assessment = await httpRequest(baseUrl, 'POST', `/sites/${pending.body.id}/assessment`, {
       headers: volunteerAuth(),

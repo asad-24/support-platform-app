@@ -169,7 +169,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (widget.selectedRole == UserAccessRole.volunteer) {
       await _showVolunteerGuideIfNeeded();
       if (!mounted) return;
-      context.go('/welcome/volunteer');
+      context.go(widget.selectedRole.dashboardPath);
       return;
     }
 

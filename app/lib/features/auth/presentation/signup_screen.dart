@@ -41,11 +41,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       next.whenOrNull(
         data: (state) {
           if (state.isAuthenticated) {
-            context.go(
-              widget.selectedRole == UserAccessRole.volunteer
-                  ? '/volunteer/profile/setup'
-                  : widget.selectedRole.dashboardPath,
-            );
+            context.go(widget.selectedRole.dashboardPath);
           }
         },
         error: (error, _) {

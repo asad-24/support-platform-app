@@ -59,7 +59,7 @@ describe('jobs_testmeta_inline', () => {
   });
 
   afterAll(async () => {
-    // Close any oxen-queue pools created during this suite
+    // Close Mongo-backed queue processors created during this suite
     const ox = require('../../core/instances/oxen');
     try { if (ox && typeof ox.closeAll === 'function') await ox.closeAll(); } catch (_) {}
   });

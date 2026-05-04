@@ -1,6 +1,7 @@
 'use strict';
 
 const FlutterSchoolStore = require('@src/services/FlutterSchoolStore');
+const FileStorage = require('@src/services/FileStorage');
 
 function handleError(res, error) {
   if (error.body) return res.status(error.status || 500).json(error.body);
@@ -56,14 +57,22 @@ class SiteController {
 
   async media(req, res) {
     try {
-      // Handle file upload
       let mediaData = req.body;
       if (req.file) {
-        // Generate URL for the uploaded file
-        const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-        mediaData.url = `${baseUrl}/uploads/${req.file.filename}`;
-        mediaData.filename = req.file.originalname;
-        mediaData.mimeType = req.file.mimetype;
+        const stored = await FileStorage.saveUploadedFile(req.file, {
+          folder: `schools/${req.params.id}`,
+          req,
+        });
+        mediaData = {
+          ...mediaData,
+          url: stored.publicUrl,
+          fileUrl: stored.publicUrl,
+          localPath: stored.localPath,
+          filename: stored.filename,
+          originalFilename: req.file.originalname,
+          mimeType: stored.mimeType,
+          size: stored.size,
+        };
       }
       return res.status(201).json(await FlutterSchoolStore.uploadMedia(req.params.id, req.auth.user, mediaData));
     } catch (error) {

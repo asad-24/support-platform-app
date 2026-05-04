@@ -1,5 +1,5 @@
 const User = require('@src/models/User');
-const { Op } = require('sequelize');
+const Op = require('@core/util/classes/Operators');
 const {
   hashPassword,
   issueAccessToken,

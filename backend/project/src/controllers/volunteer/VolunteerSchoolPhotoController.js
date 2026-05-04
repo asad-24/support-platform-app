@@ -1,6 +1,7 @@
 'use strict';
 
 const SchoolStore = require('@src/services/SchoolStore');
+const FileStorage = require('@src/services/FileStorage');
 
 function handleError(res, error) {
   return res.status(error.status || 500).json({ success: false, error: error.message || 'Request failed' });
@@ -28,6 +29,25 @@ class VolunteerSchoolPhotoController {
       const school = await this.getSchool(req, res);
       if (!school) return;
       await SchoolStore.requireEditable(school);
+      if (req.file) {
+        const stored = await FileStorage.saveUploadedFile(req.file, {
+          folder: `schools/${school.id}`,
+          req,
+        });
+        const data = SchoolStore.normalizePhotoPayload({
+          ...req.body,
+          fileUrl: stored.publicUrl,
+          url: stored.publicUrl,
+          localPath: stored.localPath,
+        });
+        const row = await SchoolStore.SchoolPhoto.create({
+          ...data,
+          schoolId: school.id,
+          uploadedByUserId: req.auth.user.id,
+        });
+        return res.status(201).json({ success: true, data: { items: [SchoolStore.serializePhoto(row)] } });
+      }
+
       const payloads = Array.isArray(req.body.photos) ? req.body.photos : [req.body];
       const rows = [];
       for (const payload of payloads) {

@@ -1,9 +1,9 @@
-process.env.DB_DIALECT = 'sqlite';
-process.env.DB_STORAGE = ':memory:';
+process.env.MONGODB_TEST_DB_NAME = 'support_platform_app_test';
 process.env.DB_LOGGING = 'false';
 process.env.ADMIN_EMAIL = 'admin@schoolsupportatlas.local';
 process.env.ADMIN_PASSWORD = 'admin123';
 process.env.ADMIN_NAME = 'System Admin';
+jest.setTimeout(60000);
 
 const http = require('node:http');
 const express = require('express');

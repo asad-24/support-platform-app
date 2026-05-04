@@ -76,8 +76,6 @@ class AuthController extends AsyncNotifier<AuthState> {
   Future<void> completeVolunteerProfile({
     required String name,
     required String phone,
-    required String stateName,
-    required String lga,
     required String address,
     String? profileImagePath,
   }) async {
@@ -91,8 +89,6 @@ class AuthController extends AsyncNotifier<AuthState> {
             session: session,
             name: name,
             phone: phone,
-            state: stateName,
-            lga: lga,
             address: address,
             profileImagePath: profileImagePath,
           );

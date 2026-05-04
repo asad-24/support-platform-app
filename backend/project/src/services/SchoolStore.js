@@ -1,6 +1,6 @@
 'use strict';
 
-const { Op } = require('sequelize');
+const Op = require('@core/util/classes/Operators');
 const { sequelize } = require('@core/util/classes/Model');
 const User = require('@src/models/User');
 const VolunteerProfile = require('@src/models/VolunteerProfile');
@@ -116,7 +116,8 @@ function normalizeWelfarePayload(input = {}) {
 function normalizePhotoPayload(input = {}) {
   return clean({
     fileUrl: pick(input, 'fileUrl', 'file_url') || pick(input, 'url'),
-    category: pick(input, 'category') || 'other',
+    localPath: pick(input, 'localPath', 'local_path'),
+    category: pick(input, 'category') || pick(input, 'type') || 'other',
     caption: pick(input, 'caption'),
   });
 }
@@ -216,6 +217,7 @@ function serializePhoto(row) {
     school_id: data.schoolId,
     uploaded_by_user_id: data.uploadedByUserId,
     file_url: data.fileUrl,
+    local_path: data.localPath,
     category: data.category,
     caption: data.caption,
     created_at: data.createdAt,

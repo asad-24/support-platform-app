@@ -1,27 +1,32 @@
+process.env.MONGODB_TEST_DB_NAME = 'support_platform_app_test';
+jest.setTimeout(60000);
+
 const core = require('../../core/util/classes/Model');
 const TestMeta = require('../../src/models/TestMeta');
 const cfg = require('../../core/util/functions/config');
 
-describe('db_sequalize', () => {
+describe('db_mongodb', () => {
+  beforeAll(async () => {
+    await core.sequelize.sync({ force: true });
+  });
+
+  afterAll(async () => {
+    await core.sequelize.close();
+  });
+
   test('db_config_present', () => {
-    const db_cfg = cfg('db');
-    expect(typeof db_cfg).toBe('object');
-    expect(db_cfg).toHaveProperty('dialect');
+    const dbCfg = cfg('db');
+    expect(typeof dbCfg).toBe('object');
+    expect(dbCfg.dialect).toBe('mongodb');
   });
 
   test('insert_two_and_fetch', async () => {
-    const sequelize = core.sequelize;
-    const timeout = (ms) => new Promise((resolve) => setTimeout(() => resolve('timeout'), ms));
-    const auth = await Promise.race([sequelize.authenticate().then(() => 'ok').catch(() => 'fail'), timeout(1500)]);
-    if (auth !== 'ok') { expect(true).toBe(true); return; }
-    await TestMeta.sync({ alter: false });
+    await core.sequelize.authenticate();
+    await TestMeta.sync();
     await TestMeta.destroy({ where: { key: ['t1', 't2'] } });
     await TestMeta.create({ key: 't1', value: 'v1' });
     await TestMeta.create({ key: 't2', value: 'v2' });
     const rows = await TestMeta.findAll({ where: { key: ['t1', 't2'] }, order: [['key', 'ASC']] });
-    expect(Array.isArray(rows)).toBe(true);
-    expect(rows.length).toBe(2);
-    expect(rows[0].key).toBe('t1');
-    expect(rows[1].key).toBe('t2');
+    expect(rows.map((row) => row.key)).toEqual(['t1', 't2']);
   });
 });

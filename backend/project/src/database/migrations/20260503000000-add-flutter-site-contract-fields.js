@@ -8,7 +8,7 @@ async function removeColumn(queryInterface, table, column) {
   await queryInterface.removeColumn(table, column);
 }
 
-/** @type {import('sequelize-cli').Migration} */
+/** MongoDB migration */
 module.exports = {
   async up(queryInterface, Sequelize) {
     await addColumn(queryInterface, 'schools', 'unique_site_id', {

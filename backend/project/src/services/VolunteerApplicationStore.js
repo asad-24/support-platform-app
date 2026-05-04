@@ -3,6 +3,8 @@
 const crypto = require('node:crypto');
 const VolunteerApplication = require('@src/models/VolunteerApplication');
 const User = require('@src/models/User');
+const AuthStore = require('@src/services/AuthStore');
+const ProfileStore = require('@src/services/VolunteerProfileStore');
 const { normalizeEmail } = require('@src/services/auth/credentials');
 
 const REQUIRED_FIELDS = [
@@ -55,6 +57,7 @@ function normalizePayload(body = {}) {
     ['motivation', 'motivation'],
     ['emergencyContactName', 'emergency_contact_name'],
     ['emergencyContactPhone', 'emergency_contact_phone'],
+    ['password', 'password'],
   ];
 
   const payload = {};
@@ -64,6 +67,52 @@ function normalizePayload(body = {}) {
   }
   if (payload.email) payload.email = normalizeEmail(payload.email);
   return payload;
+}
+
+function sanitizeUsernameBase(value) {
+  const base = String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 24);
+  return base || 'volunteer';
+}
+
+async function generateUsername(application) {
+  const emailLocal = String(application.email || '').split('@')[0];
+  const base = sanitizeUsernameBase(application.fullName || emailLocal);
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    const username = attempt === 0 ? base : `${base}_${attempt + 1}`;
+    const existing = await User.findOne({ where: { username } });
+    if (!existing) return username;
+  }
+  return `${base}_${crypto.randomBytes(3).toString('hex')}`;
+}
+
+function generateTemporaryPassword() {
+  return `Temp@${crypto.randomBytes(6).toString('hex')}`;
+}
+
+function profilePayloadFromApplication(application) {
+  return {
+    fullName: application.fullName,
+    phone: application.phone,
+    state: application.state,
+    lga: application.lga,
+    address: application.address,
+    dateOfBirth: application.dateOfBirth,
+    gender: application.gender,
+    educationLevel: application.educationLevel,
+    occupation: application.occupation,
+    skills: application.skills,
+    volunteerExperience: application.volunteerExperience,
+    availability: application.availability,
+    volunteeringMode: application.volunteeringMode,
+    motivation: application.motivation,
+    emergencyContactName: application.emergencyContactName,
+    emergencyContactPhone: application.emergencyContactPhone,
+  };
 }
 
 function validate(payload) {
@@ -119,8 +168,82 @@ async function create(body = {}) {
   });
 }
 
+async function list(query = {}) {
+  const where = {};
+  if (query.status) where.status = String(query.status).trim().toLowerCase();
+  return VolunteerApplication.findAll({ where, order: [['createdAt', 'DESC']] });
+}
+
+async function getPending(applicationId) {
+  const application = await VolunteerApplication.findByPk(applicationId);
+  if (!application) {
+    const error = new Error('Volunteer application not found.');
+    error.status = 404;
+    error.code = 'APPLICATION_NOT_FOUND';
+    throw error;
+  }
+  if (application.status !== 'pending') {
+    const error = new Error('Volunteer application has already been reviewed.');
+    error.status = 409;
+    error.code = 'APPLICATION_ALREADY_REVIEWED';
+    throw error;
+  }
+  return application;
+}
+
+async function approve(applicationId, adminUserId, body = {}) {
+  const application = await getPending(applicationId);
+  const existingUser = await User.findOne({ where: { email: application.email } });
+  if (existingUser) {
+    const error = new Error('An account already exists for this application email.');
+    error.status = 409;
+    error.code = 'EMAIL_TAKEN';
+    throw error;
+  }
+
+  const username = await generateUsername(application);
+  const password = application.password || body.password || generateTemporaryPassword();
+  const auth = await AuthStore.createUser({
+    name: application.fullName,
+    email: application.email,
+    username,
+    password,
+    role: 'volunteer',
+  });
+
+  const profile = await ProfileStore.upsertForUser(auth.user.id, profilePayloadFromApplication(application));
+  await application.update({
+    status: 'approved',
+    reviewedByUserId: adminUserId,
+    reviewedAt: new Date(),
+    adminNotes: body.adminNotes || body.notes || application.adminNotes || null,
+  });
+
+  return {
+    application,
+    user: auth.user,
+    profile,
+    username,
+    temporaryPassword: application.password ? null : password,
+  };
+}
+
+async function reject(applicationId, adminUserId, body = {}) {
+  const application = await getPending(applicationId);
+  await application.update({
+    status: 'rejected',
+    reviewedByUserId: adminUserId,
+    reviewedAt: new Date(),
+    adminNotes: body.adminNotes || body.notes || application.adminNotes || null,
+  });
+  return application;
+}
+
 module.exports = {
+  approve,
   create,
+  list,
   normalizePayload,
+  reject,
   validate,
 };

@@ -1,6 +1,6 @@
 'use strict';
 
-const { Op } = require('sequelize');
+const Op = require('@core/util/classes/Operators');
 const User = require('@src/models/User');
 const VolunteerProfile = require('@src/models/VolunteerProfile');
 const AuthStore = require('@src/services/AuthStore');

@@ -44,8 +44,6 @@ abstract class AuthRepository {
     required AuthSession session,
     required String name,
     required String phone,
-    required String state,
-    required String lga,
     required String address,
     String? profileImagePath,
   });
@@ -246,8 +244,6 @@ class ApiAuthRepository implements AuthRepository {
     required AuthSession session,
     required String name,
     required String phone,
-    required String state,
-    required String lga,
     required String address,
     String? profileImagePath,
   }) async {
@@ -255,14 +251,15 @@ class ApiAuthRepository implements AuthRepository {
       final formData = FormData.fromMap({
         'fullName': name,
         'phone': phone,
-        'state': state,
-        'lga': lga,
         'address': address,
       });
 
       // Add profile image if provided
       if (profileImagePath != null && profileImagePath.isNotEmpty) {
-        final file = await MultipartFile.fromFile(profileImagePath, filename: 'profile_image.jpg');
+        final file = await MultipartFile.fromFile(
+          profileImagePath,
+          filename: 'profile_image.jpg',
+        );
         formData.files.add(MapEntry('profileImage', file));
       }
 
@@ -520,16 +517,12 @@ class MockAuthRepository implements AuthRepository {
     required AuthSession session,
     required String name,
     required String phone,
-    required String state,
-    required String lga,
     required String address,
     String? profileImagePath,
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 450));
     if (name.trim().length < 2 ||
         phone.trim().length < 7 ||
-        state.trim().isEmpty ||
-        lga.trim().isEmpty ||
         address.trim().length < 4) {
       throw const AppException('Complete your name, phone, and address.');
     }
@@ -538,8 +531,6 @@ class MockAuthRepository implements AuthRepository {
       user: session.user.copyWith(
         name: name.trim(),
         phone: phone.trim(),
-        state: state.trim(),
-        lga: lga.trim(),
         address: address.trim(),
         profileImagePath: profileImagePath,
         profileComplete: true,

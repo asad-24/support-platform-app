@@ -33,8 +33,8 @@ class _VolunteerProfileSetupScreenState
   ];
 
   static const _editSteps = [
-    FlowStepMeta(title: 'Contact Info', subtitle: 'Update name and phone.'),
-    FlowStepMeta(title: 'Address', subtitle: 'Update location.'),
+    FlowStepMeta(title: 'Contact', subtitle: 'Update name and phone.'),
+    FlowStepMeta(title: 'Address', subtitle: 'Update address.'),
     FlowStepMeta(title: 'Photo', subtitle: 'Update profile picture.'),
   ];
 
@@ -52,6 +52,7 @@ class _VolunteerProfileSetupScreenState
   bool _loadingLocations = true;
   String? _locationsError;
   XFile? _profileImage;
+  String? _profileImageUrl;
   List<NigeriaStateOption> _states = [];
 
   @override
@@ -66,10 +67,10 @@ class _VolunteerProfileSetupScreenState
       _address.text = user.address ?? '';
       final imagePath = user.profileImagePath;
       if (imagePath != null && imagePath.isNotEmpty) {
-        _profileImage = XFile(imagePath);
+        _profileImageUrl = imagePath;
       }
     }
-    _loadLocations();
+    if (!widget.editMode) _loadLocations();
   }
 
   @override
@@ -242,14 +243,13 @@ class _VolunteerProfileSetupScreenState
             children: [
               const AddSiteFormSectionHeader(
                 title: 'Volunteer Name',
-                description: 'Your registered name (not editable).',
+                description: 'Update the name shown on your profile.',
               ),
               AddSiteLabeledTextField(
                 controller: _name,
                 heading: 'Volunteer name',
                 hintText: 'Enter volunteer name',
                 required: true,
-                enabled: false, // Make it read-only in edit mode
                 prefixIcon: const Icon(Icons.badge_outlined),
               ),
               const SizedBox(height: 18),
@@ -273,87 +273,16 @@ class _VolunteerProfileSetupScreenState
             children: [
               const AddSiteFormSectionHeader(
                 title: 'Address',
-                description: 'Update your Nigerian location.',
+                description: 'Update your address or nearest landmark.',
               ),
-              if (_loadingLocations)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else if (_locationsError != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _locationsError!,
-                        style: const TextStyle(color: AppColors.danger),
-                      ),
-                      const SizedBox(height: 10),
-                      OutlinedButton.icon(
-                        onPressed: _loadLocations,
-                        icon: const Icon(Icons.refresh_rounded),
-                        label: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                )
-              else
-                Column(
-                  children: [
-                    AddSiteLabeledDropdown<String>(
-                      value: _state.text.isEmpty ? null : _state.text,
-                      heading: 'State',
-                      hintText: 'Select state',
-                      required: true,
-                      items: _states
-                          .map(
-                            (state) => DropdownMenuItem(
-                              value: state.name,
-                              child: Text(state.name),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _state.text = value ?? '';
-                          _lga.text = '';
-                        });
-                      },
-                      prefixIcon: const Icon(Icons.map_outlined),
-                    ),
-                    const SizedBox(height: 16),
-                    AddSiteLabeledDropdown<String>(
-                      value: _lga.text.isEmpty ? null : _lga.text,
-                      heading: 'LGA',
-                      hintText: 'Select LGA',
-                      required: true,
-                      items: _states
-                          .where((state) => state.name == _state.text)
-                          .expand((state) => state.lgas)
-                          .map(
-                            (lga) => DropdownMenuItem(
-                              value: lga,
-                              child: Text(lga),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        setState(() => _lga.text = value ?? '');
-                      },
-                      prefixIcon: const Icon(Icons.location_city_outlined),
-                    ),
-                    const SizedBox(height: 16),
-                    AddSiteLabeledTextField(
-                      controller: _address,
-                      heading: 'Address',
-                      hintText: 'e.g Behind the market, Lagos Island',
-                      required: true,
-                      prefixIcon: const Icon(Icons.home_outlined),
-                    ),
-                  ],
-                ),
+              AddSiteLabeledTextField(
+                controller: _address,
+                heading: 'Address',
+                hintText: 'Street, area, or nearest landmark',
+                required: true,
+                maxLines: 3,
+                prefixIcon: const Icon(Icons.home_outlined),
+              ),
             ],
           );
         default:
@@ -367,6 +296,7 @@ class _VolunteerProfileSetupScreenState
               Center(
                 child: _ProfileImagePicker(
                   image: _profileImage,
+                  imageUrl: _profileImageUrl,
                   initials: _initials(_name.text),
                   onPick: _pickProfileImage,
                 ),
@@ -424,6 +354,7 @@ class _VolunteerProfileSetupScreenState
             Center(
               child: _ProfileImagePicker(
                 image: _profileImage,
+                imageUrl: _profileImageUrl,
                 initials: _initials(_name.text),
                 onPick: _pickProfileImage,
               ),
@@ -512,11 +443,9 @@ class _VolunteerProfileSetupScreenState
       await ref
           .read(authControllerProvider.notifier)
           .completeVolunteerProfile(
-            name: _name.text, // Keep existing
+            name: _name.text.trim(),
             phone: _phone.text.trim(),
-            stateName: _state.text, // Keep existing
-            lga: _lga.text, // Keep existing
-            address: _address.text, // Keep existing
+            address: _address.text.trim(),
             profileImagePath: _profileImage?.path,
           );
     } else {
@@ -525,14 +454,12 @@ class _VolunteerProfileSetupScreenState
           .completeVolunteerProfile(
             name: _name.text.trim(),
             phone: _phone.text.trim(),
-            stateName: _state.text.trim(),
-            lga: _lga.text.trim(),
             address: _address.text.trim(),
             profileImagePath: _profileImage?.path,
           );
     }
     if (!mounted) return;
-    context.go('/volunteer/home');
+    context.go(widget.editMode ? '/volunteer/profile' : '/volunteer/home');
   }
 
   Future<void> _pickProfileImage() async {
@@ -542,7 +469,10 @@ class _VolunteerProfileSetupScreenState
       maxWidth: 900,
     );
     if (image == null) return;
-    setState(() => _profileImage = image);
+    setState(() {
+      _profileImage = image;
+      _profileImageUrl = null;
+    });
   }
 
   Future<void> _loadLocations() async {
@@ -602,11 +532,13 @@ class _VolunteerProfileSetupScreenState
 class _ProfileImagePicker extends StatelessWidget {
   const _ProfileImagePicker({
     required this.image,
+    required this.imageUrl,
     required this.initials,
     required this.onPick,
   });
 
   final XFile? image;
+  final String? imageUrl;
   final String initials;
   final VoidCallback onPick;
 
@@ -627,33 +559,7 @@ class _ProfileImagePicker extends StatelessWidget {
                     color: AppColors.onboardingCardGreen,
                     shape: BoxShape.circle,
                   ),
-                  child: image == null
-                      ? Center(
-                          child: Text(
-                            initials.toUpperCase(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 34,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        )
-                      : FutureBuilder<Uint8List>(
-                          future: image!.readAsBytes(),
-                          builder: (context, snapshot) {
-                            if (snapshot.hasData) {
-                              return Image.memory(
-                                snapshot.data!,
-                                fit: BoxFit.cover,
-                              );
-                            }
-                            return const Center(
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                              ),
-                            );
-                          },
-                        ),
+                  child: _imageContent(),
                 ),
               ),
             ),
@@ -676,6 +582,52 @@ class _ProfileImagePicker extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _imageContent() {
+    if (image != null) {
+      return FutureBuilder<Uint8List>(
+        future: image!.readAsBytes(),
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return Image.memory(snapshot.data!, fit: BoxFit.cover);
+          }
+          return const Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          );
+        },
+      );
+    }
+
+    if (imageUrl != null && imageUrl!.isNotEmpty) {
+      return Image.network(
+        imageUrl!,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => _InitialsAvatar(initials: initials),
+      );
+    }
+
+    return _InitialsAvatar(initials: initials);
+  }
+}
+
+class _InitialsAvatar extends StatelessWidget {
+  const _InitialsAvatar({required this.initials});
+
+  final String initials;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        initials.toUpperCase(),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 34,
+          fontWeight: FontWeight.w900,
         ),
       ),
     );

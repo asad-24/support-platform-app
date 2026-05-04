@@ -68,7 +68,7 @@ void main() {
       find.text('User is not registered or the password is incorrect.'),
       findsOneWidget,
     );
-    expect(find.text('Welcome Route'), findsNothing);
+    expect(find.text('Home Route'), findsNothing);
   });
 
   testWidgets('successful login shows success popup then volunteer guide', (
@@ -124,7 +124,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(settings.dismissed, isTrue);
-    expect(find.text('Welcome Route'), findsOneWidget);
+    expect(find.text('Home Route'), findsOneWidget);
   });
 
   testWidgets('change password shows success popup', (tester) async {
@@ -179,9 +179,8 @@ Widget _authTestApp({
             const LoginScreen(selectedRole: UserAccessRole.volunteer),
       ),
       GoRoute(
-        path: '/welcome/volunteer',
-        builder: (context, state) =>
-            const Scaffold(body: Text('Welcome Route')),
+        path: '/volunteer/home',
+        builder: (context, state) => const Scaffold(body: Text('Home Route')),
       ),
     ],
   );
@@ -203,6 +202,12 @@ class _FakeSettingsStorage extends LocalSettingsStorage {
 
   @override
   Future<void> saveThemeMode(ThemeMode mode) async {}
+
+  @override
+  bool readUseSystemTheme() => false;
+
+  @override
+  Future<void> saveUseSystemTheme(bool useSystemTheme) async {}
 
   @override
   bool readVolunteerLoginGuideDismissed() => dismissed;

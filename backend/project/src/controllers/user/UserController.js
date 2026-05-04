@@ -1,6 +1,8 @@
 const AuthStore = require('@src/services/AuthStore');
 const ProfileStore = require('@src/services/VolunteerProfileStore');
 const FlutterSchoolStore = require('@src/services/FlutterSchoolStore');
+const FileStorage = require('@src/services/FileStorage');
+const User = require('@src/models/User');
 
 function permissionsFor(role) {
   if (role === 'volunteer') return ['sites:create', 'sites:update:assigned'];
@@ -80,16 +82,25 @@ exports.update_volunteer_profile = async (req, res) => {
     });
   }
 
-  const profileBody = { ...req.body };
-  if (!profileBody.fullName && !profileBody.full_name) {
-    profileBody.fullName = req.auth.user.name;
+  const profileBody = ProfileStore.normalizeEditablePayload(req.body);
+  const requestedName = profileBody.fullName;
+  if (!profileBody.fullName) profileBody.fullName = req.auth.user.name;
+
+  if (req.file) {
+    const stored = await FileStorage.saveUploadedFile(req.file, {
+      folder: `profiles/${req.auth.user.id}`,
+      req,
+    });
+    profileBody.profileImagePath = stored.publicUrl;
   }
 
-  // Handle profile image upload
-  if (req.file) {
-    // Generate URL for the uploaded file
-    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-    profileBody.profileImagePath = `${baseUrl}/uploads/${req.file.filename}`;
+  if (requestedName) {
+    const user = await User.findByPk(req.auth.user.id);
+    if (user) {
+      user.name = requestedName;
+      await user.save();
+      req.auth.user = { ...req.auth.user, name: user.name };
+    }
   }
 
   await ProfileStore.upsertForUser(req.auth.user.id, profileBody);

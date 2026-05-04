@@ -6,6 +6,7 @@ const config = require('@core/util/functions/config');
 const routes = require('@src/routes');
 const bind_routes = require('@core/util/functions/bind_routes');
 const debug = require('@core/util/functions/debug');
+const FileStorage = require('@src/services/FileStorage');
 
 const app = express();
 const corsOrigins = String(config('server.corsOrigins', ''))
@@ -16,7 +17,7 @@ app.use(cors({ origin: corsOrigins.length ? corsOrigins : true, credentials: tru
 app.use(express.json());
 
 // Serve uploaded files statically
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(FileStorage.uploadRoot()));
 
 debug('server: binding routes');
 bind_routes(app, routes, {

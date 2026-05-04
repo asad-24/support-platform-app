@@ -1,6 +1,6 @@
 'use strict';
 
-/** @type {import('sequelize-cli').Migration} */
+/** MongoDB seeder */
 module.exports = {
   async up(queryInterface) {
     const now = new Date();
@@ -13,4 +13,3 @@ module.exports = {
     await queryInterface.bulkDelete('test_metas', null, {});
   },
 };
-

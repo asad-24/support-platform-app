@@ -1,6 +1,6 @@
 'use strict';
 
-/** @type {import('sequelize-cli').Migration} */
+/** MongoDB migration */
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('users', {

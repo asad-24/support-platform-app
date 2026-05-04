@@ -36,7 +36,7 @@ function schoolRef(Sequelize, allowNull = false) {
   };
 }
 
-/** @type {import('sequelize-cli').Migration} */
+/** MongoDB migration */
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('volunteer_profiles', {

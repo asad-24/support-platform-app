@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = async () => {
-  // Close oxen-queue MySQL pools and stop any processors
+  // Close Mongo-backed queue processors
   try {
     const ox = require('../core/instances/oxen');
     if (ox && typeof ox.closeAll === 'function') {
@@ -9,7 +9,7 @@ module.exports = async () => {
     }
   } catch (_) {}
 
-  // Close Sequelize connection
+  // Close MongoDB connection
   try {
     const core = require('../core/util/classes/Model');
     if (core && core.sequelize && typeof core.sequelize.close === 'function') {
@@ -17,4 +17,3 @@ module.exports = async () => {
     }
   } catch (_) {}
 };
-

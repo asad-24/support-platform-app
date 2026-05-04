@@ -1,19 +1,24 @@
-process.env.DB_DIALECT = 'sqlite';
-process.env.DB_STORAGE = ':memory:';
+process.env.MONGODB_TEST_DB_NAME = 'support_platform_app_test';
 process.env.DB_LOGGING = 'false';
 process.env.ADMIN_EMAIL = 'admin@schoolsupportatlas.local';
 process.env.ADMIN_PASSWORD = 'admin123';
 process.env.ADMIN_NAME = 'System Admin';
+jest.setTimeout(60000);
 
 const http = require('node:http');
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
+
+process.env.STORAGE_LOCAL_ROOT = path.join(__dirname, '..', '..', '..', '.tmp', 'uploads-auth-test');
 
 const bind_routes = require('@core/util/functions/bind_routes');
 const { sequelize } = require('@core/util/classes/Model');
+const FileStorage = require('@src/services/FileStorage');
 const AuthStore = require('@src/services/AuthStore');
 const User = require('@src/models/User');
 const VolunteerApplication = require('@src/models/VolunteerApplication');
+const VolunteerProfile = require('@src/models/VolunteerProfile');
 
 function httpRequest(baseUrl, method, urlPath, { headers = {}, body } = {}) {
   return new Promise((resolve, reject) => {
@@ -48,6 +53,64 @@ function httpRequest(baseUrl, method, urlPath, { headers = {}, body } = {}) {
   });
 }
 
+function multipartBody({ fields = {}, files = [] }) {
+  const boundary = `----ssa-test-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const chunks = [];
+  const push = (value) => chunks.push(Buffer.isBuffer(value) ? value : Buffer.from(String(value)));
+
+  for (const [name, value] of Object.entries(fields)) {
+    push(`--${boundary}\r\n`);
+    push(`Content-Disposition: form-data; name="${name}"\r\n\r\n`);
+    push(`${value}\r\n`);
+  }
+
+  for (const file of files) {
+    push(`--${boundary}\r\n`);
+    push(`Content-Disposition: form-data; name="${file.name}"; filename="${file.filename}"\r\n`);
+    push(`Content-Type: ${file.contentType}\r\n\r\n`);
+    push(file.content);
+    push('\r\n');
+  }
+
+  push(`--${boundary}--\r\n`);
+  return { boundary, body: Buffer.concat(chunks) };
+}
+
+function httpMultipartRequest(baseUrl, method, urlPath, { headers = {}, fields = {}, files = [] } = {}) {
+  return new Promise((resolve, reject) => {
+    const url = new URL(urlPath, baseUrl);
+    const { boundary, body } = multipartBody({ fields, files });
+    const options = {
+      method,
+      hostname: url.hostname,
+      port: url.port,
+      path: url.pathname + (url.search || ''),
+      headers: {
+        'content-type': `multipart/form-data; boundary=${boundary}`,
+        'content-length': body.length,
+        ...headers,
+      },
+    };
+
+    const req = http.request(options, (res) => {
+      let data = '';
+      res.setEncoding('utf8');
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        try {
+          resolve({ status: res.statusCode, headers: res.headers, body: data ? JSON.parse(data) : null });
+        } catch (_) {
+          resolve({ status: res.statusCode, headers: res.headers, body: data });
+        }
+      });
+    });
+
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+
 function volunteerApplicationBody(overrides = {}) {
   return {
     fullName: 'Ibrahim Sule',
@@ -78,8 +141,10 @@ describe('flutter auth contract routes', () => {
 
   beforeAll(async () => {
     await sequelize.sync({ force: true });
+    fs.rmSync(FileStorage.uploadRoot(), { recursive: true, force: true });
     app = express();
     app.use(express.json());
+    app.use('/uploads', express.static(FileStorage.uploadRoot()));
     bind_routes(app, undefined, {
       controllers_base_dir: path.join(process.cwd(), 'src', 'controllers'),
       middlewares_base_dir: path.join(process.cwd(), 'src', 'middlewares'),
@@ -94,6 +159,7 @@ describe('flutter auth contract routes', () => {
 
   beforeEach(async () => {
     await sequelize.sync({ force: true });
+    fs.rmSync(FileStorage.uploadRoot(), { recursive: true, force: true });
   });
 
   afterAll(async () => {
@@ -172,7 +238,7 @@ describe('flutter auth contract routes', () => {
         email: 'ibrahim@example.com',
         username: 'ibrahim',
         role: 'fieldWorker',
-        profileComplete: false,
+        profileComplete: true,
       },
     });
 
@@ -194,11 +260,11 @@ describe('flutter auth contract routes', () => {
       name: 'Ibrahim Sule',
       email: 'ibrahim@example.com',
       phone: '+2348012345678',
-      state: 'Kano',
-      lga: 'Nassarawa',
+      state: null,
+      lga: null,
       address: 'Nassarawa LGA, Kano State',
-      educationLevel: 'Tertiary',
-      occupation: 'Community volunteer',
+      educationLevel: null,
+      occupation: null,
       profileComplete: true,
     });
 
@@ -206,6 +272,34 @@ describe('flutter auth contract routes', () => {
     expect(me.status).toBe(200);
     expect(me.body.profileComplete).toBe(true);
     expect(me.body.permissions).toEqual(['sites:create', 'sites:update:assigned']);
+
+    const uploaded = await httpMultipartRequest(baseUrl, 'PATCH', '/users/me/volunteer-profile', {
+      headers: auth,
+      fields: { occupation: 'Field coordinator' },
+      files: [{
+        name: 'profileImage',
+        filename: 'avatar.jpg',
+        contentType: 'image/jpeg',
+        content: Buffer.from('profile-image-bytes'),
+      }],
+    });
+    expect(uploaded.status).toBe(200);
+    expect(uploaded.body.profileImagePath).toMatch(/^http:\/\/.+\/uploads\/profiles\/\d+\/avatar-/);
+
+    const imagePath = new URL(uploaded.body.profileImagePath).pathname;
+    const image = await httpRequest(baseUrl, 'GET', imagePath);
+    expect(image.status).toBe(200);
+    expect(image.body).toBe('profile-image-bytes');
+
+    const relogin = await httpRequest(baseUrl, 'POST', '/auth/login', {
+      body: {
+        identifier: 'ibrahim',
+        password: 'Password1!',
+        accessRole: 'volunteer',
+      },
+    });
+    expect(relogin.status).toBe(200);
+    expect(relogin.body.user.profileImagePath).toBe(uploaded.body.profileImagePath);
   });
 
   test('refresh rotates tokens, logout clears them, and change password validates current password', async () => {
@@ -258,9 +352,9 @@ describe('flutter auth contract routes', () => {
     expect(denied.status).toBe(401);
   });
 
-  test('volunteer applications are pending records and do not create users', async () => {
+  test('admin approval creates a volunteer account with generated username and application profile data', async () => {
     const res = await httpRequest(baseUrl, 'POST', '/volunteer-applications', {
-      body: volunteerApplicationBody(),
+      body: volunteerApplicationBody({ password: 'Password1!' }),
     });
 
     expect(res.status).toBe(201);
@@ -273,8 +367,61 @@ describe('flutter auth contract routes', () => {
     const application = await VolunteerApplication.findOne({ where: { email: 'ibrahim.sule@example.com' } });
     expect(application).not.toBeNull();
 
+    const pendingUser = await User.findOne({ where: { email: 'ibrahim.sule@example.com' } });
+    expect(pendingUser).toBeNull();
+
+    await AuthStore.createUser({
+      name: 'System Admin',
+      email: 'admin@schoolsupportatlas.local',
+      password: 'admin123',
+      role: 'admin',
+    });
+    const adminLogin = await httpRequest(baseUrl, 'POST', '/auth/sign-in', {
+      body: { email: 'admin@schoolsupportatlas.local', password: 'admin123' },
+    });
+
+    const approve = await httpRequest(baseUrl, 'POST', `/admin/volunteer-applications/${application.id}/approve`, {
+      headers: { authorization: `Bearer ${adminLogin.body.data.access_token}` },
+      body: { adminNotes: 'Accepted' },
+    });
+    expect(approve.status).toBe(200);
+    expect(approve.body.data.user).toMatchObject({
+      name: 'Ibrahim Sule',
+      email: 'ibrahim.sule@example.com',
+      username: 'ibrahim_sule',
+      role: 'volunteer',
+    });
+    expect(approve.body.data.temporaryPassword).toBeUndefined();
+
     const user = await User.findOne({ where: { email: 'ibrahim.sule@example.com' } });
-    expect(user).toBeNull();
+    expect(user.username).toBe('ibrahim_sule');
+    const profile = await VolunteerProfile.findOne({ where: { userId: user.id } });
+    expect(profile).toMatchObject({
+      fullName: 'Ibrahim Sule',
+      phone: '+2348012345678',
+      state: 'Kano',
+      lga: 'Nassarawa',
+      address: 'Nassarawa LGA, Kano State',
+      isCompleted: true,
+    });
+
+    const login = await httpRequest(baseUrl, 'POST', '/auth/login', {
+      body: {
+        identifier: 'ibrahim_sule',
+        password: 'Password1!',
+        accessRole: 'volunteer',
+      },
+    });
+    expect(login.status).toBe(200);
+    expect(login.body.user).toMatchObject({
+      name: 'Ibrahim Sule',
+      username: 'ibrahim_sule',
+      phone: '+2348012345678',
+      state: 'Kano',
+      lga: 'Nassarawa',
+      address: 'Nassarawa LGA, Kano State',
+      profileComplete: true,
+    });
   });
 
   test('volunteer applications return validation errors and reject duplicate pending emails', async () => {

@@ -1,6 +1,6 @@
 'use strict';
 
-/** @type {import('sequelize-cli').Migration} */
+/** MongoDB migration */
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('test_metas', {
@@ -33,4 +33,3 @@ module.exports = {
     await queryInterface.dropTable('test_metas');
   },
 };
-

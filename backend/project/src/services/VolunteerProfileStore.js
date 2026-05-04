@@ -48,6 +48,23 @@ function normalizePayload(body = {}) {
   return payload;
 }
 
+function normalizeEditablePayload(body = {}) {
+  const payload = {};
+  const map = [
+    ['fullName', 'full_name', 'name'],
+    ['phone', 'phone'],
+    ['address', 'address'],
+    ['profilePhotoUrl', 'profile_photo_url', 'profileImagePath'],
+  ];
+
+  for (const [camel, ...keys] of map) {
+    const value = pick(body, camel, ...keys);
+    if (value !== undefined) payload[camel] = typeof value === 'string' ? value.trim() : value;
+  }
+
+  return payload;
+}
+
 function isCompletePayload(payload = {}) {
   return REQUIRED_FIELDS.every((field) => readString(payload[field]));
 }
@@ -109,7 +126,7 @@ function serializeForFlutter(profile) {
       emergencyContactName: null,
       emergencyContactPhone: null,
       profileImagePath: null,
-      profileComplete: false,
+      profileComplete: true,
     };
   }
 
@@ -131,7 +148,7 @@ function serializeForFlutter(profile) {
     emergencyContactName: data.emergencyContactName || null,
     emergencyContactPhone: data.emergencyContactPhone || null,
     profileImagePath: data.profilePhotoUrl || null,
-    profileComplete: isComplete(profile),
+    profileComplete: true,
   };
 }
 
@@ -143,8 +160,9 @@ async function getStatus(userId) {
   const profile = await getByUserId(userId);
   return {
     profile: serialize(profile),
-    profile_completed: isComplete(profile),
-    next_step: isComplete(profile) ? 'dashboard' : 'complete_profile',
+    profile_completed: true,
+    next_step: 'dashboard',
+    actual_profile_completed: isComplete(profile),
   };
 }
 
@@ -171,6 +189,7 @@ module.exports = {
   getByUserId,
   getStatus,
   isComplete,
+  normalizeEditablePayload,
   normalizePayload,
   serialize,
   serializeForFlutter,

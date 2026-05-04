@@ -1,3 +1,5 @@
+const upload = require('@src/middlewares/UploadMiddleware');
+
 module.exports = [
   { method: 'GET', path: '/drafts', name: 'drafts.index', middleware: 'auth', handler: 'site/DraftController.index' },
   { method: 'POST', path: '/drafts', name: 'drafts.store', middleware: 'auth', handler: 'site/DraftController.store' },
@@ -13,6 +15,6 @@ module.exports = [
   { method: 'PUT', path: '/:id', name: 'update', middleware: 'auth', handler: 'site/SiteController.update' },
   { method: 'PATCH', path: '/:id', name: 'patch', middleware: 'auth', handler: 'site/SiteController.update' },
   { method: 'DELETE', path: '/:id', name: 'destroy', middleware: 'auth', handler: 'site/SiteController.destroy' },
-  { method: 'POST', path: '/:id/media', name: 'media', middleware: ['auth', 'UploadMiddleware.single(media)'], handler: 'site/SiteController.media' },
+  { method: 'POST', path: '/:id/media', name: 'media', middleware: ['auth', upload.single('media')], handler: 'site/SiteController.media' },
   { method: 'POST', path: '/:id/assessment', name: 'assessment', middleware: 'auth', handler: 'site/SiteController.assessment' },
 ];

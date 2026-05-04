@@ -110,8 +110,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/volunteer/profile/setup',
-            builder: (context, state) =>
-                const VolunteerProfileSetupScreen(editMode: false),
+            redirect: (_, _) => '/volunteer/profile/edit',
           ),
           GoRoute(
             path: '/volunteer/profile/edit',
@@ -131,10 +130,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       // Nested Sites Routes
       ShellRoute(
-        builder: (context, state, child) => SitesShellLayout(
-          currentRoute: state.matchedLocation,
-          child: child,
-        ),
+        builder: (context, state, child) =>
+            SitesShellLayout(currentRoute: state.matchedLocation, child: child),
         routes: [
           GoRoute(
             path: '/sites',
@@ -228,32 +225,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       if (isAuthRoute) {
         if (session.accessRole == UserAccessRole.volunteer) {
-          return session.user.profileComplete
-              ? '/welcome/volunteer'
-              : '/volunteer/profile/setup';
+          return session.accessRole.dashboardPath;
         }
         return session.accessRole.dashboardPath;
       }
 
       if (location == '/splash' || location == '/access') {
-        if (session.accessRole == UserAccessRole.volunteer &&
-            !session.user.profileComplete) {
-          return '/volunteer/profile/setup';
-        }
         return session.accessRole.dashboardPath;
-      }
-
-      final isVolunteerProfileSetup = location == '/volunteer/profile/setup';
-      if (session.accessRole == UserAccessRole.volunteer &&
-          !session.user.profileComplete &&
-          !isVolunteerProfileSetup) {
-        return '/volunteer/profile/setup';
-      }
-
-      if (session.accessRole == UserAccessRole.volunteer &&
-          session.user.profileComplete &&
-          isVolunteerProfileSetup) {
-        return '/welcome/volunteer';
       }
 
       final adminOnly = location == '/export';

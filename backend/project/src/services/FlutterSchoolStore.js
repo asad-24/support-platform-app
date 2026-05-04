@@ -2,7 +2,7 @@
 
 const path = require('path');
 const fs = require('fs');
-const { Op } = require('sequelize');
+const Op = require('@core/util/classes/Operators');
 const SQL = require('@core/util/classes/SQL');
 const { sequelize } = require('@core/util/classes/Model');
 const School = require('@src/models/School');
@@ -246,7 +246,7 @@ class FlutterSchoolStore {
       uploadedByUserId: user.id,
       clientId: maybeString(payload.id),
       fileUrl,
-      localPath: fileUrl, // Store the URL as localPath for now, since we're serving files locally
+      localPath: maybeString(payload.localPath),
       category: type,
       caption: maybeString(payload.caption),
       capturedAt: payload.timestamp ? new Date(payload.timestamp) : new Date(),

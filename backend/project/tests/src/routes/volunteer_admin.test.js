@@ -1,16 +1,20 @@
-process.env.DB_DIALECT = 'sqlite';
-process.env.DB_STORAGE = ':memory:';
+process.env.MONGODB_TEST_DB_NAME = 'support_platform_app_test';
 process.env.DB_LOGGING = 'false';
 process.env.ADMIN_EMAIL = 'admin@schoolsupportatlas.local';
 process.env.ADMIN_PASSWORD = 'admin123';
 process.env.ADMIN_NAME = 'System Admin';
+jest.setTimeout(60000);
 
 const http = require('node:http');
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
+
+process.env.STORAGE_LOCAL_ROOT = path.join(__dirname, '..', '..', '..', '.tmp', 'uploads-volunteer-test');
 
 const bind_routes = require('@core/util/functions/bind_routes');
 const { sequelize } = require('@core/util/classes/Model');
+const FileStorage = require('@src/services/FileStorage');
 const AuthStore = require('@src/services/AuthStore');
 
 function httpRequest(baseUrl, method, urlPath, { headers = {}, body } = {}) {
@@ -46,6 +50,64 @@ function httpRequest(baseUrl, method, urlPath, { headers = {}, body } = {}) {
   });
 }
 
+function multipartBody({ fields = {}, files = [] }) {
+  const boundary = `----ssa-test-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const chunks = [];
+  const push = (value) => chunks.push(Buffer.isBuffer(value) ? value : Buffer.from(String(value)));
+
+  for (const [name, value] of Object.entries(fields)) {
+    push(`--${boundary}\r\n`);
+    push(`Content-Disposition: form-data; name="${name}"\r\n\r\n`);
+    push(`${value}\r\n`);
+  }
+
+  for (const file of files) {
+    push(`--${boundary}\r\n`);
+    push(`Content-Disposition: form-data; name="${file.name}"; filename="${file.filename}"\r\n`);
+    push(`Content-Type: ${file.contentType}\r\n\r\n`);
+    push(file.content);
+    push('\r\n');
+  }
+
+  push(`--${boundary}--\r\n`);
+  return { boundary, body: Buffer.concat(chunks) };
+}
+
+function httpMultipartRequest(baseUrl, method, urlPath, { headers = {}, fields = {}, files = [] } = {}) {
+  return new Promise((resolve, reject) => {
+    const url = new URL(urlPath, baseUrl);
+    const { boundary, body } = multipartBody({ fields, files });
+    const options = {
+      method,
+      hostname: url.hostname,
+      port: url.port,
+      path: url.pathname + (url.search || ''),
+      headers: {
+        'content-type': `multipart/form-data; boundary=${boundary}`,
+        'content-length': body.length,
+        ...headers,
+      },
+    };
+
+    const req = http.request(options, (res) => {
+      let data = '';
+      res.setEncoding('utf8');
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        try {
+          resolve({ status: res.statusCode, body: data ? JSON.parse(data) : null });
+        } catch (_) {
+          resolve({ status: res.statusCode, body: data });
+        }
+      });
+    });
+
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+
 describe('volunteer and admin routes', () => {
   let app;
   let server;
@@ -53,8 +115,10 @@ describe('volunteer and admin routes', () => {
 
   beforeAll(async () => {
     await sequelize.sync({ force: true });
+    fs.rmSync(FileStorage.uploadRoot(), { recursive: true, force: true });
     app = express();
     app.use(express.json());
+    app.use('/uploads', express.static(FileStorage.uploadRoot()));
     bind_routes(app, undefined, {
       controllers_base_dir: path.join(process.cwd(), 'src', 'controllers'),
       middlewares_base_dir: path.join(process.cwd(), 'src', 'middlewares'),
@@ -69,6 +133,7 @@ describe('volunteer and admin routes', () => {
 
   beforeEach(async () => {
     await sequelize.sync({ force: true });
+    fs.rmSync(FileStorage.uploadRoot(), { recursive: true, force: true });
   });
 
   afterAll(async () => {
@@ -96,21 +161,18 @@ describe('volunteer and admin routes', () => {
     return res.body.data.access_token;
   }
 
-  test('volunteer must complete profile before dashboard and school submission', async () => {
+  test('volunteer can open dashboard and submit schools without a forced complete-profile step', async () => {
     const token = await signUpVolunteer();
     const auth = { authorization: `Bearer ${token}` };
 
-    const blocked = await httpRequest(baseUrl, 'GET', '/volunteer/dashboard', { headers: auth });
-    expect(blocked.status).toBe(403);
-    expect(blocked.body.code).toBe('PROFILE_INCOMPLETE');
+    const dashboard = await httpRequest(baseUrl, 'GET', '/volunteer/dashboard', { headers: auth });
+    expect(dashboard.status).toBe(200);
 
     const profile = await httpRequest(baseUrl, 'PUT', '/volunteer/profile', {
       headers: auth,
       body: {
         full_name: 'Volunteer One',
         phone: '+2348012345678',
-        state: 'Kano',
-        lga: 'Nasarawa',
         address: 'Near central mosque',
       },
     });
@@ -196,5 +258,59 @@ describe('volunteer and admin routes', () => {
       headers: { authorization: `Bearer ${adminToken}` },
     });
     expect(res.status).toBe(403);
+  });
+
+  test('volunteer school photo endpoint accepts multipart uploads', async () => {
+    const token = await signUpVolunteer();
+    const auth = { authorization: `Bearer ${token}` };
+    await httpRequest(baseUrl, 'PUT', '/volunteer/profile', {
+      headers: auth,
+      body: {
+        full_name: 'Volunteer One',
+        phone: '+2348012345678',
+        state: 'Kano',
+        lga: 'Nasarawa',
+        address: 'Near central mosque',
+      },
+    });
+
+    const draft = await httpRequest(baseUrl, 'POST', '/volunteer/schools/drafts', {
+      headers: auth,
+      body: {
+        school: {
+          school_name: 'Draft Quranic School',
+          school_type: 'traditional_quranic_school',
+        },
+      },
+    });
+    expect(draft.status).toBe(201);
+    const schoolId = draft.body.data.school.id;
+
+    const uploaded = await httpMultipartRequest(baseUrl, 'POST', `/volunteer/schools/${schoolId}/photos`, {
+      headers: auth,
+      fields: {
+        category: 'entrance',
+        caption: 'School entrance',
+      },
+      files: [{
+        name: 'photo',
+        filename: 'entrance.jpg',
+        contentType: 'image/jpeg',
+        content: Buffer.from('volunteer-school-image'),
+      }],
+    });
+    expect(uploaded.status).toBe(201);
+    expect(uploaded.body.data.items[0]).toMatchObject({
+      school_id: schoolId,
+      file_url: expect.stringMatching(/^http:\/\/.+\/uploads\/schools\/\d+\/entrance-/),
+      local_path: expect.stringMatching(/^uploads\/schools\/\d+\/entrance-/),
+      category: 'entrance',
+      caption: 'School entrance',
+    });
+
+    const imagePath = new URL(uploaded.body.data.items[0].file_url).pathname;
+    const image = await httpRequest(baseUrl, 'GET', imagePath);
+    expect(image.status).toBe(200);
+    expect(image.body).toBe('volunteer-school-image');
   });
 });

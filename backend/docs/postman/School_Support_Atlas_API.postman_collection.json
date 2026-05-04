@@ -1,0 +1,2322 @@
+{
+  "info": {
+    "_postman_id": "school-support-atlas-complete",
+    "name": "School Support Atlas API - Complete",
+    "description": "Complete Postman collection for School Support Atlas API including Auth, Volunteer, Admin, Schools, Users, Sites, Dashboard, Exports, and Locations endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000"
+    },
+    {
+      "key": "volunteer_email",
+      "value": "volunteer.postman@example.com"
+    },
+    {
+      "key": "volunteer_password",
+      "value": "secret123"
+    },
+    {
+      "key": "admin_email",
+      "value": "admin@schoolsupportatlas.local"
+    },
+    {
+      "key": "admin_password",
+      "value": "admin123"
+    },
+    {
+      "key": "volunteer_token",
+      "value": ""
+    },
+    {
+      "key": "admin_token",
+      "value": ""
+    },
+    {
+      "key": "school_id",
+      "value": "1"
+    },
+    {
+      "key": "volunteer_id",
+      "value": "2"
+    },
+    {
+      "key": "notification_id",
+      "value": "1"
+    },
+    {
+      "key": "operator_id",
+      "value": "1"
+    },
+    {
+      "key": "draft_id",
+      "value": "1"
+    },
+    {
+      "key": "photo_id",
+      "value": "1"
+    },
+    {
+      "key": "site_id",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 Auth",
+      "item": [
+        {
+          "name": "Volunteer Sign Up",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Volunteer\",\n  \"email\": \"{{volunteer_email}}\",\n  \"password\": \"{{volunteer_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/sign-up",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "sign-up"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Volunteer Sign In",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{volunteer_email}}\",\n  \"password\": \"{{volunteer_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/sign-in",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "sign-in"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Sign In",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/sign-in",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "sign-in"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New User\",\n  \"email\": \"newuser@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"volunteer\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/admin/users",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "admin", "users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{volunteer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{volunteer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "logout"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Check Username Available",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/auth/username-available?username=testuser",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "username-available"],
+              "query": [
+                {
+                  "key": "username",
+                  "value": "testuser"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{volunteer_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"{{volunteer_password}}\",\n  \"new_password\": \"newpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/change-password",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "change-password"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 Volunteer",
+      "item": [
+        {
+          "name": "Dashboard",
+          "item": [
+            {
+              "name": "Get Volunteer Dashboard",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/dashboard",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "dashboard"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Profile",
+          "item": [
+            {
+              "name": "Get Volunteer Profile",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/profile",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "profile"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create/Update Volunteer Profile",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"full_name\": \"Volunteer Name\",\n  \"phone\": \"+2348012345678\",\n  \"state\": \"Kano\",\n  \"lga\": \"Nasarawa\",\n  \"community\": \"Tudun Wada\",\n  \"address\": \"Near central mosque\",\n  \"bio\": \"Community education volunteer\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/volunteer/profile",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "profile"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Profile Activity",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/profile/activity",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "profile", "activity"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Notifications",
+          "item": [
+            {
+              "name": "List Notifications",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/notifications?status=unread&page=1&limit=10",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "notifications"],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "unread"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Test Notification",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"type\": \"test\",\n  \"title\": \"Test Notification\",\n  \"message\": \"This is a test notification\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/volunteer/notifications",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "notifications"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Notification",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/notifications/{{notification_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "notifications", "{{notification_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Notification",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"read\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/volunteer/notifications/{{notification_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "notifications", "{{notification_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Mark Notification as Read",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/notifications/{{notification_id}}/read",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "notifications", "{{notification_id}}", "read"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Mark All Notifications as Read",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/notifications/read-all",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "notifications", "read-all"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Notification",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/notifications/{{notification_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "notifications", "{{notification_id}}"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "School Drafts",
+          "item": [
+            {
+              "name": "Create Draft School",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"school_name\": \"Al-Huda Quranic School\",\n  \"school_type\": \"traditional_quranic_school\",\n  \"urgency\": \"high\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/drafts",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "drafts"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "List Draft Schools",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/drafts?page=1&limit=10",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "drafts"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Draft School",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/drafts/{{draft_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "drafts", "{{draft_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Draft School",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"school_name\": \"Updated School Name\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/drafts/{{draft_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "drafts", "{{draft_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Submit Draft School",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/drafts/{{draft_id}}/submit",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "drafts", "{{draft_id}}", "submit"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Draft School",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/drafts/{{draft_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "drafts", "{{draft_id}}"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Schools",
+          "item": [
+            {
+              "name": "Submit School",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"school\": {\n    \"school_name\": \"Al-Huda Quranic School\",\n    \"school_type\": \"traditional_quranic_school\",\n    \"urgency\": \"high\"\n  },\n  \"operators\": [\n    {\n      \"name\": \"Mallam Musa\",\n      \"phone\": \"+2348012345678\"\n    }\n  ],\n  \"location\": {\n    \"latitude\": 12.0022,\n    \"longitude\": 8.5919,\n    \"country\": \"Nigeria\",\n    \"state\": \"Kano\",\n    \"lga\": \"Nasarawa\",\n    \"community\": \"Tudun Wada\",\n    \"address\": \"Behind main market\"\n  },\n  \"children_stats\": {\n    \"total_children\": 120,\n    \"residential_children\": 80,\n    \"non_residential_children\": 40,\n    \"boys_count\": 90,\n    \"girls_count\": 30,\n    \"age_3_5_count\": 8,\n    \"age_6_10_count\": 45,\n    \"age_11_15_count\": 50,\n    \"age_16_18_count\": 15,\n    \"age_18_plus_count\": 2\n  },\n  \"welfare\": {\n    \"has_clean_water\": false,\n    \"has_sanitation\": false,\n    \"has_healthcare\": false,\n    \"has_nutritious_food\": false,\n    \"has_educational_materials\": true,\n    \"has_recreational_facilities\": false,\n    \"has_clothing_shelter\": false,\n    \"has_sleeping_area\": true,\n    \"has_electricity\": false,\n    \"has_internet\": false,\n    \"has_transportation\": false,\n    \"has_financial_resources\": false,\n    \"safety_physical_abuse\": false,\n    \"safety_child_labor\": true,\n    \"safety_sexual_abuse\": false,\n    \"safety_trafficking\": false,\n    \"additional_notes\": \"Needs clean water and sanitation support.\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "List Submitted Schools",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools?status=pending&page=1&limit=10&search=",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools"],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "pending"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    },
+                    {
+                      "key": "search",
+                      "value": ""
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get School Details",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/{{school_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "{{school_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update School",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"school_name\": \"Updated School Name\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/{{school_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "{{school_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Submit Existing School",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/{{school_id}}/submit",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "{{school_id}}", "submit"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete School",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/{{school_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "{{school_id}}"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "School Operators",
+          "item": [
+            {
+              "name": "List School Operators",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/{{school_id}}/operators",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "{{school_id}}", "operators"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create School Operator",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Mallam Musa\",\n  \"phone\": \"+2348012345678\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/{{school_id}}/operators",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "{{school_id}}", "operators"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get School Operator",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/{{school_id}}/operators/{{operator_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "{{school_id}}", "operators", "{{operator_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update School Operator",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Updated Operator Name\",\n  \"phone\": \"+2348087654321\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/{{school_id}}/operators/{{operator_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "{{school_id}}", "operators", "{{operator_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete School Operator",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/{{school_id}}/operators/{{operator_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "{{school_id}}", "operators", "{{operator_id}}"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "School Location",
+          "item": [
+            {
+              "name": "Get School Location",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/{{school_id}}/location",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "{{school_id}}", "location"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create/Update School Location",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"latitude\": 12.0022,\n  \"longitude\": 8.5919,\n  \"country\": \"Nigeria\",\n  \"state\": \"Kano\",\n  \"lga\": \"Nasarawa\",\n  \"community\": \"Tudun Wada\",\n  \"address\": \"Behind main market\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/{{school_id}}/location",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "{{school_id}}", "location"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete School Location",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/{{school_id}}/location",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "{{school_id}}", "location"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "School Children Stats",
+          "item": [
+            {
+              "name": "Get Children Stats",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/{{school_id}}/children-stats",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "{{school_id}}", "children-stats"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create/Update Children Stats",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"total_children\": 120,\n  \"residential_children\": 80,\n  \"non_residential_children\": 40,\n  \"boys_count\": 90,\n  \"girls_count\": 30,\n  \"age_3_5_count\": 8,\n  \"age_6_10_count\": 45,\n  \"age_11_15_count\": 50,\n  \"age_16_18_count\": 15,\n  \"age_18_plus_count\": 2\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/{{school_id}}/children-stats",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "{{school_id}}", "children-stats"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Children Stats",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/{{school_id}}/children-stats",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "{{school_id}}", "children-stats"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "School Welfare",
+          "item": [
+            {
+              "name": "Get School Welfare",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/{{school_id}}/welfare",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "{{school_id}}", "welfare"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create/Update School Welfare",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"has_clean_water\": false,\n  \"has_sanitation\": false,\n  \"has_healthcare\": false,\n  \"has_nutritious_food\": false,\n  \"has_educational_materials\": true,\n  \"has_recreational_facilities\": false,\n  \"has_clothing_shelter\": false,\n  \"has_sleeping_area\": true,\n  \"has_electricity\": false,\n  \"has_internet\": false,\n  \"has_transportation\": false,\n  \"has_financial_resources\": false,\n  \"safety_physical_abuse\": false,\n  \"safety_child_labor\": true,\n  \"safety_sexual_abuse\": false,\n  \"safety_trafficking\": false,\n  \"additional_notes\": \"Needs clean water and sanitation support.\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/{{school_id}}/welfare",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "{{school_id}}", "welfare"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete School Welfare",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/{{school_id}}/welfare",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "{{school_id}}", "welfare"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "School Photos",
+          "item": [
+            {
+              "name": "List School Photos",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/{{school_id}}/photos",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "{{school_id}}", "photos"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Upload School Photos",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "photos[]",
+                      "type": "file",
+                      "src": "path/to/image.jpg"
+                    },
+                    {
+                      "key": "category",
+                      "value": "entrance",
+                      "type": "text"
+                    },
+                    {
+                      "key": "caption",
+                      "value": "School entrance photo",
+                      "type": "text"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/{{school_id}}/photos",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "{{school_id}}", "photos"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get School Photo",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/{{school_id}}/photos/{{photo_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "{{school_id}}", "photos", "{{photo_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update School Photo",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"category\": \"class_area\",\n  \"caption\": \"Updated caption\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/{{school_id}}/photos/{{photo_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "{{school_id}}", "photos", "{{photo_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete School Photo",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/volunteer/schools/{{school_id}}/photos/{{photo_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["volunteer", "schools", "{{school_id}}", "photos", "{{photo_id}}"]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 Admin",
+      "item": [
+        {
+          "name": "Dashboard",
+          "item": [
+            {
+              "name": "Get Admin Dashboard",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/dashboard",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "dashboard"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Notifications",
+          "item": [
+            {
+              "name": "List Admin Notifications",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/notifications?status=unread&page=1&limit=10",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "notifications"],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "unread"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Admin Notification",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"type\": \"test\",\n  \"title\": \"Test Notification\",\n  \"message\": \"This is a test notification\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/notifications",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "notifications"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Admin Notification",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/notifications/{{notification_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "notifications", "{{notification_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Admin Notification",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"read\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/notifications/{{notification_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "notifications", "{{notification_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Mark Admin Notification as Read",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/notifications/{{notification_id}}/read",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "notifications", "{{notification_id}}", "read"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Mark All Admin Notifications as Read",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/notifications/read-all",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "notifications", "read-all"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Admin Notification",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/notifications/{{notification_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "notifications", "{{notification_id}}"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Volunteers",
+          "item": [
+            {
+              "name": "List Volunteers",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/volunteers?profile_completed=true&page=1&limit=10&search=",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "volunteers"],
+                  "query": [
+                    {
+                      "key": "profile_completed",
+                      "value": "true"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    },
+                    {
+                      "key": "search",
+                      "value": ""
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Volunteer",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"New Volunteer\",\n  \"email\": \"newvolunteer@example.com\",\n  \"phone\": \"+2348012345678\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/volunteers",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "volunteers"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Volunteer Details",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/volunteers/{{volunteer_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "volunteers", "{{volunteer_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Volunteer",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Updated Volunteer Name\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/volunteers/{{volunteer_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "volunteers", "{{volunteer_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Volunteer Schools",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/volunteers/{{volunteer_id}}/schools?status=pending&page=1&limit=10",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "volunteers", "{{volunteer_id}}", "schools"],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "pending"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Volunteer",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/volunteers/{{volunteer_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "volunteers", "{{volunteer_id}}"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Schools",
+          "item": [
+            {
+              "name": "List Schools for Review",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/schools?status=pending&page=1&limit=10&search=",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "schools"],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "pending"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    },
+                    {
+                      "key": "search",
+                      "value": ""
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create School (Admin)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"school_name\": \"New School\",\n  \"school_type\": \"traditional_quranic_school\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/schools",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "schools"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get School Full Details",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/schools/{{school_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "schools", "{{school_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update School (Admin)",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"school_name\": \"Updated School Name\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/schools/{{school_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "schools", "{{school_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update School Status",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"approved\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/schools/{{school_id}}/status",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "schools", "{{school_id}}", "status"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Approve School",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"feedback\": \"School approved\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/schools/{{school_id}}/approve",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "schools", "{{school_id}}", "approve"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Reject School",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"reason\": \"Reason for rejection\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/schools/{{school_id}}/reject",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "schools", "{{school_id}}", "reject"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get School Review History",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/schools/{{school_id}}/reviews",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "schools", "{{school_id}}", "reviews"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete School (Admin)",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/schools/{{school_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "schools", "{{school_id}}"]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 Schools (Public)",
+      "item": [
+        {
+          "name": "List Approved Schools",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{volunteer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/schools?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["schools"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get School Details (Public)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{volunteer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/schools/{{school_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["schools", "{{school_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 Users",
+      "item": [
+        {
+          "name": "Get Current User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{volunteer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/me",
+              "host": ["{{base_url}}"],
+              "path": ["users", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Volunteer Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{volunteer_token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "profileImage",
+                  "type": "file",
+                  "src": "path/to/image.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/users/me/volunteer-profile",
+              "host": ["{{base_url}}"],
+              "path": ["users", "me", "volunteer-profile"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Submitted Sites",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{volunteer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{{volunteer_id}}/submitted-sites",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{volunteer_id}}", "submitted-sites"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06 Sites",
+      "item": [
+        {
+          "name": "Drafts",
+          "item": [
+            {
+              "name": "List Draft Sites",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/sites/drafts?page=1&limit=10",
+                  "host": ["{{base_url}}"],
+                  "path": ["sites", "drafts"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Draft Site",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"site_name\": \"New Site\",\n  \"description\": \"Site description\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/sites/drafts",
+                  "host": ["{{base_url}}"],
+                  "path": ["sites", "drafts"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Draft Site",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/sites/drafts/{{site_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["sites", "drafts", "{{site_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Draft Site",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"site_name\": \"Updated Site Name\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/sites/drafts/{{site_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["sites", "drafts", "{{site_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Submit Draft Site",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/sites/drafts/{{site_id}}/submit",
+                  "host": ["{{base_url}}"],
+                  "path": ["sites", "drafts", "{{site_id}}", "submit"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Draft Site",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/sites/drafts/{{site_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["sites", "drafts", "{{site_id}}"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Sites",
+          "item": [
+            {
+              "name": "List Sites",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/sites?page=1&limit=10",
+                  "host": ["{{base_url}}"],
+                  "path": ["sites"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Site",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"site_name\": \"New Site\",\n  \"description\": \"Site description\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/sites",
+                  "host": ["{{base_url}}"],
+                  "path": ["sites"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Site",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/sites/{{site_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["sites", "{{site_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Site",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"site_name\": \"Updated Site Name\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/sites/{{site_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["sites", "{{site_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Upload Site Media",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "media",
+                      "type": "file",
+                      "src": "path/to/media.jpg"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/sites/{{site_id}}/media",
+                  "host": ["{{base_url}}"],
+                  "path": ["sites", "{{site_id}}", "media"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Submit Site Assessment",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"assessment_data\": {}\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/sites/{{site_id}}/assessment",
+                  "host": ["{{base_url}}"],
+                  "path": ["sites", "{{site_id}}", "assessment"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Site",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{volunteer_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/sites/{{site_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["sites", "{{site_id}}"]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{volunteer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dashboard/summary",
+              "host": ["{{base_url}}"],
+              "path": ["dashboard", "summary"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "08 Exports",
+      "item": [
+        {
+          "name": "Export Sites",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/exports/sites",
+              "host": ["{{base_url}}"],
+              "path": ["exports", "sites"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "09 Locations",
+      "item": [
+        {
+          "name": "Get Nigeria States and LGAs",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/locations/nigeria/states-lgas",
+              "host": ["{{base_url}}"],
+              "path": ["locations", "nigeria", "states-lgas"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "10 Volunteer Applications",
+      "item": [
+        {
+          "name": "Submit Volunteer Application",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Applicant Name\",\n  \"email\": \"applicant@example.com\",\n  \"phone\": \"+2348012345678\",\n  \"message\": \"I want to be a volunteer\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/volunteer-applications",
+              "host": ["{{base_url}}"],
+              "path": ["volunteer-applications"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

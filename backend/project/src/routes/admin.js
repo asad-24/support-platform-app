@@ -18,6 +18,10 @@ module.exports = [
   { method: 'DELETE', path: '/volunteers/:id', name: 'volunteers.destroy', middleware: ['auth', 'admin'], handler: 'admin/AdminVolunteerController.destroy' },
   { method: 'GET', path: '/volunteers/:id/schools', name: 'volunteers.schools', middleware: ['auth', 'admin'], handler: 'admin/AdminVolunteerController.schools' },
 
+  { method: 'GET', path: '/volunteer-applications', name: 'volunteerApplications.index', middleware: ['auth', 'admin'], handler: 'admin/AdminVolunteerApplicationController.index' },
+  { method: 'POST', path: '/volunteer-applications/:id/approve', name: 'volunteerApplications.approve', middleware: ['auth', 'admin'], handler: 'admin/AdminVolunteerApplicationController.approve' },
+  { method: 'POST', path: '/volunteer-applications/:id/reject', name: 'volunteerApplications.reject', middleware: ['auth', 'admin'], handler: 'admin/AdminVolunteerApplicationController.reject' },
+
   { method: 'GET', path: '/schools', name: 'schools.index', middleware: ['auth', 'admin'], handler: 'admin/AdminSchoolController.index' },
   { method: 'POST', path: '/schools', name: 'schools.store', middleware: ['auth', 'admin'], handler: 'admin/AdminSchoolController.store' },
   { method: 'GET', path: '/schools/:id', name: 'schools.show', middleware: ['auth', 'admin'], handler: 'admin/AdminSchoolController.show' },

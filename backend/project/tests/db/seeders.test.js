@@ -2,6 +2,9 @@ const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
 const TestMeta = require('../../src/models/TestMeta');
+const { sequelize } = require('../../core/util/classes/Model');
+
+jest.setTimeout(60000);
 
 function run(cmd, opts = {}) {
   const cwd = opts.cwd || path.join(process.cwd());
@@ -63,7 +66,7 @@ module.exports = {
     }
   });
 
-  afterAll(() => {
+  afterAll(async () => {
     try { if (new_seeder_path && fs.existsSync(new_seeder_path)) fs.unlinkSync(new_seeder_path); } catch (_) {}
     // Defensive cleanup: remove any stray test-created seeders from previous runs
     try {
@@ -75,5 +78,6 @@ module.exports = {
         }
       }
     } catch (_) {}
+    await sequelize.close();
   });
 });

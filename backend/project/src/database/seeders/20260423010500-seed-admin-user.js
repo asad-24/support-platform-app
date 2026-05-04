@@ -10,7 +10,7 @@ function adminDefaults() {
   };
 }
 
-/** @type {import('sequelize-cli').Seeder} */
+/** MongoDB seeder */
 module.exports = {
   async up(queryInterface) {
     if (String(process.env.SEED_DEFAULT_ADMIN || '').toLowerCase() !== 'true') {
