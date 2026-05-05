@@ -25,11 +25,15 @@ class VolunteerNotificationController {
       limit,
       offset,
     });
+    const unreadCount = await SchoolStore.VolunteerNotification.count({
+      where: ownerWhere(req, { status: 'unread' }),
+    });
 
     return res.json({
       success: true,
       data: {
         items: rows.map(SchoolStore.serializeVolunteerNotification),
+        unreadCount,
         pagination: { total: count, page, limit },
       },
     });

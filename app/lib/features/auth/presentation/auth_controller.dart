@@ -76,19 +76,25 @@ class AuthController extends AsyncNotifier<AuthState> {
   Future<void> completeVolunteerProfile({
     required String name,
     required String phone,
+    required String state,
+    required String lga,
+    required String ward,
     required String address,
     String? profileImagePath,
   }) async {
-    final session = state.valueOrNull?.session;
+    final session = this.state.valueOrNull?.session;
     if (session == null) return;
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
+    this.state = const AsyncLoading();
+    this.state = await AsyncValue.guard(() async {
       final updatedSession = await ref
           .read(authRepositoryProvider)
           .updateVolunteerProfile(
             session: session,
             name: name,
             phone: phone,
+            state: state,
+            lga: lga,
+            ward: ward,
             address: address,
             profileImagePath: profileImagePath,
           );

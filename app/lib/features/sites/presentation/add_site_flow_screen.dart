@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:latlong2/latlong.dart' as osm;
 import 'package:uuid/uuid.dart';
 
 import '../../../core/storage/storage_providers.dart';
@@ -15,6 +15,7 @@ import '../../../features/auth/presentation/auth_controller.dart';
 import '../../../shared/models/app_enums.dart';
 import '../../../shared/models/media_file.dart';
 import '../../../shared/models/site_draft.dart';
+import '../../../shared/models/user_access_role.dart';
 import '../data/sites_repository.dart';
 import 'add_site_flow/flow_timeline.dart';
 import 'add_site_flow/location_step.dart';
@@ -49,6 +50,7 @@ class AddSiteFlowScreen extends ConsumerStatefulWidget {
 class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
   static const _minPhotos = 2;
   static const _maxPhotos = 8;
+  static const _maxVideoBytes = 4 * 1024 * 1024;
 
   static const _schoolTypes = [
     'Traditional Quranic School',
@@ -104,7 +106,7 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
   String? _initialPayloadSignature;
   List<CorrectionIssue> _correctionIssues = const [];
   String? _statesLoadError;
-  LatLng? _selectedLocation;
+  osm.LatLng? _selectedLocation;
 
   final _name = TextEditingController();
   final _localName = TextEditingController();
@@ -144,6 +146,7 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
   final Set<NeedType> _needs = {};
   final Set<String> _studentAgeGroups = {};
   final List<SitePhotoDraft> _photos = [];
+  SiteVideoDraft? _video;
   final List<OperatorContactFields> _additionalOperators = [];
   List<NigeriaStateOption> _nigeriaStates = [];
 
@@ -452,12 +455,15 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
       case 2:
         return PhotosReviewStep(
           photos: _photos,
+          video: _video,
           minPhotos: _minPhotos,
           maxPhotos: _maxPhotos,
           onCapturePhoto: () => _pickPhoto(ImageSource.camera),
           onSelectFromGallery: () => _pickPhoto(ImageSource.gallery),
+          onSelectVideo: _pickVideo,
           onPhotoCategoryChanged: _setPhotoCategory,
           onRemovePhoto: (photo) => setState(() => _photos.remove(photo)),
+          onRemoveVideo: () => setState(() => _video = null),
         );
       case 3:
         return PopulationStep(
@@ -575,7 +581,7 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
       _phone.text = site.phone;
       _lat.text = site.latitude.toStringAsFixed(6);
       _lng.text = site.longitude.toStringAsFixed(6);
-      _selectedLocation = LatLng(site.latitude, site.longitude);
+      _selectedLocation = osm.LatLng(site.latitude, site.longitude);
       _urgency = site.urgencyLevel;
       _needs
         ..clear()
@@ -632,7 +638,10 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
         ..clear()
         ..addAll(
           site.media
-              .where((file) => file.localPath != null)
+              .where(
+                (file) =>
+                    file.localPath != null && file.mediaKind != 'video',
+              )
               .map(
                 (file) => SitePhotoDraft(
                   file: XFile(file.localPath!),
@@ -640,6 +649,15 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
                 ),
               ),
         );
+      final videos = site.media.where(
+        (file) => file.localPath != null && file.mediaKind == 'video',
+      );
+      _video = videos.isEmpty
+          ? null
+          : SiteVideoDraft(
+              file: XFile(videos.first.localPath!),
+              sizeBytes: videos.first.size,
+            );
     });
     _captureInitialPayloadSignature();
   }
@@ -679,7 +697,7 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
     _phone.text = payload['phone'] as String? ?? '';
     _lat.text = '${payload['latitude'] ?? '9.0820'}';
     _lng.text = '${payload['longitude'] ?? '8.6753'}';
-    _selectedLocation = LatLng(
+    _selectedLocation = osm.LatLng(
       double.tryParse(_lat.text) ?? 9.082,
       double.tryParse(_lng.text) ?? 8.6753,
     );
@@ -735,6 +753,7 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
         (payload['media'] as List? ?? const [])
             .map((item) => Map<String, dynamic>.from(item as Map))
             .where((item) => (item['localPath'] as String?)?.isNotEmpty == true)
+            .where((item) => item['mediaKind'] != 'video')
             .map(
               (item) => SitePhotoDraft(
                 file: XFile(item['localPath'] as String),
@@ -744,6 +763,19 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
               ),
             ),
       );
+    final videos = (payload['media'] as List? ?? const [])
+        .map((item) => Map<String, dynamic>.from(item as Map))
+        .where((item) => (item['localPath'] as String?)?.isNotEmpty == true)
+        .where((item) => item['mediaKind'] == 'video');
+    if (videos.isEmpty) {
+      _video = null;
+    } else {
+      final item = videos.first;
+      _video = SiteVideoDraft(
+        file: XFile(item['localPath'] as String),
+        sizeBytes: (item['size'] as num?)?.toInt(),
+      );
+    }
   }
 
   String _normalizeSchoolType(String rawType) {
@@ -908,7 +940,7 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
       final position = await Geolocator.getCurrentPosition();
       if (!mounted) return;
       setState(() {
-        _selectedLocation = LatLng(position.latitude, position.longitude);
+        _selectedLocation = osm.LatLng(position.latitude, position.longitude);
         _lat.text = position.latitude.toStringAsFixed(6);
         _lng.text = position.longitude.toStringAsFixed(6);
       });
@@ -919,7 +951,7 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
     }
   }
 
-  void _onMapTap(LatLng location) {
+  void _onMapTap(osm.LatLng location) {
     setState(() {
       _selectedLocation = location;
       _lat.text = location.latitude.toStringAsFixed(6);
@@ -1023,6 +1055,20 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
     );
     if (photo == null) return;
     setState(() => _photos.add(SitePhotoDraft(file: photo)));
+  }
+
+  Future<void> _pickVideo() async {
+    final video = await _picker.pickVideo(source: ImageSource.gallery);
+    if (video == null) return;
+    final size = await video.length();
+    if (size > _maxVideoBytes) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Video must be 4 MB or smaller.')),
+      );
+      return;
+    }
+    setState(() => _video = SiteVideoDraft(file: video, sizeBytes: size));
   }
 
   void _setPhotoCategory(SitePhotoDraft photo, MediaType? category) {
@@ -1172,13 +1218,15 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
     setState(() => _submitting = true);
     try {
       final repository = ref.read(sitesRepositoryProvider);
+      final payload = _onlinePayload();
       final site = widget.siteId == null
-          ? await repository.createSite(_payload())
+          ? await repository.createSite(payload)
           : await repository.updateSite(
               widget.siteId!,
-              _payload(),
+              payload,
               correctionOnly: widget.correctionOnly,
             );
+      await _uploadSelectedMedia(repository, site.id);
       ref
         ..invalidate(sitesProvider)
         ..invalidate(dashboardSummaryProvider);
@@ -1207,7 +1255,12 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
         ),
       );
 
-      if (mounted) context.go('/sites/${site.id}');
+      if (mounted) {
+        final destination = session?.accessRole == UserAccessRole.volunteer
+            ? '/volunteer/submitted-schools/${site.id}'
+            : '/sites/${site.id}';
+        context.go(destination);
+      }
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -1216,6 +1269,65 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  Map<String, dynamic> _onlinePayload() {
+    final payload = Map<String, dynamic>.from(_payload());
+    payload.remove('media');
+    return payload;
+  }
+
+  Future<void> _uploadSelectedMedia(
+    SitesRepository repository,
+    String siteId,
+  ) async {
+    final session = ref.read(authControllerProvider).valueOrNull?.session;
+    final uploadedBy = session?.user.id ?? 'field-001';
+    for (final photo in _photos) {
+      if (_isStoredBackendPhoto(photo)) continue;
+      await repository.uploadMedia(
+        siteId,
+        MediaFile(
+          id: _uuid.v4(),
+          siteId: siteId,
+          localPath: photo.file.path,
+          type: photo.category ?? MediaType.other,
+          timestamp: DateTime.now(),
+          latitude: double.tryParse(_lat.text),
+          longitude: double.tryParse(_lng.text),
+          uploadedBy: uploadedBy,
+        ),
+        uploadFile: photo.file,
+      );
+    }
+    final video = _video;
+    if (video != null && !_isStoredBackendVideo(video)) {
+      await repository.uploadMedia(
+        siteId,
+        MediaFile(
+          id: _uuid.v4(),
+          siteId: siteId,
+          localPath: video.file.path,
+          mediaKind: 'video',
+          mimeType: video.file.mimeType,
+          size: video.sizeBytes,
+          type: MediaType.other,
+          timestamp: DateTime.now(),
+          latitude: double.tryParse(_lat.text),
+          longitude: double.tryParse(_lng.text),
+          uploadedBy: uploadedBy,
+        ),
+        uploadFile: video.file,
+      );
+    }
+  }
+
+  bool _isStoredBackendPhoto(SitePhotoDraft photo) {
+    return photo.file.path.startsWith('uploads/');
+  }
+
+  bool _isStoredBackendVideo(SiteVideoDraft video) {
+    return video.file.path.startsWith('uploads/');
   }
 
   Map<String, dynamic> _payload() {
@@ -1297,20 +1409,35 @@ class _AddSiteFlowScreenState extends ConsumerState<AddSiteFlowScreen> {
         'notes': _welfareNotes.text.trim(),
       },
       'needs': _needs.map((need) => need.toJson()).toList(),
-      'media': _photos
-          .map(
-            (photo) => MediaFile(
-              id: _uuid.v4(),
-              siteId: widget.siteId ?? 'pending',
-              localPath: photo.file.path,
-              type: photo.category ?? MediaType.other,
-              timestamp: DateTime.now(),
-              latitude: double.tryParse(_lat.text),
-              longitude: double.tryParse(_lng.text),
-              uploadedBy: session?.user.id ?? 'field-001',
-            ).toJson(),
-          )
-          .toList(),
+      'media': [
+        ..._photos.map(
+          (photo) => MediaFile(
+            id: _uuid.v4(),
+            siteId: widget.siteId ?? 'pending',
+            localPath: photo.file.path,
+            mediaKind: 'image',
+            type: photo.category ?? MediaType.other,
+            timestamp: DateTime.now(),
+            latitude: double.tryParse(_lat.text),
+            longitude: double.tryParse(_lng.text),
+            uploadedBy: session?.user.id ?? 'field-001',
+          ).toJson(),
+        ),
+        if (_video != null)
+          MediaFile(
+            id: _uuid.v4(),
+            siteId: widget.siteId ?? 'pending',
+            localPath: _video!.file.path,
+            mediaKind: 'video',
+            mimeType: _video!.file.mimeType,
+            size: _video!.sizeBytes,
+            type: MediaType.other,
+            timestamp: DateTime.now(),
+            latitude: double.tryParse(_lat.text),
+            longitude: double.tryParse(_lng.text),
+            uploadedBy: session?.user.id ?? 'field-001',
+          ).toJson(),
+      ],
     };
   }
 

@@ -36,6 +36,7 @@ class VolunteerProfileScreen extends ConsumerWidget {
     final phone = user?.phone ?? 'Not provided';
     final username = user?.username == null ? '' : '@${user!.username}';
     final location = [
+      user?.ward,
       user?.lga,
       user?.state,
     ].where((item) => item != null && item.trim().isNotEmpty).join(' · ');

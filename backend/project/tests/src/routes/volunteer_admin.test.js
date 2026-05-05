@@ -240,12 +240,29 @@ describe('volunteer and admin routes', () => {
     const volunteerNotifications = await httpRequest(baseUrl, 'GET', '/volunteer/notifications', { headers: volunteerAuth });
     expect(volunteerNotifications.status).toBe(200);
     expect(volunteerNotifications.body.data.items).toHaveLength(1);
+    expect(volunteerNotifications.body.data.unreadCount).toBe(1);
     expect(volunteerNotifications.body.data.items[0].type).toBe('school_approved');
     expect(volunteerNotifications.body.data.items[0].status).toBe('unread');
 
     const read = await httpRequest(baseUrl, 'POST', `/volunteer/notifications/${volunteerNotifications.body.data.items[0].id}/read`, { headers: volunteerAuth });
     expect(read.status).toBe(200);
     expect(read.body.data.notification.status).toBe('read');
+
+    const afterRead = await httpRequest(baseUrl, 'GET', '/volunteer/notifications', { headers: volunteerAuth });
+    expect(afterRead.body.data.unreadCount).toBe(0);
+
+    const manualNotification = await httpRequest(baseUrl, 'POST', '/volunteer/notifications', {
+      headers: volunteerAuth,
+      body: { title: 'Manual review update', message: 'Please check this update.' },
+    });
+    expect(manualNotification.status).toBe(201);
+    const beforeReadAll = await httpRequest(baseUrl, 'GET', '/volunteer/notifications', { headers: volunteerAuth });
+    expect(beforeReadAll.body.data.unreadCount).toBe(1);
+
+    const readAll = await httpRequest(baseUrl, 'POST', '/volunteer/notifications/read-all', { headers: volunteerAuth });
+    expect(readAll.status).toBe(200);
+    const afterReadAll = await httpRequest(baseUrl, 'GET', '/volunteer/notifications', { headers: volunteerAuth });
+    expect(afterReadAll.body.data.unreadCount).toBe(0);
 
     const publicSchool = await httpRequest(baseUrl, 'GET', `/schools/${schoolId}`, { headers: adminAuth });
     expect(publicSchool.status).toBe(200);

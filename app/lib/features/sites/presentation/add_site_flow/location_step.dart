@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart' as osm;
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/utils/google_maps_web_availability.dart';
-import '../../../../shared/widgets/map_unavailable_placeholder.dart';
 import 'form_fields.dart';
 import 'models.dart';
 import 'shared_widgets.dart';
@@ -38,11 +37,11 @@ class LocationStep extends StatelessWidget {
   final bool isLoadingStates;
   final String? statesLoadError;
   final bool isFetchingLocation;
-  final LatLng? currentLocation;
+  final osm.LatLng? currentLocation;
   final VoidCallback onRetryLoadStates;
   final ValueChanged<String?> onStateChanged;
   final ValueChanged<String?> onLgaChanged;
-  final ValueChanged<LatLng> onMapTap;
+  final ValueChanged<osm.LatLng> onMapTap;
   final TextEditingController wardController;
   final TextEditingController communityController;
   final TextEditingController landmarkController;
@@ -52,8 +51,6 @@ class LocationStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final canShowMap = isGoogleMapsAvailableForCurrentPlatform();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -113,37 +110,51 @@ class LocationStep extends StatelessWidget {
             border: Border.all(color: AppColors.border(context)),
           ),
           clipBehavior: Clip.antiAlias,
-          child: !canShowMap
-              ? const MapUnavailablePlaceholder(
-                  message:
-                      'Add a Google Maps JavaScript API key for web to enable the map preview. You can still use current location and enter coordinates below.',
-                )
-              : currentLocation == null
+          child: currentLocation == null
               ? Center(
                   child: Text(
                     'Getting current location...',
                     style: TextStyle(color: AppColors.secondaryText(context)),
                   ),
                 )
-              : GoogleMap(
+              : FlutterMap(
                   key: ValueKey(
                     '${currentLocation!.latitude},${currentLocation!.longitude}',
                   ),
-                  initialCameraPosition: CameraPosition(
-                    target: currentLocation!,
-                    zoom: 16,
+                  options: MapOptions(
+                    initialCenter: currentLocation!,
+                    initialZoom: 16,
+                    onTap: (_, point) => onMapTap(point),
                   ),
-                  markers: {
-                    Marker(
-                      markerId: const MarkerId('current-school-location'),
-                      position: currentLocation!,
+                  children: [
+                    TileLayer(
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.schoolsupportatlas.app',
                     ),
-                  },
-                  myLocationEnabled: true,
-                  myLocationButtonEnabled: true,
-                  mapToolbarEnabled: false,
-                  zoomControlsEnabled: false,
-                  onTap: onMapTap,
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: currentLocation!,
+                          width: 54,
+                          height: 54,
+                          child: const Icon(
+                            Icons.location_on_rounded,
+                            color: AppColors.deepGreen,
+                            size: 44,
+                          ),
+                        ),
+                      ],
+                    ),
+                    RichAttributionWidget(
+                      attributions: [
+                        TextSourceAttribution(
+                          'OpenStreetMap contributors',
+                          onTap: () {},
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
         ),
         Row(

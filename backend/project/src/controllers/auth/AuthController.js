@@ -79,6 +79,7 @@ async function flutterUser(user) {
         phone: null,
         state: null,
         lga: null,
+        ward: null,
         address: null,
         dateOfBirth: null,
         gender: null,

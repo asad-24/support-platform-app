@@ -27,6 +27,12 @@ class VolunteerProfileController {
       if (!profileBody.fullName) profileBody.fullName = req.auth.user.name;
 
       if (req.file) {
+        if (!req.file.mimetype.startsWith('image/')) {
+          return res.status(400).json({
+            success: false,
+            error: 'Profile picture must be an image file',
+          });
+        }
         const stored = await FileStorage.saveUploadedFile(req.file, {
           folder: `profiles/${req.auth.user.id}`,
           req,

@@ -3,6 +3,8 @@
 const FlutterSchoolStore = require('@src/services/FlutterSchoolStore');
 const FileStorage = require('@src/services/FileStorage');
 
+const MAX_VIDEO_BYTES = 4 * 1024 * 1024;
+
 function handleError(res, error) {
   if (error.body) return res.status(error.status || 500).json(error.body);
   return res.status(error.status || 500).json({
@@ -59,6 +61,14 @@ class SiteController {
     try {
       let mediaData = req.body;
       if (req.file) {
+        if (req.file.mimetype.startsWith('video/') && req.file.size > MAX_VIDEO_BYTES) {
+          return res.status(400).json({
+            error: {
+              code: 'VIDEO_TOO_LARGE',
+              message: 'Video uploads must be 4 MB or smaller.',
+            },
+          });
+        }
         const stored = await FileStorage.saveUploadedFile(req.file, {
           folder: `schools/${req.params.id}`,
           req,
@@ -70,6 +80,7 @@ class SiteController {
           localPath: stored.localPath,
           filename: stored.filename,
           originalFilename: req.file.originalname,
+          mediaKind: req.file.mimetype.startsWith('video/') ? 'video' : 'image',
           mimeType: stored.mimeType,
           size: stored.size,
         };

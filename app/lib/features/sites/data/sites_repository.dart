@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http_parser/http_parser.dart' as http_parser;
+import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/errors/app_exception.dart';
@@ -33,6 +37,12 @@ final draftsProvider = FutureProvider.autoDispose<List<SiteDraft>>((ref) {
 
 final submittedSitesProvider = FutureProvider.autoDispose
     .family<List<Site>, String>((ref, userId) {
+      final refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+        if (ref.state.isLoading) return;
+        ref.invalidateSelf();
+      });
+      ref.onDispose(refreshTimer.cancel);
+
       return ref.watch(sitesRepositoryProvider).getSubmittedSites(userId);
     });
 
@@ -56,7 +66,11 @@ abstract class SitesRepository {
     bool correctionOnly = false,
   });
 
-  Future<MediaFile> uploadMedia(String siteId, MediaFile file);
+  Future<MediaFile> uploadMedia(
+    String siteId,
+    MediaFile file, {
+    XFile? uploadFile,
+  });
 
   Future<WelfareAssessment> submitAssessment(
     String siteId,
@@ -150,16 +164,64 @@ class ApiSitesRepository implements SitesRepository {
   }
 
   @override
-  Future<MediaFile> uploadMedia(String siteId, MediaFile file) async {
+  Future<MediaFile> uploadMedia(
+    String siteId,
+    MediaFile file, {
+    XFile? uploadFile,
+  }) async {
     try {
+      final sourceFile =
+          uploadFile ??
+          (file.localPath == null || file.localPath!.isEmpty
+              ? null
+              : XFile(file.localPath!));
+      final data = file.toJson();
+      final requestData = sourceFile == null
+          ? data
+          : FormData.fromMap({
+              'id': file.id,
+              'siteId': siteId,
+              'mediaKind': file.mediaKind,
+              'type': file.type.toJson(),
+              'timestamp': file.timestamp.toIso8601String(),
+              if (file.latitude != null) 'latitude': file.latitude,
+              if (file.longitude != null) 'longitude': file.longitude,
+              'uploadedBy': file.uploadedBy,
+              'media': MultipartFile.fromBytes(
+                await sourceFile.readAsBytes(),
+                filename: sourceFile.name,
+                contentType: _contentType(sourceFile, file.mediaKind),
+              ),
+            });
+
       final response = await _dio.post<Map<String, dynamic>>(
         '/sites/$siteId/media',
-        data: file.toJson(),
+        data: requestData,
       );
       return MediaFile.fromJson(response.data ?? const {});
     } catch (error) {
       throw _exceptionFrom(error);
     }
+  }
+
+  http_parser.MediaType _contentType(XFile file, String mediaKind) {
+    final mimeType = file.mimeType;
+    if (mimeType != null && mimeType.contains('/')) {
+      return http_parser.MediaType.parse(mimeType);
+    }
+
+    final extension = file.name.split('.').last.toLowerCase();
+    return switch (extension) {
+      'jpg' || 'jpeg' => http_parser.MediaType('image', 'jpeg'),
+      'png' => http_parser.MediaType('image', 'png'),
+      'gif' => http_parser.MediaType('image', 'gif'),
+      'webp' => http_parser.MediaType('image', 'webp'),
+      'mp4' => http_parser.MediaType('video', 'mp4'),
+      'mov' => http_parser.MediaType('video', 'quicktime'),
+      'webm' => http_parser.MediaType('video', 'webm'),
+      _ when mediaKind == 'video' => http_parser.MediaType('video', 'mp4'),
+      _ => http_parser.MediaType('image', 'jpeg'),
+    };
   }
 
   @override
@@ -416,7 +478,11 @@ class MockSitesRepository implements SitesRepository {
   }
 
   @override
-  Future<MediaFile> uploadMedia(String siteId, MediaFile file) async {
+  Future<MediaFile> uploadMedia(
+    String siteId,
+    MediaFile file, {
+    XFile? uploadFile,
+  }) async {
     await Future<void>.delayed(const Duration(milliseconds: 500));
     return file;
   }

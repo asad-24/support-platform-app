@@ -41,6 +41,7 @@ class AuthInterceptor extends Interceptor {
 
   final Dio _dio;
   final SecureTokenStorage _tokenStorage;
+  Future<_AuthTokens>? _refreshFuture;
 
   @override
   Future<void> onRequest(
@@ -59,6 +60,12 @@ class AuthInterceptor extends Interceptor {
     DioException err,
     ErrorInterceptorHandler handler,
   ) async {
+    if (err.requestOptions.extra['skipAuth'] == true) {
+      if (err.response?.statusCode == 401) await _tokenStorage.clear();
+      handler.next(err);
+      return;
+    }
+
     if (err.response?.statusCode != 401 ||
         err.requestOptions.extra['retried'] == true) {
       handler.next(err);
@@ -72,22 +79,11 @@ class AuthInterceptor extends Interceptor {
     }
 
     try {
-      final response = await _dio.post<Map<String, dynamic>>(
-        '/auth/refresh',
-        data: {'refreshToken': refreshToken},
-        options: Options(extra: {'skipAuth': true}),
-      );
-      final data = response.data ?? {};
-      final accessToken = data['accessToken'] as String;
-      final nextRefreshToken = data['refreshToken'] as String? ?? refreshToken;
-      await _tokenStorage.updateTokens(
-        accessToken: accessToken,
-        refreshToken: nextRefreshToken,
-      );
+      final tokens = await _refreshTokens(refreshToken);
 
       final retryOptions = err.requestOptions;
       retryOptions.extra['retried'] = true;
-      retryOptions.headers['Authorization'] = 'Bearer $accessToken';
+      retryOptions.headers['Authorization'] = 'Bearer ${tokens.accessToken}';
       final retryResponse = await _dio.fetch<dynamic>(retryOptions);
       handler.resolve(retryResponse);
     } catch (_) {
@@ -95,4 +91,32 @@ class AuthInterceptor extends Interceptor {
       handler.next(err);
     }
   }
+
+  Future<_AuthTokens> _refreshTokens(String refreshToken) {
+    return _refreshFuture ??= _requestRefresh(
+      refreshToken,
+    ).whenComplete(() => _refreshFuture = null);
+  }
+
+  Future<_AuthTokens> _requestRefresh(String refreshToken) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/auth/refresh',
+      data: {'refreshToken': refreshToken},
+      options: Options(extra: {'skipAuth': true}),
+    );
+    final data = response.data ?? {};
+    final accessToken = data['accessToken'] as String;
+    final nextRefreshToken = data['refreshToken'] as String? ?? refreshToken;
+    await _tokenStorage.updateTokens(
+      accessToken: accessToken,
+      refreshToken: nextRefreshToken,
+    );
+    return _AuthTokens(accessToken);
+  }
+}
+
+class _AuthTokens {
+  const _AuthTokens(this.accessToken);
+
+  final String accessToken;
 }

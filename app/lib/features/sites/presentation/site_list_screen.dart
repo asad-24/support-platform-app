@@ -8,6 +8,7 @@ import '../../../features/auth/presentation/auth_controller.dart';
 import '../../../shared/models/app_enums.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/site_card.dart';
+import '../../volunteer/data/volunteer_notification.dart';
 import '../data/sites_repository.dart';
 
 class SiteListScreen extends ConsumerStatefulWidget {
@@ -17,11 +18,47 @@ class SiteListScreen extends ConsumerStatefulWidget {
   ConsumerState<SiteListScreen> createState() => _SiteListScreenState();
 }
 
-class _SiteListScreenState extends ConsumerState<SiteListScreen> {
+class _SiteListScreenState extends ConsumerState<SiteListScreen>
+    with WidgetsBindingObserver {
   String _query = '';
   VerificationStatus? _status;
   UrgencyLevel? _urgency;
   NeedType? _need;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshSites());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _refreshSites();
+  }
+
+  Future<void> _refreshSites() async {
+    final session = ref.read(authControllerProvider).valueOrNull?.session;
+    if (session?.user.role == UserRole.fieldWorker) {
+      final sites = submittedSitesProvider(session!.user.id);
+      final notifications = volunteerNotificationsProvider(session.user.id);
+      if (!ref.read(sites).isLoading) ref.invalidate(sites);
+      if (!ref.read(notifications).isLoading) ref.invalidate(notifications);
+      await Future.wait([
+        ref.read(sites.future),
+        ref.read(notifications.future),
+      ]);
+    } else {
+      if (!ref.read(sitesProvider).isLoading) ref.invalidate(sitesProvider);
+      await ref.read(sitesProvider.future);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -139,17 +176,21 @@ class _SiteListScreenState extends ConsumerState<SiteListScreen> {
                       );
                     }
 
-                    return ListView.separated(
-                      padding: Responsive.pagePadding(context),
-                      itemCount: filtered.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 10),
-                      itemBuilder: (context, index) {
-                        final site = filtered[index];
-                        return SiteCard(
-                          site: site,
-                          onTap: () => context.go('/sites/${site.id}'),
-                        );
-                      },
+                    return RefreshIndicator(
+                      onRefresh: _refreshSites,
+                      child: ListView.separated(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: Responsive.pagePadding(context),
+                        itemCount: filtered.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
+                        itemBuilder: (context, index) {
+                          final site = filtered[index];
+                          return SiteCard(
+                            site: site,
+                            onTap: () => context.go('/sites/${site.id}'),
+                          );
+                        },
+                      ),
                     );
                   },
                   loading: () =>

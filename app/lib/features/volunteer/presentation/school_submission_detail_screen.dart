@@ -12,13 +12,49 @@ import '../../../shared/models/site.dart';
 import 'volunteer_home_screen.dart';
 import 'volunteer_submitted_schools_screen.dart';
 
-class SchoolSubmissionDetailScreen extends ConsumerWidget {
+class SchoolSubmissionDetailScreen extends ConsumerStatefulWidget {
   const SchoolSubmissionDetailScreen({super.key, required this.siteId});
 
   final String siteId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SchoolSubmissionDetailScreen> createState() =>
+      _SchoolSubmissionDetailScreenState();
+}
+
+class _SchoolSubmissionDetailScreenState
+    extends ConsumerState<SchoolSubmissionDetailScreen>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshSites());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _refreshSites();
+  }
+
+  void _refreshSites() {
+    final session = ref.read(authControllerProvider).valueOrNull?.session;
+    if (session == null) return;
+    if (session.user.role == UserRole.fieldWorker) {
+      ref.invalidate(submittedSitesProvider(session.user.id));
+    } else {
+      ref.invalidate(sitesProvider);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final session = ref.watch(authControllerProvider).valueOrNull?.session;
     final sites = session?.user.role == UserRole.fieldWorker
         ? ref.watch(submittedSitesProvider(session!.user.id))
@@ -36,7 +72,9 @@ class SchoolSubmissionDetailScreen extends ConsumerWidget {
             ),
             child: sites.when(
               data: (items) {
-                final site = items.firstWhere((item) => item.id == siteId);
+                final site = items.firstWhere(
+                  (item) => item.id == widget.siteId,
+                );
                 return _DetailBody(site: site);
               },
               loading: () => const Center(child: CircularProgressIndicator()),

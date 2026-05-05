@@ -7,13 +7,61 @@ import '../../../core/utils/responsive.dart';
 import '../../../shared/models/app_enums.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../sites/data/sites_repository.dart';
+import '../data/volunteer_notification.dart';
 import 'volunteer_reward_widgets.dart';
 
-class VolunteerHomeScreen extends ConsumerWidget {
+class VolunteerHomeScreen extends ConsumerStatefulWidget {
   const VolunteerHomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<VolunteerHomeScreen> createState() =>
+      _VolunteerHomeScreenState();
+}
+
+class _VolunteerHomeScreenState extends ConsumerState<VolunteerHomeScreen>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _refreshSubmittedSites(),
+    );
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _refreshSubmittedSites();
+  }
+
+  Future<void> _refreshSubmittedSites() async {
+    final session = ref.read(authControllerProvider).valueOrNull?.session;
+    if (session == null) return;
+    final sites = submittedSitesProvider(session.user.id);
+    if (!ref.read(sites).isLoading) ref.invalidate(sites);
+    await ref.read(sites.future);
+  }
+
+  Future<void> _refreshHomeData() async {
+    final session = ref.read(authControllerProvider).valueOrNull?.session;
+    if (session == null) return;
+    final sites = submittedSitesProvider(session.user.id);
+    final notifications = volunteerNotificationsProvider(session.user.id);
+
+    if (!ref.read(sites).isLoading) ref.invalidate(sites);
+    if (!ref.read(notifications).isLoading) ref.invalidate(notifications);
+
+    await Future.wait([ref.read(sites.future), ref.read(notifications.future)]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final session = ref.watch(authControllerProvider).valueOrNull?.session;
     final userId = session?.user.id ?? 'field-001';
     final submittedSites = ref.watch(submittedSitesProvider(userId));
@@ -50,109 +98,112 @@ class VolunteerHomeScreen extends ConsumerWidget {
               constraints: BoxConstraints(
                 maxWidth: Responsive.pageMaxWidth(context),
               ),
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-                children: [
-                  VolunteerHeaderCard(
-                    userName: userName,
-                    location: location.isEmpty
-                        ? 'Location not provided'
-                        : location,
-                    approvedCount: approvedCount,
-                  ),
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: VolunteerStatCard(
-                          value: submittedSites.isLoading
-                              ? '...'
-                              : '$totalCount',
-                          label: 'Total',
-                          color: AppColors.onboardingGreen,
-                        ),
-                      ),
-                      SizedBox(width: 9),
-                      Expanded(
-                        child: VolunteerStatCard(
-                          value: submittedSites.isLoading
-                              ? '...'
-                              : '$approvedCount',
-                          label: 'Approved',
-                          color: const Color(0xFF18A66D),
-                        ),
-                      ),
-                      SizedBox(width: 9),
-                      Expanded(
-                        child: VolunteerStatCard(
-                          value: submittedSites.isLoading
-                              ? '...'
-                              : '$pendingCount',
-                          label: 'Pending',
-                          color: AppColors.orange,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-                  Text(
-                    'Quick Actions',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
+              child: RefreshIndicator(
+                onRefresh: _refreshHomeData,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+                  children: [
+                    VolunteerHeaderCard(
+                      userName: userName,
+                      location: location.isEmpty
+                          ? 'Location not provided'
+                          : location,
+                      approvedCount: approvedCount,
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 9,
-                    crossAxisSpacing: 9,
-                    childAspectRatio: 1.45,
-                    children: [
-                      QuickActionCard(
-                        title: 'Add New\nSchool',
-                        icon: Icons.add_circle_outline_rounded,
-                        iconColor: AppColors.onboardingGreen,
-                        iconBackground: AppColors.onboardingGreen.withValues(
-                          alpha: 0.10,
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: VolunteerStatCard(
+                            value: submittedSites.isLoading
+                                ? '...'
+                                : '$totalCount',
+                            label: 'Total',
+                            color: AppColors.onboardingGreen,
+                          ),
                         ),
-                        onTap: () => context.go('/sites/new'),
-                      ),
-                      QuickActionCard(
-                        title: 'My\nSchools',
-                        icon: Icons.map_outlined,
-                        iconColor: AppColors.onboardingGreen,
-                        iconBackground: AppColors.onboardingGreen.withValues(
-                          alpha: 0.10,
+                        SizedBox(width: 9),
+                        Expanded(
+                          child: VolunteerStatCard(
+                            value: submittedSites.isLoading
+                                ? '...'
+                                : '$approvedCount',
+                            label: 'Approved',
+                            color: const Color(0xFF18A66D),
+                          ),
                         ),
-                        onTap: () => context.go('/volunteer/submitted-schools'),
-                      ),
-                      QuickActionCard(
-                        title: 'Draft\nRecords',
-                        icon: Icons.edit_outlined,
-                        iconColor: const Color(0xFF1586C7),
-                        iconBackground: const Color(0xFFEAF6FF),
-                        onTap: () => context.go('/volunteer/drafts'),
-                      ),
-                      QuickActionCard(
-                        title: 'Notifications',
-                        icon: Icons.notifications_none_rounded,
-                        iconColor: const Color(0xFFC47A05),
-                        iconBackground: const Color(0xFFFFF4D8),
-                        onTap: () => context.go('/volunteer/notifications'),
-                      ),
-                      QuickActionCard(
-                        title: 'My\nProfile',
-                        icon: Icons.person_outline_rounded,
-                        iconColor: const Color(0xFF7C3EC8),
-                        iconBackground: const Color(0xFFF3ECFF),
-                        onTap: () => context.go('/volunteer/profile'),
-                      ),
-                    ],
-                  ),
-                ],
+                        SizedBox(width: 9),
+                        Expanded(
+                          child: VolunteerStatCard(
+                            value: submittedSites.isLoading
+                                ? '...'
+                                : '$pendingCount',
+                            label: 'Pending',
+                            color: AppColors.orange,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      'Quick Actions',
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(fontSize: 20, fontWeight: FontWeight.w900),
+                    ),
+                    const SizedBox(height: 10),
+                    GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 9,
+                      crossAxisSpacing: 9,
+                      childAspectRatio: 1.45,
+                      children: [
+                        QuickActionCard(
+                          title: 'Add New\nSchool',
+                          icon: Icons.add_circle_outline_rounded,
+                          iconColor: AppColors.onboardingGreen,
+                          iconBackground: AppColors.onboardingGreen.withValues(
+                            alpha: 0.10,
+                          ),
+                          onTap: () => context.go('/sites/new'),
+                        ),
+                        QuickActionCard(
+                          title: 'My\nSchools',
+                          icon: Icons.map_outlined,
+                          iconColor: AppColors.onboardingGreen,
+                          iconBackground: AppColors.onboardingGreen.withValues(
+                            alpha: 0.10,
+                          ),
+                          onTap: () =>
+                              context.go('/volunteer/submitted-schools'),
+                        ),
+                        QuickActionCard(
+                          title: 'Draft\nRecords',
+                          icon: Icons.edit_outlined,
+                          iconColor: const Color(0xFF1586C7),
+                          iconBackground: const Color(0xFFEAF6FF),
+                          onTap: () => context.go('/volunteer/drafts'),
+                        ),
+                        QuickActionCard(
+                          title: 'Notifications',
+                          icon: Icons.notifications_none_rounded,
+                          iconColor: const Color(0xFFC47A05),
+                          iconBackground: const Color(0xFFFFF4D8),
+                          onTap: () => context.go('/volunteer/notifications'),
+                        ),
+                        QuickActionCard(
+                          title: 'My\nProfile',
+                          icon: Icons.person_outline_rounded,
+                          iconColor: const Color(0xFF7C3EC8),
+                          iconBackground: const Color(0xFFF3ECFF),
+                          onTap: () => context.go('/volunteer/profile'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -293,6 +344,7 @@ class VolunteerHeaderCard extends StatelessWidget {
           VolunteerRewardBadge(
             approvedCount: approvedCount,
             onDarkBackground: true,
+            showInfoButton: true,
           ),
         ],
       ),
@@ -454,13 +506,23 @@ class QuickActionCard extends StatelessWidget {
   }
 }
 
-class VolunteerBottomNavigation extends StatelessWidget {
+class VolunteerBottomNavigation extends ConsumerWidget {
   const VolunteerBottomNavigation({super.key, required this.currentIndex});
 
   final int currentIndex;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userId = ref
+        .watch(authControllerProvider)
+        .valueOrNull
+        ?.session
+        ?.user
+        .id;
+    final unreadCount = userId == null
+        ? 0
+        : ref.watch(volunteerUnreadNotificationsProvider(userId)).valueOrNull ??
+              0;
     final items = [
       _VolunteerNavItem('Home', Icons.home_outlined, '/volunteer/home'),
       _VolunteerNavItem(
@@ -508,13 +570,64 @@ class VolunteerBottomNavigation extends StatelessWidget {
           destinations: [
             for (final item in items)
               NavigationDestination(
-                icon: Icon(item.icon),
-                selectedIcon: Icon(item.icon, color: AppColors.onboardingGreen),
+                icon: _VolunteerNavIcon(
+                  icon: item.icon,
+                  showBadge:
+                      item.path == '/volunteer/notifications' &&
+                      unreadCount > 0,
+                ),
+                selectedIcon: _VolunteerNavIcon(
+                  icon: item.icon,
+                  color: AppColors.onboardingGreen,
+                  showBadge:
+                      item.path == '/volunteer/notifications' &&
+                      unreadCount > 0,
+                ),
                 label: item.label,
               ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _VolunteerNavIcon extends StatelessWidget {
+  const _VolunteerNavIcon({
+    required this.icon,
+    this.color,
+    this.showBadge = false,
+  });
+
+  final IconData icon;
+  final Color? color;
+  final bool showBadge;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Icon(icon, color: color),
+        if (showBadge)
+          Positioned(
+            top: -3,
+            right: -4,
+            child: Container(
+              key: const Key('notification-unread-badge'),
+              width: 9,
+              height: 9,
+              decoration: BoxDecoration(
+                color: AppColors.danger,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.elevatedSurface(context),
+                  width: 1.4,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

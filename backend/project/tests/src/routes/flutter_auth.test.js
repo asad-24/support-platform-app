@@ -249,6 +249,7 @@ describe('flutter auth contract routes', () => {
         phone: '+2348012345678',
         state: 'Kano',
         lga: 'Nassarawa',
+        ward: 'Tudun Wada',
         address: 'Nassarawa LGA, Kano State',
         educationLevel: 'Tertiary',
         occupation: 'Community volunteer',
@@ -260,8 +261,9 @@ describe('flutter auth contract routes', () => {
       name: 'Ibrahim Sule',
       email: 'ibrahim@example.com',
       phone: '+2348012345678',
-      state: null,
-      lga: null,
+      state: 'Kano',
+      lga: 'Nassarawa',
+      ward: 'Tudun Wada',
       address: 'Nassarawa LGA, Kano State',
       educationLevel: null,
       occupation: null,
@@ -271,6 +273,11 @@ describe('flutter auth contract routes', () => {
     const me = await httpRequest(baseUrl, 'GET', '/users/me', { headers: auth });
     expect(me.status).toBe(200);
     expect(me.body.profileComplete).toBe(true);
+    expect(me.body).toMatchObject({
+      state: 'Kano',
+      lga: 'Nassarawa',
+      ward: 'Tudun Wada',
+    });
     expect(me.body.permissions).toEqual(['sites:create', 'sites:update:assigned']);
 
     const uploaded = await httpMultipartRequest(baseUrl, 'PATCH', '/users/me/volunteer-profile', {

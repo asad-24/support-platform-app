@@ -400,11 +400,54 @@ describe('flutter site contract routes', () => {
     const storedPhoto = await SchoolPhoto.findOne({ where: { clientId: 'media-upload-001' } });
     expect(storedPhoto.fileUrl).toBe(uploadedMedia.body.fileUrl);
     expect(storedPhoto.localPath).toBe(uploadedMedia.body.localPath);
+    expect(storedPhoto.mediaKind).toBe('image');
+    expect(storedPhoto.mimeType).toBe('image/jpeg');
+    expect(storedPhoto.size).toBe(Buffer.byteLength('school-image-bytes'));
 
     const imagePath = new URL(uploadedMedia.body.fileUrl).pathname;
     const image = await httpRequest(baseUrl, 'GET', imagePath);
     expect(image.status).toBe(200);
     expect(image.body).toBe('school-image-bytes');
+
+    const uploadedVideo = await httpMultipartRequest(baseUrl, 'POST', `/sites/${pending.body.id}/media`, {
+      headers: volunteerAuth(),
+      fields: {
+        id: 'media-video-001',
+        type: 'other',
+      },
+      files: [{
+        name: 'media',
+        filename: 'school-video.mp4',
+        contentType: 'video/mp4',
+        content: Buffer.from('small-video-bytes'),
+      }],
+    });
+    expect(uploadedVideo.status).toBe(201);
+    expect(uploadedVideo.body).toMatchObject({
+      id: 'media-video-001',
+      siteId: pending.body.id,
+      mediaKind: 'video',
+      mimeType: 'video/mp4',
+      size: Buffer.byteLength('small-video-bytes'),
+      type: 'other',
+    });
+    expect(uploadedVideo.body.fileUrl).toMatch(/^http:\/\/.+\/uploads\/schools\/\d+\/school-video-/);
+
+    const largeVideo = await httpMultipartRequest(baseUrl, 'POST', `/sites/${pending.body.id}/media`, {
+      headers: volunteerAuth(),
+      fields: {
+        id: 'media-video-large',
+        type: 'other',
+      },
+      files: [{
+        name: 'media',
+        filename: 'large-video.mp4',
+        contentType: 'video/mp4',
+        content: Buffer.alloc((4 * 1024 * 1024) + 1, 1),
+      }],
+    });
+    expect(largeVideo.status).toBe(400);
+    expect(largeVideo.body.error.code).toBe('VIDEO_TOO_LARGE');
 
     const assessment = await httpRequest(baseUrl, 'POST', `/sites/${pending.body.id}/assessment`, {
       headers: volunteerAuth(),

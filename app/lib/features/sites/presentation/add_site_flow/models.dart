@@ -50,3 +50,10 @@ class SitePhotoDraft {
     return SitePhotoDraft(file: file, category: category ?? this.category);
   }
 }
+
+class SiteVideoDraft {
+  const SiteVideoDraft({required this.file, this.sizeBytes});
+
+  final XFile file;
+  final int? sizeBytes;
+}

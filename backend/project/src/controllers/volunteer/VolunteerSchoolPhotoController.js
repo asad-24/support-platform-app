@@ -30,6 +30,12 @@ class VolunteerSchoolPhotoController {
       if (!school) return;
       await SchoolStore.requireEditable(school);
       if (req.file) {
+        if (!req.file.mimetype.startsWith('image/')) {
+          return res.status(400).json({
+            success: false,
+            error: 'School photo must be an image file',
+          });
+        }
         const stored = await FileStorage.saveUploadedFile(req.file, {
           folder: `schools/${school.id}`,
           req,

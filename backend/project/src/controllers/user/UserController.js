@@ -21,6 +21,7 @@ async function flutterUser(user) {
         phone: null,
         state: null,
         lga: null,
+        ward: null,
         address: null,
         dateOfBirth: null,
         gender: null,
@@ -87,6 +88,14 @@ exports.update_volunteer_profile = async (req, res) => {
   if (!profileBody.fullName) profileBody.fullName = req.auth.user.name;
 
   if (req.file) {
+    if (!req.file.mimetype.startsWith('image/')) {
+      return res.status(400).json({
+        error: {
+          code: 'INVALID_PROFILE_IMAGE',
+          message: 'Profile picture must be an image file.',
+        },
+      });
+    }
     const stored = await FileStorage.saveUploadedFile(req.file, {
       folder: `profiles/${req.auth.user.id}`,
       req,

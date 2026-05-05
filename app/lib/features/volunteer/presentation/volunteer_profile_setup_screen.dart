@@ -45,6 +45,7 @@ class _VolunteerProfileSetupScreenState
   final _phone = TextEditingController();
   final _state = TextEditingController();
   final _lga = TextEditingController();
+  final _ward = TextEditingController();
   final _address = TextEditingController();
 
   int _step = 0;
@@ -64,13 +65,14 @@ class _VolunteerProfileSetupScreenState
       _phone.text = user.phone ?? '';
       _state.text = user.state ?? '';
       _lga.text = user.lga ?? '';
+      _ward.text = user.ward ?? '';
       _address.text = user.address ?? '';
       final imagePath = user.profileImagePath;
       if (imagePath != null && imagePath.isNotEmpty) {
         _profileImageUrl = imagePath;
       }
     }
-    if (!widget.editMode) _loadLocations();
+    _loadLocations();
   }
 
   @override
@@ -79,6 +81,7 @@ class _VolunteerProfileSetupScreenState
     _phone.dispose();
     _state.dispose();
     _lga.dispose();
+    _ward.dispose();
     _address.dispose();
     super.dispose();
   }
@@ -272,8 +275,58 @@ class _VolunteerProfileSetupScreenState
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const AddSiteFormSectionHeader(
-                title: 'Address',
-                description: 'Update your address or nearest landmark.',
+                title: 'Location',
+                description: 'Update the location shown on your volunteer card.',
+              ),
+              if (_loadingLocations)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (_locationsError != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _locationsError!,
+                        style: const TextStyle(color: AppColors.danger),
+                      ),
+                      const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        onPressed: _loadLocations,
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                )
+              else ...[
+                AddSiteLabeledDropdownField(
+                  heading: 'State',
+                  hintText: 'Select state',
+                  items: _states.map((item) => item.name).toList(),
+                  value: _selectedState,
+                  required: true,
+                  onChanged: _onStateChanged,
+                ),
+                AddSiteLabeledDropdownField(
+                  heading: 'LGA',
+                  hintText: _availableLgas.isEmpty
+                      ? 'Select state first'
+                      : 'Select LGA',
+                  items: _availableLgas,
+                  value: _selectedLga,
+                  required: true,
+                  onChanged: (value) => _lga.text = value ?? '',
+                ),
+              ],
+              AddSiteLabeledTextField(
+                controller: _ward,
+                heading: 'Ward',
+                hintText: 'Ward or area name',
+                prefixIcon: const Icon(Icons.location_city_outlined),
               ),
               AddSiteLabeledTextField(
                 controller: _address,
@@ -405,6 +458,12 @@ class _VolunteerProfileSetupScreenState
               ),
             ],
             AddSiteLabeledTextField(
+              controller: _ward,
+              heading: 'Ward',
+              hintText: 'Ward or area name',
+              prefixIcon: const Icon(Icons.location_city_outlined),
+            ),
+            AddSiteLabeledTextField(
               controller: _address,
               heading: 'Address',
               hintText: 'Street, area, or nearest landmark',
@@ -445,6 +504,9 @@ class _VolunteerProfileSetupScreenState
           .completeVolunteerProfile(
             name: _name.text.trim(),
             phone: _phone.text.trim(),
+            state: _state.text.trim(),
+            lga: _lga.text.trim(),
+            ward: _ward.text.trim(),
             address: _address.text.trim(),
             profileImagePath: _profileImage?.path,
           );
@@ -454,6 +516,9 @@ class _VolunteerProfileSetupScreenState
           .completeVolunteerProfile(
             name: _name.text.trim(),
             phone: _phone.text.trim(),
+            state: _state.text.trim(),
+            lga: _lga.text.trim(),
+            ward: _ward.text.trim(),
             address: _address.text.trim(),
             profileImagePath: _profileImage?.path,
           );
@@ -513,12 +578,16 @@ class _VolunteerProfileSetupScreenState
 
   String? get _selectedState {
     final value = _state.text.trim();
-    return value.isEmpty ? null : value;
+    if (value.isEmpty) return null;
+    if (_states.isEmpty) return value;
+    return _states.any((item) => item.name == value) ? value : null;
   }
 
   String? get _selectedLga {
     final value = _lga.text.trim();
-    return value.isEmpty ? null : value;
+    if (value.isEmpty) return null;
+    if (_availableLgas.isEmpty) return null;
+    return _availableLgas.contains(value) ? value : null;
   }
 
   String _initials(String value) {

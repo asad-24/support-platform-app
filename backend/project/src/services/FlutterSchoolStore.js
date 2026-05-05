@@ -33,6 +33,7 @@ const NEEDS = new Set([
 ]);
 
 const MEDIA_TYPES = new Set(['entrance', 'class_area', 'sleeping_area', 'sanitation', 'environment', 'other']);
+const MEDIA_KINDS = new Set(['image', 'video']);
 const URGENCY = new Set(['low', 'medium', 'high']);
 const STATUS_BY_REVIEW = {
   approved: 'approved',
@@ -238,6 +239,10 @@ class FlutterSchoolStore {
     this.requireCanModify(user, school, { allowApprovedAdmin: true });
 
     const type = MEDIA_TYPES.has(payload.type) ? payload.type : 'other';
+    const mimeType = maybeString(payload.mimeType);
+    const mediaKind = MEDIA_KINDS.has(payload.mediaKind)
+      ? payload.mediaKind
+      : ((mimeType || '').startsWith('video/') ? 'video' : 'image');
     const fileName = readString(payload.filename) || readString(payload.fileName) || `${type}.jpg`;
     const fileUrl = readString(payload.url) || readString(payload.fileUrl)
       || `https://cdn.example.com/sites/${this.siteId(school)}/${encodeURIComponent(fileName)}`;
@@ -247,6 +252,9 @@ class FlutterSchoolStore {
       clientId: maybeString(payload.id),
       fileUrl,
       localPath: maybeString(payload.localPath),
+      mediaKind,
+      mimeType,
+      size: numberOrNull(payload.size),
       category: type,
       caption: maybeString(payload.caption),
       capturedAt: payload.timestamp ? new Date(payload.timestamp) : new Date(),
@@ -554,6 +562,10 @@ class FlutterSchoolStore {
   async createMediaFromPayload(school, user, payload, transaction = null) {
     if (!payload.fileUrl && !payload.fileDataBase64) return null;
     const type = MEDIA_TYPES.has(payload.type) ? payload.type : 'other';
+    const mimeType = maybeString(payload.mimeType);
+    const mediaKind = MEDIA_KINDS.has(payload.mediaKind)
+      ? payload.mediaKind
+      : ((mimeType || '').startsWith('video/') ? 'video' : 'image');
     const fileUrl = payload.fileUrl || `https://cdn.example.com/sites/${this.siteId(school)}/${payload.id || `${type}.jpg`}`;
     return SchoolPhoto.create({
       schoolId: school.id,
@@ -561,6 +573,9 @@ class FlutterSchoolStore {
       clientId: maybeString(payload.id),
       fileUrl,
       localPath: maybeString(payload.localPath),
+      mediaKind,
+      mimeType,
+      size: numberOrNull(payload.size),
       category: type,
       capturedAt: payload.timestamp ? new Date(payload.timestamp) : new Date(),
       latitude: numberOrNull(payload.latitude),
@@ -673,6 +688,9 @@ class FlutterSchoolStore {
       siteId: this.siteId(school),
       fileUrl: row.fileUrl,
       localPath: row.localPath || null,
+      mediaKind: row.mediaKind || 'image',
+      mimeType: row.mimeType || null,
+      size: row.size == null ? null : Number(row.size),
       type: row.category || 'other',
       timestamp: iso(row.capturedAt || row.createdAt) || new Date().toISOString(),
       latitude: row.latitude == null ? null : Number(row.latitude),

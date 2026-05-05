@@ -44,6 +44,9 @@ abstract class AuthRepository {
     required AuthSession session,
     required String name,
     required String phone,
+    required String state,
+    required String lga,
+    required String ward,
     required String address,
     String? profileImagePath,
   });
@@ -244,6 +247,9 @@ class ApiAuthRepository implements AuthRepository {
     required AuthSession session,
     required String name,
     required String phone,
+    required String state,
+    required String lga,
+    required String ward,
     required String address,
     String? profileImagePath,
   }) async {
@@ -251,6 +257,9 @@ class ApiAuthRepository implements AuthRepository {
       final formData = FormData.fromMap({
         'fullName': name,
         'phone': phone,
+        'state': state,
+        'lga': lga,
+        'ward': ward,
         'address': address,
       });
 
@@ -517,20 +526,30 @@ class MockAuthRepository implements AuthRepository {
     required AuthSession session,
     required String name,
     required String phone,
+    required String state,
+    required String lga,
+    required String ward,
     required String address,
     String? profileImagePath,
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 450));
     if (name.trim().length < 2 ||
         phone.trim().length < 7 ||
+        state.trim().isEmpty ||
+        lga.trim().isEmpty ||
         address.trim().length < 4) {
-      throw const AppException('Complete your name, phone, and address.');
+      throw const AppException(
+        'Complete your name, phone, location, and address.',
+      );
     }
 
     final updated = session.copyWith(
       user: session.user.copyWith(
         name: name.trim(),
         phone: phone.trim(),
+        state: state.trim(),
+        lga: lga.trim(),
+        ward: ward.trim(),
         address: address.trim(),
         profileImagePath: profileImagePath,
         profileComplete: true,

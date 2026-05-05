@@ -9,6 +9,7 @@ import '../../../features/auth/presentation/auth_controller.dart';
 import '../../../features/sites/data/sites_repository.dart';
 import '../../../shared/models/app_enums.dart';
 import '../../../shared/models/site.dart';
+import '../data/volunteer_notification.dart';
 import 'volunteer_home_screen.dart';
 
 enum SubmittedSchoolsFilter {
@@ -48,8 +49,41 @@ class VolunteerSubmittedSchoolsScreen extends ConsumerStatefulWidget {
 }
 
 class _VolunteerSubmittedSchoolsScreenState
-    extends ConsumerState<VolunteerSubmittedSchoolsScreen> {
+    extends ConsumerState<VolunteerSubmittedSchoolsScreen>
+    with WidgetsBindingObserver {
   SubmittedSchoolsFilter _filter = SubmittedSchoolsFilter.all;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _refreshSubmittedSites(),
+    );
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _refreshSubmittedSites();
+  }
+
+  Future<void> _refreshSubmittedSites() async {
+    final session = ref.read(authControllerProvider).valueOrNull?.session;
+    if (session == null) return;
+    final sites = submittedSitesProvider(session.user.id);
+    final notifications = volunteerNotificationsProvider(session.user.id);
+
+    if (!ref.read(sites).isLoading) ref.invalidate(sites);
+    if (!ref.read(notifications).isLoading) ref.invalidate(notifications);
+
+    await Future.wait([ref.read(sites.future), ref.read(notifications.future)]);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,6 +108,7 @@ class _VolunteerSubmittedSchoolsScreenState
                   sites: sites,
                   filter: _filter,
                   onFilterChanged: (value) => setState(() => _filter = value),
+                  onRefresh: _refreshSubmittedSites,
                 ),
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (error, _) => Center(child: Text(error.toString())),
@@ -92,11 +127,13 @@ class _SubmittedSchoolsBody extends StatelessWidget {
     required this.sites,
     required this.filter,
     required this.onFilterChanged,
+    required this.onRefresh,
   });
 
   final List<Site> sites;
   final SubmittedSchoolsFilter filter;
   final ValueChanged<SubmittedSchoolsFilter> onFilterChanged;
+  final RefreshCallback onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -107,58 +144,62 @@ class _SubmittedSchoolsBody extends StatelessWidget {
         .length;
     final filtered = filterSubmittedSchoolsForVolunteer(sites, filter);
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(18, 28, 18, 18),
-      children: [
-        Text(
-          'My Schools',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontSize: 22,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          '${sites.length} submissions · $approvedCount approved & live',
-          style: TextStyle(
-            color: AppColors.secondaryText(context),
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 18),
-        _SubmissionFilterTabs(
-          sites: sites,
-          selected: filter,
-          onChanged: onFilterChanged,
-        ),
-        const SizedBox(height: 18),
-        if (filtered.isEmpty)
-          _SubmittedEmptyState(filter: filter)
-        else
-          for (final site in filtered) ...[
-            SubmittedSchoolCard(
-              site: site,
-              onTap: () =>
-                  context.go('/volunteer/submitted-schools/${site.id}'),
-            ),
-            const SizedBox(height: 14),
-          ],
-        const SizedBox(height: 8),
-        ElevatedButton.icon(
-          onPressed: () => context.go('/sites/new'),
-          icon: const Icon(Icons.add_rounded, size: 22),
-          label: const Text('Submit Another School'),
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size.fromHeight(48),
-            textStyle: const TextStyle(
-              fontSize: 14,
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(18, 28, 18, 18),
+        children: [
+          Text(
+            'My Schools',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              fontSize: 22,
               fontWeight: FontWeight.w900,
             ),
           ),
-        ),
-        const SizedBox(height: 12),
-      ],
+          const SizedBox(height: 8),
+          Text(
+            '${sites.length} submissions · $approvedCount approved & live',
+            style: TextStyle(
+              color: AppColors.secondaryText(context),
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 18),
+          _SubmissionFilterTabs(
+            sites: sites,
+            selected: filter,
+            onChanged: onFilterChanged,
+          ),
+          const SizedBox(height: 18),
+          if (filtered.isEmpty)
+            _SubmittedEmptyState(filter: filter)
+          else
+            for (final site in filtered) ...[
+              SubmittedSchoolCard(
+                site: site,
+                onTap: () =>
+                    context.go('/volunteer/submitted-schools/${site.id}'),
+              ),
+              const SizedBox(height: 14),
+            ],
+          const SizedBox(height: 8),
+          ElevatedButton.icon(
+            onPressed: () => context.go('/sites/new'),
+            icon: const Icon(Icons.add_rounded, size: 22),
+            label: const Text('Submit Another School'),
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size.fromHeight(48),
+              textStyle: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+      ),
     );
   }
 }

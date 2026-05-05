@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
@@ -96,13 +96,10 @@ class VolunteerHelpSupportScreen extends StatelessWidget {
                     icon: Icons.person_outline_rounded,
                     title: 'Profile changes',
                     body:
-                        'Use Edit Profile from the Profile tab to update your name, phone, location, address, or profile picture.',
+                        'Use Edit Profile from the Profile tab to update your name, phone, address, or profile picture.',
                   ),
                   const SizedBox(height: 6),
-                  _SupportActionCard(
-                    onProfile: () => context.go('/volunteer/profile/edit'),
-                    onSchool: () => context.go('/sites/new'),
-                  ),
+                  const _SupportEmailCard(),
                 ],
               ),
             ),
@@ -179,11 +176,10 @@ class _HelpCard extends StatelessWidget {
   }
 }
 
-class _SupportActionCard extends StatelessWidget {
-  const _SupportActionCard({required this.onProfile, required this.onSchool});
+class _SupportEmailCard extends StatelessWidget {
+  const _SupportEmailCard();
 
-  final VoidCallback onProfile;
-  final VoidCallback onSchool;
+  static const _supportEmail = 'info@example.com';
 
   @override
   Widget build(BuildContext context) {
@@ -198,24 +194,59 @@ class _SupportActionCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Need to fix something now?',
+            'Contact support',
             style: TextStyle(
               color: AppColors.primaryText(context),
               fontSize: 15,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: onProfile,
-            icon: const Icon(Icons.person_outline_rounded),
-            label: const Text('Edit Profile'),
+          const SizedBox(height: 8),
+          Text(
+            'For help with your account, school submissions, or review updates, email the support team.',
+            style: TextStyle(
+              color: AppColors.secondaryText(context),
+              fontSize: 12,
+              height: 1.35,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-          const SizedBox(height: 10),
-          ElevatedButton.icon(
-            onPressed: onSchool,
-            icon: const Icon(Icons.add_rounded),
-            label: const Text('Submit School'),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.greenTint(context),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border(context)),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.mail_outline_rounded,
+                  color: AppColors.onboardingGreen,
+                ),
+                const SizedBox(width: 10),
+                const Expanded(
+                  child: SelectableText(
+                    _supportEmail,
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Copy email',
+                  onPressed: () async {
+                    await Clipboard.setData(
+                      const ClipboardData(text: _supportEmail),
+                    );
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Support email copied.')),
+                    );
+                  },
+                  icon: const Icon(Icons.copy_rounded),
+                ),
+              ],
+            ),
           ),
         ],
       ),

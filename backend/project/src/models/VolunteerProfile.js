@@ -13,6 +13,7 @@ class VolunteerProfile extends Model {
         profilePhotoUrl: { type: DataTypes.STRING, allowNull: true, field: 'profile_photo_url' },
         state: { type: DataTypes.STRING, allowNull: false },
         lga: { type: DataTypes.STRING, allowNull: false },
+        ward: { type: DataTypes.STRING, allowNull: true },
         community: { type: DataTypes.STRING, allowNull: true },
         address: { type: DataTypes.TEXT, allowNull: false },
         bio: { type: DataTypes.TEXT, allowNull: true },

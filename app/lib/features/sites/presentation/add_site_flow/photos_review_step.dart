@@ -15,18 +15,24 @@ class PhotosReviewStep extends StatelessWidget {
     required this.maxPhotos,
     required this.onCapturePhoto,
     required this.onSelectFromGallery,
+    required this.onSelectVideo,
     required this.onPhotoCategoryChanged,
     required this.onRemovePhoto,
+    required this.onRemoveVideo,
+    this.video,
   });
 
   final List<SitePhotoDraft> photos;
+  final SiteVideoDraft? video;
   final int minPhotos;
   final int maxPhotos;
   final VoidCallback onCapturePhoto;
   final VoidCallback onSelectFromGallery;
+  final VoidCallback onSelectVideo;
   final void Function(SitePhotoDraft photo, MediaType? category)
   onPhotoCategoryChanged;
   final ValueChanged<SitePhotoDraft> onRemovePhoto;
+  final VoidCallback onRemoveVideo;
 
   bool get _canAddPhoto => photos.length < maxPhotos;
 
@@ -52,8 +58,28 @@ class PhotosReviewStep extends StatelessWidget {
               icon: const Icon(Icons.photo_library_rounded),
               label: const Text('From Gallery'),
             ),
+            OutlinedButton.icon(
+              onPressed: video == null ? onSelectVideo : null,
+              icon: const Icon(Icons.videocam_rounded),
+              label: const Text('Add Video'),
+            ),
           ],
         ),
+        const SizedBox(height: 16),
+        const AddSiteFormSectionHeader(
+          title: 'Optional Video',
+          description: 'Add one short video if helpful. Maximum size is 4 MB.',
+        ),
+        if (video == null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: Text(
+              'No video selected.',
+              style: TextStyle(color: AppColors.secondaryText(context)),
+            ),
+          )
+        else
+          _VideoDocumentationCard(video: video!, onRemove: onRemoveVideo),
         const SizedBox(height: 16),
         const AddSiteFormSectionHeader(
           title: 'Photo Categories',
@@ -81,6 +107,84 @@ class PhotosReviewStep extends StatelessWidget {
         _SafeguardingPhotoNotice(),
       ],
     );
+  }
+}
+
+class _VideoDocumentationCard extends StatelessWidget {
+  const _VideoDocumentationCard({
+    required this.video,
+    required this.onRemove,
+  });
+
+  final SiteVideoDraft video;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.elevatedSurface(context),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.border(context)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: AppColors.greenTint(context),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              Icons.videocam_rounded,
+              color: AppColors.isDark(context)
+                  ? AppColors.onboardingGreen
+                  : AppColors.deepGreen,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  video.file.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.primaryText(context),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _formatBytes(video.sizeBytes),
+                  style: TextStyle(
+                    color: AppColors.secondaryText(context),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Remove video',
+            onPressed: onRemove,
+            icon: const Icon(Icons.close_rounded),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _formatBytes(int? bytes) {
+    if (bytes == null) return 'Size unavailable';
+    final mb = bytes / (1024 * 1024);
+    return '${mb.toStringAsFixed(mb >= 1 ? 1 : 2)} MB';
   }
 }
 

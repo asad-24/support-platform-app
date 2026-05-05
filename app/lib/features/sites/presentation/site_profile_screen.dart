@@ -8,6 +8,7 @@ import '../../../core/utils/google_maps_web_availability.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../features/auth/presentation/auth_controller.dart';
 import '../../../shared/models/app_enums.dart';
+import '../../../shared/models/user_access_role.dart';
 import '../../../shared/widgets/map_unavailable_placeholder.dart';
 import '../../../shared/widgets/status_badge.dart';
 import '../data/sites_repository.dart';
@@ -27,6 +28,15 @@ class SiteProfileScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          tooltip: 'Back',
+          onPressed: () => context.go(
+            session?.accessRole == UserAccessRole.volunteer
+                ? '/volunteer/submitted-schools'
+                : '/sites',
+          ),
+          icon: const Icon(Icons.arrow_back_rounded),
+        ),
         title: const Text('Site profile'),
         actions: [
           IconButton(

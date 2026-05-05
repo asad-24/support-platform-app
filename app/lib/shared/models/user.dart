@@ -10,6 +10,7 @@ class User {
     this.phone,
     this.state,
     this.lga,
+    this.ward,
     this.address,
     this.dateOfBirth,
     this.gender,
@@ -35,6 +36,7 @@ class User {
   final String? phone;
   final String? state;
   final String? lga;
+  final String? ward;
   final String? address;
   final String? dateOfBirth;
   final String? gender;
@@ -61,6 +63,7 @@ class User {
       phone: json['phone'] as String?,
       state: json['state'] as String?,
       lga: json['lga'] as String?,
+      ward: json['ward'] as String?,
       address: json['address'] as String?,
       dateOfBirth: json['dateOfBirth'] as String?,
       gender: json['gender'] as String?,
@@ -88,6 +91,7 @@ class User {
     String? phone,
     String? state,
     String? lga,
+    String? ward,
     String? address,
     String? dateOfBirth,
     String? gender,
@@ -113,6 +117,7 @@ class User {
       phone: phone ?? this.phone,
       state: state ?? this.state,
       lga: lga ?? this.lga,
+      ward: ward ?? this.ward,
       address: address ?? this.address,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       gender: gender ?? this.gender,
@@ -141,6 +146,7 @@ class User {
     'phone': phone,
     'state': state,
     'lga': lga,
+    'ward': ward,
     'address': address,
     'dateOfBirth': dateOfBirth,
     'gender': gender,
