@@ -1,0 +1,381 @@
+{
+  "metadata": {
+    "app": "Support Atlas Admin Panel",
+    "direction": "backend-to-admin-frontend",
+    "format": "json-only",
+    "dateFormat": "ISO-8601",
+    "authMode": "httpOnly cookies"
+  },
+  "responses": {
+    "adminLoginSuccess": {
+      "status": 200,
+      "headers": {
+        "Set-Cookie": [
+          "accessToken=<jwt>; HttpOnly; SameSite=Lax; Path=/",
+          "refreshToken=<jwt>; HttpOnly; SameSite=Lax; Path=/"
+        ]
+      },
+      "body": {
+        "success": true,
+        "data": {
+          "user": {
+            "id": 1,
+            "name": "System Admin",
+            "email": "admin@schoolsupportatlas.local",
+            "username": null,
+            "role": "admin",
+            "status": "active",
+            "permissions": [
+              "admin:*"
+            ]
+          }
+        }
+      }
+    },
+    "adminMeSuccess": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "user": {
+            "id": 1,
+            "name": "System Admin",
+            "email": "admin@schoolsupportatlas.local",
+            "username": null,
+            "role": "admin",
+            "status": "active",
+            "permissions": [
+              "admin:*"
+            ]
+          }
+        }
+      }
+    },
+    "adminRefreshSuccess": {
+      "status": 200,
+      "headers": {
+        "Set-Cookie": [
+          "accessToken=<new-jwt>; HttpOnly; SameSite=Lax; Path=/",
+          "refreshToken=<new-jwt>; HttpOnly; SameSite=Lax; Path=/"
+        ]
+      },
+      "body": {
+        "success": true,
+        "data": {
+          "user": {
+            "id": 1,
+            "name": "System Admin",
+            "email": "admin@schoolsupportatlas.local",
+            "username": null,
+            "role": "admin",
+            "status": "active",
+            "permissions": [
+              "admin:*"
+            ]
+          }
+        }
+      }
+    },
+    "adminLogoutSuccess": {
+      "status": 200,
+      "headers": {
+        "Set-Cookie": [
+          "accessToken=; Max-Age=0; HttpOnly; SameSite=Lax; Path=/",
+          "refreshToken=; Max-Age=0; HttpOnly; SameSite=Lax; Path=/"
+        ]
+      },
+      "body": {
+        "success": true
+      }
+    },
+    "notificationList": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": 12,
+              "actor_user_id": null,
+              "school_id": null,
+              "type": "volunteer_application_received",
+              "title": "New volunteer registration",
+              "message": "Ibrahim Sule submitted a volunteer registration request.",
+              "status": "unread",
+              "read_at": null,
+              "resolved_at": null,
+              "metadata": {
+                "applicationId": 7,
+                "requestId": "volunteer-request-a1b2c3d4",
+                "email": "ibrahim.sule@example.com"
+              },
+              "created_at": "2026-05-07T07:00:00.000Z"
+            }
+          ],
+          "pagination": {
+            "total": 1,
+            "page": 1,
+            "limit": 25
+          }
+        }
+      }
+    },
+    "volunteerApplicationList": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": 7,
+              "requestId": "volunteer-request-a1b2c3d4",
+              "fullName": "Ibrahim Sule",
+              "email": "ibrahim.sule@example.com",
+              "phone": "+2348012345678",
+              "dateOfBirth": "1994-05-14",
+              "gender": "Male",
+              "state": "Kano",
+              "lga": "Nassarawa",
+              "address": "Nassarawa LGA, Kano State",
+              "educationLevel": "Tertiary",
+              "occupation": "Community volunteer",
+              "skills": "Community outreach, data collection",
+              "volunteerExperience": "Two years supporting school mapping.",
+              "availability": "Weekends",
+              "volunteeringMode": "Field visits",
+              "motivation": "Improve support visibility.",
+              "emergencyContactName": "Amina Sule",
+              "emergencyContactPhone": "+2348091112233",
+              "status": "pending",
+              "reviewedByUserId": null,
+              "reviewedAt": null,
+              "adminNotes": null,
+              "createdAt": "2026-05-07T07:00:00.000Z",
+              "updatedAt": "2026-05-07T07:00:00.000Z"
+            }
+          ]
+        }
+      }
+    },
+    "volunteerApplicationShow": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "application": {
+            "id": 7,
+            "requestId": "volunteer-request-a1b2c3d4",
+            "fullName": "Ibrahim Sule",
+            "email": "ibrahim.sule@example.com",
+            "phone": "+2348012345678",
+            "dateOfBirth": "1994-05-14",
+            "gender": "Male",
+            "state": "Kano",
+            "lga": "Nassarawa",
+            "address": "Nassarawa LGA, Kano State",
+            "educationLevel": "Tertiary",
+            "occupation": "Community volunteer",
+            "skills": "Community outreach, data collection",
+            "volunteerExperience": "Two years supporting school mapping.",
+            "availability": "Weekends",
+            "volunteeringMode": "Field visits",
+            "motivation": "Improve support visibility.",
+            "emergencyContactName": "Amina Sule",
+            "emergencyContactPhone": "+2348091112233",
+            "status": "pending",
+            "reviewedByUserId": null,
+            "reviewedAt": null,
+            "adminNotes": null,
+            "createdAt": "2026-05-07T07:00:00.000Z",
+            "updatedAt": "2026-05-07T07:00:00.000Z"
+          }
+        }
+      }
+    },
+    "volunteerApplicationApproved": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "application": {
+            "id": 7,
+            "requestId": "volunteer-request-a1b2c3d4",
+            "fullName": "Ibrahim Sule",
+            "email": "ibrahim.sule@example.com",
+            "status": "approved",
+            "reviewedByUserId": 1,
+            "reviewedAt": "2026-05-07T07:10:00.000Z",
+            "adminNotes": "Application verified and approved."
+          },
+          "user": {
+            "id": 15,
+            "name": "Ibrahim Sule",
+            "email": "ibrahim.sule@example.com",
+            "username": "ibrahim_sule",
+            "role": "volunteer",
+            "status": "active",
+            "created_at": "2026-05-07T07:10:00.000Z"
+          },
+          "profile": {
+            "id": 4,
+            "user_id": 15,
+            "full_name": "Ibrahim Sule",
+            "phone": "+2348012345678",
+            "state": "Kano",
+            "lga": "Nassarawa",
+            "address": "Nassarawa LGA, Kano State",
+            "date_of_birth": "1994-05-14",
+            "gender": "Male",
+            "education_level": "Tertiary",
+            "occupation": "Community volunteer",
+            "skills": "Community outreach, data collection",
+            "volunteer_experience": "Two years supporting school mapping.",
+            "availability": "Weekends",
+            "volunteering_mode": "Field visits",
+            "motivation": "Improve support visibility.",
+            "emergency_contact_name": "Amina Sule",
+            "emergency_contact_phone": "+2348091112233",
+            "is_completed": true
+          },
+          "username": "ibrahim_sule"
+        }
+      },
+      "important": "The temporary password is not returned to the admin panel. It is emailed to the applicant through SMTP."
+    },
+    "volunteerApplicationRejected": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "application": {
+            "id": 7,
+            "requestId": "volunteer-request-a1b2c3d4",
+            "fullName": "Ibrahim Sule",
+            "email": "ibrahim.sule@example.com",
+            "status": "rejected",
+            "reviewedByUserId": 1,
+            "reviewedAt": "2026-05-07T07:10:00.000Z",
+            "adminNotes": "Identity details could not be verified."
+          }
+        }
+      }
+    },
+    "userList": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": 15,
+              "name": "Ibrahim Sule",
+              "email": "ibrahim.sule@example.com",
+              "username": "ibrahim_sule",
+              "role": "volunteer",
+              "status": "active",
+              "created_at": "2026-05-07T07:10:00.000Z"
+            }
+          ],
+          "pagination": {
+            "total": 1,
+            "page": 1,
+            "limit": 25
+          }
+        }
+      }
+    },
+    "userCreated": {
+      "status": 201,
+      "body": {
+        "success": true,
+        "data": {
+          "user": {
+            "id": 16,
+            "name": "Second Admin",
+            "email": "second-admin@example.com",
+            "username": "second_admin",
+            "role": "admin",
+            "status": "active",
+            "created_at": "2026-05-07T07:15:00.000Z"
+          }
+        }
+      }
+    },
+    "userStatusUpdated": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "user": {
+            "id": 15,
+            "name": "Ibrahim Sule",
+            "email": "ibrahim.sule@example.com",
+            "username": "ibrahim_sule",
+            "role": "volunteer",
+            "status": "inactive",
+            "created_at": "2026-05-07T07:10:00.000Z"
+          }
+        }
+      }
+    },
+    "userDeleted": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "deleted": true
+        }
+      }
+    },
+    "validationError": {
+      "status": 400,
+      "body": {
+        "success": false,
+        "error": {
+          "code": "VALIDATION_ERROR",
+          "message": "Please correct the highlighted fields.",
+          "fields": {
+            "email": "Email is required"
+          }
+        }
+      }
+    },
+    "unauthorized": {
+      "status": 401,
+      "body": {
+        "success": false,
+        "error": {
+          "code": "INVALID_CREDENTIALS",
+          "message": "Invalid admin email or password."
+        }
+      }
+    },
+    "forbidden": {
+      "status": 403,
+      "body": {
+        "success": false,
+        "error": "Admin access is required"
+      }
+    },
+    "notFound": {
+      "status": 404,
+      "body": {
+        "success": false,
+        "error": {
+          "code": "APPLICATION_NOT_FOUND",
+          "message": "Volunteer application not found."
+        }
+      }
+    },
+    "conflictAlreadyReviewed": {
+      "status": 409,
+      "body": {
+        "success": false,
+        "error": {
+          "code": "APPLICATION_ALREADY_REVIEWED",
+          "message": "Volunteer application has already been reviewed."
+        }
+      }
+    }
+  }
+}

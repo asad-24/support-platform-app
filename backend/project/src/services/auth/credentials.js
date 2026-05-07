@@ -1,4 +1,9 @@
 const crypto = require('node:crypto');
+const jwt = require('jsonwebtoken');
+
+function jwtSecret() {
+  return process.env.JWT_SECRET || process.env.APP_KEY || 'support-atlas-dev-secret';
+}
 
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -22,12 +27,30 @@ function verifyPassword(password, passwordSalt, passwordHash) {
   return crypto.timingSafeEqual(left, right);
 }
 
-function issueAccessToken() {
-  return crypto.randomBytes(32).toString('hex');
+function issueAccessToken(user = {}) {
+  return jwt.sign(
+    { sub: user.id ? String(user.id) : undefined, role: user.role, typ: 'access', jti: crypto.randomUUID() },
+    jwtSecret(),
+    { expiresIn: process.env.JWT_ACCESS_TTL || '15m' }
+  );
 }
 
-function issueRefreshToken() {
-  return crypto.randomBytes(48).toString('hex');
+function issueRefreshToken(user = {}) {
+  return jwt.sign(
+    { sub: user.id ? String(user.id) : undefined, role: user.role, typ: 'refresh', jti: crypto.randomUUID() },
+    jwtSecret(),
+    { expiresIn: process.env.JWT_REFRESH_TTL || '30d' }
+  );
+}
+
+function verifyToken(token, type = null) {
+  try {
+    const payload = jwt.verify(String(token || ''), jwtSecret());
+    if (type && payload.typ !== type) return null;
+    return payload;
+  } catch (_) {
+    return null;
+  }
 }
 
 function sanitizeUser(user) {
@@ -38,6 +61,7 @@ function sanitizeUser(user) {
     email: user.email,
     username: user.username,
     role: user.role,
+    status: user.status || 'active',
     created_at: user.createdAt,
   };
 }
@@ -49,5 +73,6 @@ module.exports = {
   normalizeEmail,
   normalizeUsername,
   sanitizeUser,
+  verifyToken,
   verifyPassword,
 };

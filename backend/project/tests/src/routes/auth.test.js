@@ -54,6 +54,13 @@ function httpRequest(baseUrl, method, urlPath, { headers = {}, body } = {}) {
 const DEFAULT_ADMIN_EMAIL = 'admin@schoolsupportatlas.local';
 const DEFAULT_ADMIN_PASSWORD = 'admin123';
 
+function cookieHeader(setCookie = []) {
+  return (Array.isArray(setCookie) ? setCookie : [setCookie])
+    .filter(Boolean)
+    .map((value) => String(value).split(';')[0])
+    .join('; ');
+}
+
 describe('auth routes', () => {
   let app;
   let server;
@@ -441,5 +448,129 @@ describe('auth routes', () => {
       success: false,
       error: 'Admin access is required',
     });
+  });
+
+  test('admin cookie auth supports login, me, refresh, logout, and cookie-protected admin routes', async () => {
+    await AuthStore.createUser({
+      name: 'System Admin',
+      email: DEFAULT_ADMIN_EMAIL,
+      password: DEFAULT_ADMIN_PASSWORD,
+      role: 'admin',
+    });
+
+    const login = await httpRequest(baseUrl, 'POST', '/auth/admin/login', {
+      body: { email: DEFAULT_ADMIN_EMAIL, password: DEFAULT_ADMIN_PASSWORD },
+    });
+    expect(login.status).toBe(200);
+    expect(login.body.data.user).toMatchObject({ email: DEFAULT_ADMIN_EMAIL, role: 'admin' });
+    expect(login.headers['set-cookie'].join('\n')).toContain('accessToken=');
+    expect(login.headers['set-cookie'].join('\n')).toContain('refreshToken=');
+
+    let cookies = cookieHeader(login.headers['set-cookie']);
+    const me = await httpRequest(baseUrl, 'GET', '/auth/admin/me', {
+      headers: { cookie: cookies },
+    });
+    expect(me.status).toBe(200);
+    expect(me.body.data.user.email).toBe(DEFAULT_ADMIN_EMAIL);
+
+    const created = await httpRequest(baseUrl, 'POST', '/admin/users', {
+      headers: { cookie: cookies },
+      body: {
+        name: 'Second Admin',
+        email: 'cookie-admin@example.com',
+        role: 'admin',
+        password: 'secret123',
+      },
+    });
+    expect(created.status).toBe(201);
+    expect(created.body.data.user).toMatchObject({ email: 'cookie-admin@example.com', role: 'admin' });
+
+    const refresh = await httpRequest(baseUrl, 'POST', '/auth/admin/refresh', {
+      headers: { cookie: cookies },
+    });
+    expect(refresh.status).toBe(200);
+    cookies = cookieHeader(refresh.headers['set-cookie']);
+    expect(cookies).toContain('accessToken=');
+
+    const logout = await httpRequest(baseUrl, 'POST', '/auth/admin/logout', {
+      headers: { cookie: cookies },
+    });
+    expect(logout.status).toBe(200);
+    expect(logout.headers['set-cookie'].join('\n')).toContain('accessToken=;');
+  });
+
+  test('inactive users cannot login or use existing access tokens', async () => {
+    await AuthStore.createUser({
+      name: 'System Admin',
+      email: DEFAULT_ADMIN_EMAIL,
+      password: DEFAULT_ADMIN_PASSWORD,
+      role: 'admin',
+    });
+    const adminLogin = await httpRequest(baseUrl, 'POST', '/auth/admin/login', {
+      body: { email: DEFAULT_ADMIN_EMAIL, password: DEFAULT_ADMIN_PASSWORD },
+    });
+    const adminCookies = cookieHeader(adminLogin.headers['set-cookie']);
+
+    const volunteerAuth = await AuthStore.createUser({
+      name: 'Inactive Volunteer',
+      username: 'inactive_volunteer',
+      email: 'inactive-volunteer@example.com',
+      password: 'secret123',
+      role: 'volunteer',
+    });
+
+    const beforeInactive = await httpRequest(baseUrl, 'POST', '/auth/login', {
+      body: {
+        identifier: 'inactive_volunteer',
+        password: 'secret123',
+        accessRole: 'volunteer',
+      },
+    });
+    expect(beforeInactive.status).toBe(200);
+
+    const status = await httpRequest(baseUrl, 'PATCH', `/admin/users/${volunteerAuth.user.id}/status`, {
+      headers: { cookie: adminCookies },
+      body: { status: 'inactive' },
+    });
+    expect(status.status).toBe(200);
+    expect(status.body.data.user.status).toBe('inactive');
+
+    const afterInactive = await httpRequest(baseUrl, 'POST', '/auth/login', {
+      body: {
+        identifier: 'inactive_volunteer',
+        password: 'secret123',
+        accessRole: 'volunteer',
+      },
+    });
+    expect(afterInactive.status).toBe(401);
+
+    const existingToken = await httpRequest(baseUrl, 'GET', '/users/me', {
+      headers: { authorization: `Bearer ${beforeInactive.body.accessToken}` },
+    });
+    expect(existingToken.status).toBe(401);
+
+    const secondAdmin = await AuthStore.createUser({
+      name: 'Inactive Admin',
+      email: 'inactive-admin@example.com',
+      password: 'secret123',
+      role: 'admin',
+    });
+    const secondLogin = await httpRequest(baseUrl, 'POST', '/auth/admin/login', {
+      body: { email: 'inactive-admin@example.com', password: 'secret123' },
+    });
+    expect(secondLogin.status).toBe(200);
+    await httpRequest(baseUrl, 'PATCH', `/admin/users/${secondAdmin.user.id}/status`, {
+      headers: { cookie: adminCookies },
+      body: { status: 'inactive' },
+    });
+
+    const inactiveAdminLogin = await httpRequest(baseUrl, 'POST', '/auth/admin/login', {
+      body: { email: 'inactive-admin@example.com', password: 'secret123' },
+    });
+    expect(inactiveAdminLogin.status).toBe(401);
+    const oldAdminCookieMe = await httpRequest(baseUrl, 'GET', '/auth/admin/me', {
+      headers: { cookie: cookieHeader(secondLogin.headers['set-cookie']) },
+    });
+    expect(oldAdminCookieMe.status).toBe(401);
   });
 });

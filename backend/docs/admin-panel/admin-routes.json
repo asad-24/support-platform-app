@@ -1,0 +1,172 @@
+{
+  "metadata": {
+    "app": "Support Atlas Admin Panel",
+    "baseUrl": "http://127.0.0.1:8000",
+    "auth": {
+      "mode": "httpOnly cookies",
+      "frontendFetchRequirement": "fetch(url, { credentials: 'include' })",
+      "cookieNames": [
+        "accessToken",
+        "refreshToken"
+      ]
+    }
+  },
+  "routeGroups": {
+    "auth": [
+      {
+        "method": "POST",
+        "path": "/auth/admin/login",
+        "purpose": "Admin login and set auth cookies",
+        "authRequired": false
+      },
+      {
+        "method": "GET",
+        "path": "/auth/admin/me",
+        "purpose": "Restore current admin session",
+        "authRequired": true
+      },
+      {
+        "method": "POST",
+        "path": "/auth/admin/refresh",
+        "purpose": "Rotate access and refresh cookies",
+        "authRequired": false
+      },
+      {
+        "method": "POST",
+        "path": "/auth/admin/logout",
+        "purpose": "Clear auth cookies and invalidate stored tokens",
+        "authRequired": true
+      }
+    ],
+    "notifications": [
+      {
+        "method": "GET",
+        "path": "/admin/notifications",
+        "query": [
+          "status",
+          "type",
+          "page",
+          "limit"
+        ],
+        "purpose": "List admin notifications; poll this for new volunteer registration notifications."
+      },
+      {
+        "method": "GET",
+        "path": "/admin/notifications/:id",
+        "purpose": "Show one admin notification."
+      },
+      {
+        "method": "POST",
+        "path": "/admin/notifications/:id/read",
+        "purpose": "Mark one notification read."
+      },
+      {
+        "method": "POST",
+        "path": "/admin/notifications/read-all",
+        "purpose": "Mark all unread notifications read."
+      }
+    ],
+    "volunteerApplications": [
+      {
+        "method": "GET",
+        "path": "/admin/volunteer-applications",
+        "query": [
+          "status"
+        ],
+        "purpose": "List pending, approved, or rejected volunteer registration requests."
+      },
+      {
+        "method": "GET",
+        "path": "/admin/volunteer-applications/:id",
+        "purpose": "Show all fields submitted by the Flutter volunteer registration form."
+      },
+      {
+        "method": "POST",
+        "path": "/admin/volunteer-applications/:id/approve",
+        "purpose": "Approve registration, create volunteer user/profile, email credentials, resolve notification."
+      },
+      {
+        "method": "POST",
+        "path": "/admin/volunteer-applications/:id/reject",
+        "purpose": "Reject registration, store notes, resolve notification."
+      }
+    ],
+    "users": [
+      {
+        "method": "GET",
+        "path": "/admin/users",
+        "query": [
+          "role",
+          "status",
+          "search",
+          "page",
+          "limit"
+        ],
+        "purpose": "List admin, volunteer, or helper users."
+      },
+      {
+        "method": "POST",
+        "path": "/admin/users",
+        "purpose": "Create admin, volunteer, or helper user. Any active admin may create another admin."
+      },
+      {
+        "method": "PATCH",
+        "path": "/admin/users/:id/status",
+        "purpose": "Set user active/inactive. Inactive users cannot login."
+      },
+      {
+        "method": "DELETE",
+        "path": "/admin/users/:id",
+        "purpose": "Delete a user. Prefer inactive status for normal blocking."
+      }
+    ],
+    "existingAdminRoutesAvailable": [
+      {
+        "method": "GET",
+        "path": "/admin/dashboard",
+        "purpose": "Admin dashboard summary."
+      },
+      {
+        "method": "GET",
+        "path": "/admin/volunteers",
+        "purpose": "Existing volunteer management list with profile details."
+      },
+      {
+        "method": "GET",
+        "path": "/admin/schools",
+        "purpose": "Existing admin school/site review list."
+      },
+      {
+        "method": "PATCH",
+        "path": "/admin/schools/:id/status",
+        "purpose": "Existing school review status update."
+      }
+    ]
+  },
+  "enums": {
+    "applicationStatus": [
+      "pending",
+      "approved",
+      "rejected"
+    ],
+    "userRole": [
+      "admin",
+      "volunteer",
+      "helper"
+    ],
+    "userStatus": [
+      "active",
+      "inactive"
+    ],
+    "notificationStatus": [
+      "unread",
+      "read",
+      "resolved"
+    ],
+    "notificationType": [
+      "volunteer_application_received",
+      "school_submitted",
+      "manual"
+    ]
+  }
+}

@@ -7,7 +7,7 @@ class AdminNotification extends Model {
   static init() {
     return super.init(
       {
-        actorUserId: { type: DataTypes.INTEGER, allowNull: false, field: 'actor_user_id' },
+        actorUserId: { type: DataTypes.INTEGER, allowNull: true, field: 'actor_user_id' },
         schoolId: { type: DataTypes.INTEGER, allowNull: true, field: 'school_id' },
         type: { type: DataTypes.STRING, allowNull: false },
         title: { type: DataTypes.STRING, allowNull: false },

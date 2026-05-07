@@ -3,8 +3,10 @@
 const crypto = require('node:crypto');
 const VolunteerApplication = require('@src/models/VolunteerApplication');
 const User = require('@src/models/User');
+const AdminNotification = require('@src/models/AdminNotification');
 const AuthStore = require('@src/services/AuthStore');
 const ProfileStore = require('@src/services/VolunteerProfileStore');
+const EmailJob = require('@src/jobs/EmailJob');
 const { normalizeEmail } = require('@src/services/auth/credentials');
 
 const REQUIRED_FIELDS = [
@@ -94,6 +96,43 @@ function generateTemporaryPassword() {
   return `Temp@${crypto.randomBytes(6).toString('hex')}`;
 }
 
+function approvalEmail({ application, username, password }) {
+  const text = [
+    `Hello ${application.fullName},`,
+    '',
+    'Your Support Atlas volunteer registration request has been approved.',
+    '',
+    'Use these credentials to sign in to the Flutter app:',
+    `Email: ${application.email}`,
+    `Username: ${username}`,
+    `Temporary password: ${password}`,
+    '',
+    'Please change your password after signing in.',
+    '',
+    'Support Atlas Admin Team',
+  ].join('\n');
+
+  const html = `
+    <p>Hello ${application.fullName},</p>
+    <p>Your Support Atlas volunteer registration request has been approved.</p>
+    <p>Use these credentials to sign in to the Flutter app:</p>
+    <ul>
+      <li><strong>Email:</strong> ${application.email}</li>
+      <li><strong>Username:</strong> ${username}</li>
+      <li><strong>Temporary password:</strong> ${password}</li>
+    </ul>
+    <p>Please change your password after signing in.</p>
+    <p>Support Atlas Admin Team</p>
+  `;
+
+  return {
+    to: application.email,
+    subject: 'Your Support Atlas volunteer account is approved',
+    text,
+    html,
+  };
+}
+
 function profilePayloadFromApplication(application) {
   return {
     fullName: application.fullName,
@@ -161,11 +200,27 @@ async function create(body = {}) {
     throw error;
   }
 
-  return VolunteerApplication.create({
+  const application = await VolunteerApplication.create({
     ...payload,
     requestId: requestId(),
     status: 'pending',
   });
+
+  await AdminNotification.create({
+    actorUserId: null,
+    schoolId: null,
+    type: 'volunteer_application_received',
+    title: 'New volunteer registration',
+    message: `${application.fullName} submitted a volunteer registration request.`,
+    status: 'unread',
+    metadata: {
+      applicationId: application.id,
+      requestId: application.requestId,
+      email: application.email,
+    },
+  });
+
+  return application;
 }
 
 async function list(query = {}) {
@@ -174,7 +229,7 @@ async function list(query = {}) {
   return VolunteerApplication.findAll({ where, order: [['createdAt', 'DESC']] });
 }
 
-async function getPending(applicationId) {
+async function get(applicationId) {
   const application = await VolunteerApplication.findByPk(applicationId);
   if (!application) {
     const error = new Error('Volunteer application not found.');
@@ -182,6 +237,11 @@ async function getPending(applicationId) {
     error.code = 'APPLICATION_NOT_FOUND';
     throw error;
   }
+  return application;
+}
+
+async function getPending(applicationId) {
+  const application = await get(applicationId);
   if (application.status !== 'pending') {
     const error = new Error('Volunteer application has already been reviewed.');
     error.status = 409;
@@ -189,6 +249,22 @@ async function getPending(applicationId) {
     throw error;
   }
   return application;
+}
+
+async function resolveApplicationNotification(application) {
+  const rows = await AdminNotification.findAll({
+    where: { type: 'volunteer_application_received', status: 'unread' },
+    order: [['createdAt', 'DESC']],
+  });
+  const row = rows.find((notification) => {
+    const metadata = notification.metadata || {};
+    return Number(metadata.applicationId) === Number(application.id)
+      || metadata.requestId === application.requestId
+      || metadata.email === application.email;
+  });
+  if (!row) return null;
+  await row.update({ status: 'resolved', readAt: row.readAt || new Date(), resolvedAt: new Date() });
+  return row;
 }
 
 async function approve(applicationId, adminUserId, body = {}) {
@@ -202,7 +278,7 @@ async function approve(applicationId, adminUserId, body = {}) {
   }
 
   const username = await generateUsername(application);
-  const password = application.password || body.password || generateTemporaryPassword();
+  const password = generateTemporaryPassword();
   const auth = await AuthStore.createUser({
     name: application.fullName,
     email: application.email,
@@ -218,13 +294,15 @@ async function approve(applicationId, adminUserId, body = {}) {
     reviewedAt: new Date(),
     adminNotes: body.adminNotes || body.notes || application.adminNotes || null,
   });
+  await resolveApplicationNotification(application);
+  const email = approvalEmail({ application, username, password });
+  await new EmailJob(email).run();
 
   return {
     application,
     user: auth.user,
     profile,
     username,
-    temporaryPassword: application.password ? null : password,
   };
 }
 
@@ -236,12 +314,14 @@ async function reject(applicationId, adminUserId, body = {}) {
     reviewedAt: new Date(),
     adminNotes: body.adminNotes || body.notes || application.adminNotes || null,
   });
+  await resolveApplicationNotification(application);
   return application;
 }
 
 module.exports = {
   approve,
   create,
+  get,
   list,
   normalizePayload,
   reject,

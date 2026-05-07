@@ -3,6 +3,7 @@ process.env.DB_LOGGING = 'false';
 process.env.ADMIN_EMAIL = 'admin@schoolsupportatlas.local';
 process.env.ADMIN_PASSWORD = 'admin123';
 process.env.ADMIN_NAME = 'System Admin';
+process.env.EMAIL_TRANSPORT = 'fake';
 jest.setTimeout(60000);
 
 const http = require('node:http');
@@ -19,6 +20,8 @@ const AuthStore = require('@src/services/AuthStore');
 const User = require('@src/models/User');
 const VolunteerApplication = require('@src/models/VolunteerApplication');
 const VolunteerProfile = require('@src/models/VolunteerProfile');
+const AdminNotification = require('@src/models/AdminNotification');
+const EmailJob = require('@src/jobs/EmailJob');
 
 function httpRequest(baseUrl, method, urlPath, { headers = {}, body } = {}) {
   return new Promise((resolve, reject) => {
@@ -160,6 +163,7 @@ describe('flutter auth contract routes', () => {
   beforeEach(async () => {
     await sequelize.sync({ force: true });
     fs.rmSync(FileStorage.uploadRoot(), { recursive: true, force: true });
+    EmailJob.resetFakeDeliveries();
   });
 
   afterAll(async () => {
@@ -359,9 +363,9 @@ describe('flutter auth contract routes', () => {
     expect(denied.status).toBe(401);
   });
 
-  test('admin approval creates a volunteer account with generated username and application profile data', async () => {
+  test('admin approval creates a volunteer account, resolves notification, and emails generated credentials', async () => {
     const res = await httpRequest(baseUrl, 'POST', '/volunteer-applications', {
-      body: volunteerApplicationBody({ password: 'Password1!' }),
+      body: volunteerApplicationBody(),
     });
 
     expect(res.status).toBe(201);
@@ -377,6 +381,18 @@ describe('flutter auth contract routes', () => {
     const pendingUser = await User.findOne({ where: { email: 'ibrahim.sule@example.com' } });
     expect(pendingUser).toBeNull();
 
+    const createdNotification = await AdminNotification.findOne({
+      where: { type: 'volunteer_application_received', status: 'unread' },
+    });
+    expect(createdNotification).toMatchObject({
+      title: 'New volunteer registration',
+      metadata: {
+        applicationId: application.id,
+        requestId: application.requestId,
+        email: 'ibrahim.sule@example.com',
+      },
+    });
+
     await AuthStore.createUser({
       name: 'System Admin',
       email: 'admin@schoolsupportatlas.local',
@@ -385,6 +401,22 @@ describe('flutter auth contract routes', () => {
     });
     const adminLogin = await httpRequest(baseUrl, 'POST', '/auth/sign-in', {
       body: { email: 'admin@schoolsupportatlas.local', password: 'admin123' },
+    });
+
+    const list = await httpRequest(baseUrl, 'GET', '/admin/volunteer-applications?status=pending', {
+      headers: { authorization: `Bearer ${adminLogin.body.data.access_token}` },
+    });
+    expect(list.status).toBe(200);
+    expect(list.body.data.items).toHaveLength(1);
+
+    const show = await httpRequest(baseUrl, 'GET', `/admin/volunteer-applications/${application.id}`, {
+      headers: { authorization: `Bearer ${adminLogin.body.data.access_token}` },
+    });
+    expect(show.status).toBe(200);
+    expect(show.body.data.application).toMatchObject({
+      fullName: 'Ibrahim Sule',
+      email: 'ibrahim.sule@example.com',
+      status: 'pending',
     });
 
     const approve = await httpRequest(baseUrl, 'POST', `/admin/volunteer-applications/${application.id}/approve`, {
@@ -399,6 +431,18 @@ describe('flutter auth contract routes', () => {
       role: 'volunteer',
     });
     expect(approve.body.data.temporaryPassword).toBeUndefined();
+
+    await createdNotification.reload();
+    expect(createdNotification.status).toBe('resolved');
+
+    const deliveries = EmailJob.fakeDeliveries();
+    expect(deliveries).toHaveLength(1);
+    expect(deliveries[0]).toMatchObject({
+      to: 'ibrahim.sule@example.com',
+      subject: 'Your Support Atlas volunteer account is approved',
+    });
+    const temporaryPassword = deliveries[0].text.match(/Temporary password: (.+)/)[1].trim();
+    expect(temporaryPassword).toMatch(/^Temp@/);
 
     const user = await User.findOne({ where: { email: 'ibrahim.sule@example.com' } });
     expect(user.username).toBe('ibrahim_sule');
@@ -415,7 +459,7 @@ describe('flutter auth contract routes', () => {
     const login = await httpRequest(baseUrl, 'POST', '/auth/login', {
       body: {
         identifier: 'ibrahim_sule',
-        password: 'Password1!',
+        password: temporaryPassword,
         accessRole: 'volunteer',
       },
     });
@@ -429,6 +473,41 @@ describe('flutter auth contract routes', () => {
       address: 'Nassarawa LGA, Kano State',
       profileComplete: true,
     });
+  });
+
+  test('admin rejection marks application rejected and resolves the registration notification without creating a user', async () => {
+    await httpRequest(baseUrl, 'POST', '/volunteer-applications', {
+      body: volunteerApplicationBody({ email: 'reject.me@example.com' }),
+    });
+    const application = await VolunteerApplication.findOne({ where: { email: 'reject.me@example.com' } });
+    const notification = await AdminNotification.findOne({
+      where: { type: 'volunteer_application_received', status: 'unread' },
+    });
+
+    await AuthStore.createUser({
+      name: 'System Admin',
+      email: 'admin@schoolsupportatlas.local',
+      password: 'admin123',
+      role: 'admin',
+    });
+    const adminLogin = await httpRequest(baseUrl, 'POST', '/auth/sign-in', {
+      body: { email: 'admin@schoolsupportatlas.local', password: 'admin123' },
+    });
+
+    const reject = await httpRequest(baseUrl, 'POST', `/admin/volunteer-applications/${application.id}/reject`, {
+      headers: { authorization: `Bearer ${adminLogin.body.data.access_token}` },
+      body: { adminNotes: 'Incomplete identity details' },
+    });
+
+    expect(reject.status).toBe(200);
+    expect(reject.body.data.application).toMatchObject({
+      status: 'rejected',
+      adminNotes: 'Incomplete identity details',
+    });
+    expect(await User.findOne({ where: { email: 'reject.me@example.com' } })).toBeNull();
+    await notification.reload();
+    expect(notification.status).toBe('resolved');
+    expect(EmailJob.fakeDeliveries()).toHaveLength(0);
   });
 
   test('volunteer applications return validation errors and reject duplicate pending emails', async () => {

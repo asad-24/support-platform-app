@@ -11,6 +11,7 @@ class User extends Model {
         email: { type: DataTypes.STRING, allowNull: false, unique: true },
         username: { type: DataTypes.STRING, allowNull: true, unique: true },
         role: { type: DataTypes.STRING, allowNull: false },
+        status: { type: DataTypes.STRING, allowNull: false, defaultValue: 'active' },
         passwordSalt: { type: DataTypes.STRING, allowNull: false, field: 'password_salt' },
         passwordHash: { type: DataTypes.STRING, allowNull: false, field: 'password_hash' },
         accessToken: { type: DataTypes.STRING, allowNull: true, unique: true, field: 'access_token' },

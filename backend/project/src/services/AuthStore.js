@@ -7,6 +7,7 @@ const {
   normalizeEmail,
   normalizeUsername,
   sanitizeUser,
+  verifyToken,
   verifyPassword,
 } = require('@src/services/auth/credentials');
 
@@ -37,20 +38,24 @@ async function createStoredUser({ name, email, username = null, password, role }
   }
 
   const { salt, hash } = hashPassword(password);
-  const accessToken = issueAccessToken();
-  const refreshToken = issueRefreshToken();
   const user = await User.create({
     name: String(name).trim(),
     email: normalizedEmail,
     username: normalizedUsername,
     role,
+    status: 'active',
     passwordSalt: salt,
     passwordHash: hash,
-    accessToken,
+    accessToken: null,
     accessTokenCreatedAt: new Date(),
-    refreshToken,
+    refreshToken: null,
     refreshTokenCreatedAt: new Date(),
   });
+  const accessToken = issueAccessToken(user);
+  const refreshToken = issueRefreshToken(user);
+  user.accessToken = accessToken;
+  user.refreshToken = refreshToken;
+  await user.save();
 
   return {
     user: sanitizeUser(user),
@@ -70,6 +75,7 @@ async function ensureDefaultAdmin() {
     email: defaults.email,
     username: null,
     role: 'admin',
+    status: 'active',
     passwordSalt: salt,
     passwordHash: hash,
     accessToken: null,
@@ -83,24 +89,37 @@ async function createUser({ name, email, username, password, role }) {
   return createStoredUser({ name, email, username, password, role });
 }
 
-async function authenticate({ email, password, role }) {
+function isActive(user) {
+  return user && (user.status || 'active') === 'active';
+}
+
+async function issueTokensForUser(user, { refresh = false } = {}) {
+  user.accessToken = issueAccessToken(user);
+  user.accessTokenCreatedAt = new Date();
+  if (refresh) {
+    user.refreshToken = issueRefreshToken(user);
+    user.refreshTokenCreatedAt = new Date();
+  }
+  await user.save();
+  return {
+    user,
+    accessToken: user.accessToken,
+    ...(refresh ? { refreshToken: user.refreshToken } : {}),
+  };
+}
+
+async function authenticate({ email, password, role, issueRefresh = false }) {
   const normalizedEmail = normalizeEmail(email);
   const user = await User.findOne({ where: { email: normalizedEmail } });
   if (!user) return null;
 
   if (role && user.role !== role) return null;
+  if (!isActive(user)) return null;
 
   if (!verifyPassword(password, user.passwordSalt, user.passwordHash)) return null;
 
-  const accessToken = issueAccessToken();
-  user.accessToken = accessToken;
-  user.accessTokenCreatedAt = new Date();
-  await user.save();
-
-  return {
-    user: sanitizeUser(user),
-    accessToken,
-  };
+  const auth = await issueTokensForUser(user, { refresh: issueRefresh });
+  return { ...auth, user: sanitizeUser(auth.user) };
 }
 
 async function authenticateMobile({ identifier, password, accessRole }) {
@@ -115,27 +134,26 @@ async function authenticateMobile({ identifier, password, accessRole }) {
   });
   if (!user) return null;
   if (accessRole && user.role !== accessRole) return null;
+  if (!isActive(user)) return null;
   if (!verifyPassword(password, user.passwordSalt, user.passwordHash)) return null;
 
-  const accessToken = issueAccessToken();
-  const refreshToken = issueRefreshToken();
-  user.accessToken = accessToken;
-  user.accessTokenCreatedAt = new Date();
-  user.refreshToken = refreshToken;
-  user.refreshTokenCreatedAt = new Date();
-  await user.save();
-
-  return { user, accessToken, refreshToken };
+  return issueTokensForUser(user, { refresh: true });
 }
 
 async function getUserByToken(accessToken) {
+  const jwtPayload = verifyToken(accessToken, 'access');
   const user = await User.findOne({ where: { accessToken } });
   if (!user) return null;
+  if (!jwtPayload && String(accessToken || '').includes('.')) return null;
+  if (!isActive(user)) return null;
   return sanitizeUser(user);
 }
 
 async function getStoredUserByToken(accessToken) {
-  return User.findOne({ where: { accessToken } });
+  const jwtPayload = verifyToken(accessToken, 'access');
+  const user = await User.findOne({ where: { accessToken } });
+  if (!jwtPayload && String(accessToken || '').includes('.')) return null;
+  return isActive(user) ? user : null;
 }
 
 async function getStoredUserById(userId) {
@@ -143,20 +161,13 @@ async function getStoredUserById(userId) {
 }
 
 async function refresh(refreshToken) {
+  const jwtPayload = verifyToken(refreshToken, 'refresh');
+  if (!jwtPayload && String(refreshToken || '').includes('.')) return null;
   const user = await User.findOne({ where: { refreshToken } });
   if (!user) return null;
+  if (!isActive(user)) return null;
 
-  user.accessToken = issueAccessToken();
-  user.accessTokenCreatedAt = new Date();
-  user.refreshToken = issueRefreshToken();
-  user.refreshTokenCreatedAt = new Date();
-  await user.save();
-
-  return {
-    user,
-    accessToken: user.accessToken,
-    refreshToken: user.refreshToken,
-  };
+  return issueTokensForUser(user, { refresh: true });
 }
 
 async function logout({ accessToken = null, refreshToken = null } = {}) {
@@ -198,6 +209,20 @@ async function reset() {
   await User.destroy({ where: {} });
 }
 
+async function setStatus(userId, status) {
+  const user = await User.findByPk(userId);
+  if (!user) return null;
+  user.status = status;
+  if (status !== 'active') {
+    user.accessToken = null;
+    user.accessTokenCreatedAt = null;
+    user.refreshToken = null;
+    user.refreshTokenCreatedAt = null;
+  }
+  await user.save();
+  return sanitizeUser(user);
+}
+
 module.exports = {
   authenticate,
   authenticateMobile,
@@ -210,5 +235,6 @@ module.exports = {
   logout,
   refresh,
   reset,
+  setStatus,
   usernameAvailable,
 };

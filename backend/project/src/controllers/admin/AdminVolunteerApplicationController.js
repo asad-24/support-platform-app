@@ -31,6 +31,20 @@ class AdminVolunteerApplicationController {
     });
   }
 
+  async show(req, res) {
+    try {
+      const application = await VolunteerApplicationStore.get(req.params.id);
+      return res.json({
+        success: true,
+        data: {
+          application: applicationJson(application),
+        },
+      });
+    } catch (error) {
+      return handleError(res, error);
+    }
+  }
+
   async approve(req, res) {
     try {
       const result = await VolunteerApplicationStore.approve(req.params.id, req.auth.user.id, req.body);
@@ -41,7 +55,6 @@ class AdminVolunteerApplicationController {
           user: result.user,
           profile: ProfileStore.serialize(result.profile),
           username: result.username,
-          ...(result.temporaryPassword ? { temporaryPassword: result.temporaryPassword } : {}),
         },
       });
     } catch (error) {

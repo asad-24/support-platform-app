@@ -1,5 +1,6 @@
 const AuthStore = require('@src/services/AuthStore');
 const ProfileStore = require('@src/services/VolunteerProfileStore');
+const { ACCESS_COOKIE, REFRESH_COOKIE, clearAuthCookies, reqCookies, setAuthCookies } = require('@src/services/auth/cookies');
 
 const ALLOWED_ROLES = new Set(['admin', 'volunteer']);
 const MOBILE_ACCESS_ROLES = new Set(['volunteer', 'helper']);
@@ -67,6 +68,19 @@ function permissionsFor(role) {
   if (role === 'volunteer') return ['sites:create', 'sites:update:assigned'];
   if (role === 'helper') return ['sites:read', 'support:offer'];
   return ['admin:*'];
+}
+
+function adminUser(user) {
+  if (!user) return null;
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    username: user.username || null,
+    role: user.role,
+    status: user.status || 'active',
+    permissions: permissionsFor(user.role),
+  };
 }
 
 async function flutterUser(user) {
@@ -194,6 +208,68 @@ class AuthController {
     });
   }
 
+  async admin_login(req, res) {
+    const body = req.body || {};
+    const email = readString(body.email).toLowerCase();
+    const password = readString(body.password);
+    const fields = {};
+    if (!email) fields.email = 'Email is required';
+    if (!password) fields.password = 'Password is required';
+    if (Object.keys(fields).length) return validationError(res, fields);
+
+    const auth = await AuthStore.authenticate({ email, password, role: 'admin', issueRefresh: true });
+    if (!auth) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: 'INVALID_CREDENTIALS',
+          message: 'Invalid admin email or password.',
+        },
+      });
+    }
+
+    setAuthCookies(res, auth);
+    return res.json({ success: true, data: { user: adminUser(auth.user) } });
+  }
+
+  async admin_refresh(req, res) {
+    const cookies = reqCookies(req);
+    const body = req.body || {};
+    const refreshToken = readString(body.refreshToken || body.refresh_token || cookies[REFRESH_COOKIE]);
+    if (!refreshToken) {
+      return validationError(res, { refreshToken: 'Refresh token is required' });
+    }
+
+    const auth = await AuthStore.refresh(refreshToken);
+    if (!auth || auth.user.role !== 'admin') {
+      clearAuthCookies(res);
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: 'INVALID_REFRESH_TOKEN',
+          message: 'Invalid refresh token.',
+        },
+      });
+    }
+
+    setAuthCookies(res, auth);
+    return res.json({ success: true, data: { user: adminUser(auth.user) } });
+  }
+
+  async admin_logout(req, res) {
+    const cookies = reqCookies(req);
+    await AuthStore.logout({
+      accessToken: cookies[ACCESS_COOKIE],
+      refreshToken: cookies[REFRESH_COOKIE],
+    });
+    clearAuthCookies(res);
+    return res.json({ success: true });
+  }
+
+  async admin_me(req, res) {
+    return res.json({ success: true, data: { user: adminUser(req.auth.user) } });
+  }
+
   async login(req, res) {
     const identifier = readString(req.body.identifier || req.body.email).toLowerCase();
     const password = readString(req.body.password);
@@ -222,7 +298,8 @@ class AuthController {
   }
 
   async refresh(req, res) {
-    const refreshToken = readString(req.body.refreshToken || req.body.refresh_token);
+    const body = req.body || {};
+    const refreshToken = readString(body.refreshToken || body.refresh_token);
     if (!refreshToken) {
       return validationError(res, { refreshToken: 'Refresh token is required' });
     }
