@@ -13,7 +13,28 @@ const corsOrigins = String(config('server.corsOrigins', ''))
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
-app.use(cors({ origin: corsOrigins.length ? corsOrigins : true, credentials: true }));
+const allowAnyCorsOrigin = !corsOrigins.length || corsOrigins.includes('*');
+app.use((req, res, next) => {
+  const origin = req.header('origin');
+  const allowedOrigin = allowAnyCorsOrigin
+    ? origin
+    : (corsOrigins.includes(origin) ? origin : null);
+
+  if (allowedOrigin) {
+    res.header('Access-Control-Allow-Origin', allowedOrigin);
+    res.header('Vary', 'Origin');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+    res.header(
+      'Access-Control-Allow-Headers',
+      req.header('access-control-request-headers') || 'Origin, X-Requested-With, Content-Type, Accept, Authorization'
+    );
+  }
+
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  return next();
+});
+app.use(cors({ origin: false }));
 app.use(express.json());
 
 // Serve uploaded files statically

@@ -3,8 +3,8 @@
     "app": "Support Atlas Admin Panel",
     "baseUrl": "http://127.0.0.1:8000",
     "auth": {
-      "mode": "httpOnly cookies",
-      "frontendFetchRequirement": "fetch(url, { credentials: 'include' })",
+      "mode": "httpOnly cookies plus JSON bearer tokens",
+      "frontendFetchRequirement": "fetch(url, { headers: { Authorization: 'Bearer <accessToken>' } })",
       "cookieNames": [
         "accessToken",
         "refreshToken"
@@ -112,12 +112,12 @@
       {
         "method": "PATCH",
         "path": "/admin/users/:id/status",
-        "purpose": "Set user active/inactive. Inactive users cannot login."
+        "purpose": "Set user active/inactive. Admin/helper users are marked inactive. Volunteer users are deleted on inactive so they can submit a fresh registration request with the same email. The primary super admin cannot be made inactive."
       },
       {
         "method": "DELETE",
         "path": "/admin/users/:id",
-        "purpose": "Delete a user. Prefer inactive status for normal blocking."
+        "purpose": "Delete a user. The primary super admin cannot be deleted."
       }
     ],
     "existingAdminRoutesAvailable": [

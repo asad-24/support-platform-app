@@ -3,7 +3,8 @@
 const Op = require('@core/util/classes/Operators');
 const User = require('@src/models/User');
 const AuthStore = require('@src/services/AuthStore');
-const { sanitizeUser } = require('@src/services/auth/credentials');
+const ProfileStore = require('@src/services/VolunteerProfileStore');
+const { normalizeEmail, sanitizeUser } = require('@src/services/auth/credentials');
 
 const ROLES = new Set(['admin', 'volunteer', 'helper']);
 const STATUSES = new Set(['active', 'inactive']);
@@ -21,6 +22,24 @@ function pagination(query = {}) {
 function userJson(user) {
   const data = sanitizeUser(user);
   return data ? { ...data, status: data.status || 'active' } : null;
+}
+
+function superAdminEmail() {
+  return normalizeEmail(process.env.ADMIN_EMAIL || 'admin@schoolsupportatlas.local');
+}
+
+function isSuperAdmin(user) {
+  return user && normalizeEmail(user.email) === superAdminEmail();
+}
+
+function superAdminProtectedResponse(res) {
+  return res.status(403).json({
+    success: false,
+    error: {
+      code: 'SUPER_ADMIN_PROTECTED',
+      message: 'The primary super admin account cannot be made inactive or deleted.',
+    },
+  });
 }
 
 class AdminUserController {
@@ -103,24 +122,53 @@ class AdminUserController {
       });
     }
 
-    const user = await AuthStore.setStatus(req.params.id, status);
-    if (!user) {
+    const target = await User.findByPk(req.params.id);
+    if (!target) {
       return res.status(404).json({
         success: false,
         error: { code: 'USER_NOT_FOUND', message: 'User not found.' },
       });
     }
+
+    if (status === 'inactive' && isSuperAdmin(target)) {
+      return superAdminProtectedResponse(res);
+    }
+
+    if (status === 'inactive' && target.role === 'volunteer') {
+      const snapshot = userJson(target);
+      await ProfileStore.destroyForUser(target.id);
+      await User.destroy({ where: { id: target.id } });
+      return res.json({
+        success: true,
+        data: {
+          deleted: true,
+          user: { ...snapshot, status: 'inactive' },
+        },
+      });
+    }
+
+    const user = await AuthStore.setStatus(req.params.id, status);
     return res.json({ success: true, data: { user } });
   }
 
   async destroy(req, res) {
-    const deleted = await User.destroy({ where: { id: req.params.id } });
-    if (!deleted) {
+    const target = await User.findByPk(req.params.id);
+    if (!target) {
       return res.status(404).json({
         success: false,
         error: { code: 'USER_NOT_FOUND', message: 'User not found.' },
       });
     }
+
+    if (isSuperAdmin(target)) {
+      return superAdminProtectedResponse(res);
+    }
+
+    if (target.role === 'volunteer') {
+      await ProfileStore.destroyForUser(target.id);
+    }
+
+    const deleted = await User.destroy({ where: { id: req.params.id } });
     return res.json({ success: true, data: { deleted: true } });
   }
 }

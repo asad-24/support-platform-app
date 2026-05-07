@@ -229,7 +229,14 @@ class AuthController {
     }
 
     setAuthCookies(res, auth);
-    return res.json({ success: true, data: { user: adminUser(auth.user) } });
+    return res.json({
+      success: true,
+      data: {
+        user: adminUser(auth.user),
+        accessToken: auth.accessToken,
+        refreshToken: auth.refreshToken,
+      },
+    });
   }
 
   async admin_refresh(req, res) {
@@ -253,14 +260,22 @@ class AuthController {
     }
 
     setAuthCookies(res, auth);
-    return res.json({ success: true, data: { user: adminUser(auth.user) } });
+    return res.json({
+      success: true,
+      data: {
+        user: adminUser(auth.user),
+        accessToken: auth.accessToken,
+        refreshToken: auth.refreshToken,
+      },
+    });
   }
 
   async admin_logout(req, res) {
     const cookies = reqCookies(req);
+    const body = req.body || {};
     await AuthStore.logout({
-      accessToken: cookies[ACCESS_COOKIE],
-      refreshToken: cookies[REFRESH_COOKIE],
+      accessToken: req.auth?.accessToken || body.accessToken || body.access_token || cookies[ACCESS_COOKIE],
+      refreshToken: body.refreshToken || body.refresh_token || cookies[REFRESH_COOKIE],
     });
     clearAuthCookies(res);
     return res.json({ success: true });

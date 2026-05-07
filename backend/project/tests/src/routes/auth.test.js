@@ -12,6 +12,7 @@ const path = require('path');
 const bind_routes = require('@core/util/functions/bind_routes');
 const User = require('@src/models/User');
 const AuthStore = require('@src/services/AuthStore');
+const ProfileStore = require('@src/services/VolunteerProfileStore');
 const { sequelize } = require('@core/util/classes/Model');
 
 function httpRequest(baseUrl, method, urlPath, { headers = {}, body } = {}) {
@@ -53,6 +54,29 @@ function httpRequest(baseUrl, method, urlPath, { headers = {}, body } = {}) {
 
 const DEFAULT_ADMIN_EMAIL = 'admin@schoolsupportatlas.local';
 const DEFAULT_ADMIN_PASSWORD = 'admin123';
+
+function volunteerApplicationBody(overrides = {}) {
+  return {
+    fullName: 'Inactive Volunteer',
+    email: 'inactive-volunteer@example.com',
+    phone: '+2348012345678',
+    dateOfBirth: '1994-05-14',
+    gender: 'Male',
+    state: 'Kano',
+    lga: 'Nassarawa',
+    address: 'Nassarawa LGA, Kano State',
+    educationLevel: 'Tertiary',
+    occupation: 'Community volunteer',
+    skills: 'Community outreach, data collection',
+    volunteerExperience: 'Two years supporting school mapping.',
+    availability: 'Weekends',
+    volunteeringMode: 'Field visits',
+    motivation: 'Improve support visibility.',
+    emergencyContactName: 'Amina Sule',
+    emergencyContactPhone: '+2348091112233',
+    ...overrides,
+  };
+}
 
 function cookieHeader(setCookie = []) {
   return (Array.isArray(setCookie) ? setCookie : [setCookie])
@@ -518,6 +542,7 @@ describe('auth routes', () => {
       password: 'secret123',
       role: 'volunteer',
     });
+    await ProfileStore.upsertForUser(volunteerAuth.user.id, volunteerApplicationBody());
 
     const beforeInactive = await httpRequest(baseUrl, 'POST', '/auth/login', {
       body: {
@@ -533,7 +558,10 @@ describe('auth routes', () => {
       body: { status: 'inactive' },
     });
     expect(status.status).toBe(200);
+    expect(status.body.data.deleted).toBe(true);
     expect(status.body.data.user.status).toBe('inactive');
+    expect(await User.findOne({ where: { email: 'inactive-volunteer@example.com' } })).toBeNull();
+    expect(await ProfileStore.getByUserId(volunteerAuth.user.id)).toBeNull();
 
     const afterInactive = await httpRequest(baseUrl, 'POST', '/auth/login', {
       body: {
@@ -548,6 +576,12 @@ describe('auth routes', () => {
       headers: { authorization: `Bearer ${beforeInactive.body.accessToken}` },
     });
     expect(existingToken.status).toBe(401);
+
+    const registerAgain = await httpRequest(baseUrl, 'POST', '/volunteer-applications', {
+      body: volunteerApplicationBody(),
+    });
+    expect(registerAgain.status).toBe(201);
+    expect(registerAgain.body.status).toBe('pending');
 
     const secondAdmin = await AuthStore.createUser({
       name: 'Inactive Admin',
@@ -572,5 +606,58 @@ describe('auth routes', () => {
       headers: { cookie: cookieHeader(secondLogin.headers['set-cookie']) },
     });
     expect(oldAdminCookieMe.status).toBe(401);
+  });
+
+  test('primary super admin cannot be deactivated or deleted but can deactivate other admins', async () => {
+    const superAdmin = await AuthStore.createUser({
+      name: 'System Admin',
+      email: DEFAULT_ADMIN_EMAIL,
+      password: DEFAULT_ADMIN_PASSWORD,
+      role: 'admin',
+    });
+    const secondAdmin = await AuthStore.createUser({
+      name: 'Second Admin',
+      email: 'second-admin@example.com',
+      password: 'secret123',
+      role: 'admin',
+    });
+
+    const superLogin = await httpRequest(baseUrl, 'POST', '/auth/admin/login', {
+      body: { email: DEFAULT_ADMIN_EMAIL, password: DEFAULT_ADMIN_PASSWORD },
+    });
+    const superCookies = cookieHeader(superLogin.headers['set-cookie']);
+
+    const selfInactive = await httpRequest(baseUrl, 'PATCH', `/admin/users/${superAdmin.user.id}/status`, {
+      headers: { cookie: superCookies },
+      body: { status: 'inactive' },
+    });
+    expect(selfInactive.status).toBe(403);
+    expect(selfInactive.body.error.code).toBe('SUPER_ADMIN_PROTECTED');
+
+    const deactivateSecond = await httpRequest(baseUrl, 'PATCH', `/admin/users/${secondAdmin.user.id}/status`, {
+      headers: { cookie: superCookies },
+      body: { status: 'inactive' },
+    });
+    expect(deactivateSecond.status).toBe(200);
+    expect(deactivateSecond.body.data.user.status).toBe('inactive');
+
+    await AuthStore.setStatus(secondAdmin.user.id, 'active');
+    const secondLogin = await httpRequest(baseUrl, 'POST', '/auth/admin/login', {
+      body: { email: 'second-admin@example.com', password: 'secret123' },
+    });
+    const secondCookies = cookieHeader(secondLogin.headers['set-cookie']);
+
+    const secondDeactivatesSuper = await httpRequest(baseUrl, 'PATCH', `/admin/users/${superAdmin.user.id}/status`, {
+      headers: { cookie: secondCookies },
+      body: { status: 'inactive' },
+    });
+    expect(secondDeactivatesSuper.status).toBe(403);
+    expect(secondDeactivatesSuper.body.error.code).toBe('SUPER_ADMIN_PROTECTED');
+
+    const secondDeletesSuper = await httpRequest(baseUrl, 'DELETE', `/admin/users/${superAdmin.user.id}`, {
+      headers: { cookie: secondCookies },
+    });
+    expect(secondDeletesSuper.status).toBe(403);
+    expect(secondDeletesSuper.body.error.code).toBe('SUPER_ADMIN_PROTECTED');
   });
 });

@@ -4,7 +4,7 @@
     "direction": "backend-to-admin-frontend",
     "format": "json-only",
     "dateFormat": "ISO-8601",
-    "authMode": "httpOnly cookies"
+    "authMode": "httpOnly cookies plus JSON bearer tokens"
   },
   "responses": {
     "adminLoginSuccess": {
@@ -28,7 +28,9 @@
             "permissions": [
               "admin:*"
             ]
-          }
+          },
+          "accessToken": "mock-admin-access-token",
+          "refreshToken": "mock-admin-refresh-token"
         }
       }
     },
@@ -47,7 +49,9 @@
             "permissions": [
               "admin:*"
             ]
-          }
+          },
+          "accessToken": "new-admin-access-token",
+          "refreshToken": "new-admin-refresh-token"
         }
       }
     },
@@ -306,6 +310,7 @@
       "body": {
         "success": true,
         "data": {
+          "deleted": true,
           "user": {
             "id": 15,
             "name": "Ibrahim Sule",
@@ -316,7 +321,8 @@
             "created_at": "2026-05-07T07:10:00.000Z"
           }
         }
-      }
+      },
+      "important": "When the target user is a volunteer and status is set to inactive, the backend deletes the volunteer user/profile records so the same email can submit a fresh registration request. Admin/helper users are marked inactive instead."
     },
     "userDeleted": {
       "status": 200,
@@ -355,6 +361,16 @@
       "body": {
         "success": false,
         "error": "Admin access is required"
+      }
+    },
+    "superAdminProtected": {
+      "status": 403,
+      "body": {
+        "success": false,
+        "error": {
+          "code": "SUPER_ADMIN_PROTECTED",
+          "message": "The primary super admin account cannot be made inactive or deleted."
+        }
       }
     },
     "notFound": {

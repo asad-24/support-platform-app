@@ -5,9 +5,13 @@ import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "../components/ui/sheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
+import { useAuth } from "../context/AuthContext";
 import { apiRequest, errorMessage } from "../lib/api";
 import { formatDateTime, titleCase } from "../lib/format";
 import type { ManagedUser, VolunteerSummary } from "../lib/types";
+
+const PRIMARY_SUPER_ADMIN_EMAIL = (import.meta.env.VITE_SUPER_ADMIN_EMAIL || "admin@schoolsupportatlas.local").toLowerCase();
+const SUPER_ADMIN_PROTECTED_MESSAGE = "The primary super admin account cannot be made inactive or deleted.";
 
 type UserListResponse = {
   success: true;
@@ -34,6 +38,7 @@ type VolunteerSummaryResponse = {
 };
 
 export function UsersPage() {
+  const { user: currentAdmin } = useAuth();
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
   const [volunteerSummary, setVolunteerSummary] = useState<VolunteerSummary | null>(null);
@@ -80,7 +85,17 @@ export function UsersPage() {
     }
   };
 
-  const deactivateUser = async (userId: number) => {
+  const isProtectedUser = (target: ManagedUser) => (
+    target.email.toLowerCase() === PRIMARY_SUPER_ADMIN_EMAIL || target.id === currentAdmin?.id
+  );
+
+  const deactivateUser = async (target: ManagedUser) => {
+    if (isProtectedUser(target)) {
+      setError(SUPER_ADMIN_PROTECTED_MESSAGE);
+      return;
+    }
+
+    const userId = target.id;
     setActionLoading(userId);
     setError("");
     try {
@@ -161,11 +176,12 @@ export function UsersPage() {
                           variant="outline"
                           size="sm"
                           className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                          onClick={() => void deactivateUser(user.id)}
-                          disabled={actionLoading === user.id}
+                          onClick={() => void deactivateUser(user)}
+                          disabled={actionLoading === user.id || isProtectedUser(user)}
+                          title={isProtectedUser(user) ? SUPER_ADMIN_PROTECTED_MESSAGE : "Deactivate user"}
                         >
                           <UserX className="h-4 w-4" />
-                          {actionLoading === user.id ? "Deactivating..." : "Deactivate"}
+                          {isProtectedUser(user) ? "Protected" : actionLoading === user.id ? "Deactivating..." : "Deactivate"}
                         </Button>
                       </div>
                     </TableCell>
@@ -219,11 +235,12 @@ export function UsersPage() {
                   <Button
                     variant="outline"
                     className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    onClick={() => void deactivateUser(selectedUser.id)}
-                    disabled={actionLoading === selectedUser.id}
+                    onClick={() => void deactivateUser(selectedUser)}
+                    disabled={actionLoading === selectedUser.id || isProtectedUser(selectedUser)}
+                    title={isProtectedUser(selectedUser) ? SUPER_ADMIN_PROTECTED_MESSAGE : "Deactivate user"}
                   >
                     <UserX className="h-4 w-4" />
-                    {actionLoading === selectedUser.id ? "Deactivating..." : "Deactivate user"}
+                    {isProtectedUser(selectedUser) ? "Protected account" : actionLoading === selectedUser.id ? "Deactivating..." : "Deactivate user"}
                   </Button>
                 </div>
               </>

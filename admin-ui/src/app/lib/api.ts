@@ -1,4 +1,6 @@
 const API_BASE_URL = resolveApiBaseUrl();
+const ACCESS_TOKEN_KEY = "support_atlas_admin_access_token";
+const REFRESH_TOKEN_KEY = "support_atlas_admin_refresh_token";
 
 type ApiOptions = Omit<RequestInit, "body"> & {
   body?: unknown;
@@ -76,9 +78,48 @@ function emitAuthExpired() {
   window.dispatchEvent(new Event("admin-auth-expired"));
 }
 
+export function getAdminAccessToken() {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(ACCESS_TOKEN_KEY);
+}
+
+export function getAdminRefreshToken() {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(REFRESH_TOKEN_KEY);
+}
+
+export function setAdminTokens(tokens: { accessToken?: string | null; refreshToken?: string | null }) {
+  if (typeof window === "undefined") return;
+  if (tokens.accessToken) window.localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
+  if (tokens.refreshToken) window.localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
+}
+
+export function clearAdminTokens() {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+  window.localStorage.removeItem(REFRESH_TOKEN_KEY);
+}
+
+function persistTokensFromResponse(data: unknown) {
+  if (!data || typeof data !== "object") return;
+  const value = data as { data?: { accessToken?: unknown; refreshToken?: unknown } };
+  const accessToken = value.data?.accessToken;
+  const refreshToken = value.data?.refreshToken;
+  if (typeof accessToken === "string" || typeof refreshToken === "string") {
+    setAdminTokens({
+      accessToken: typeof accessToken === "string" ? accessToken : undefined,
+      refreshToken: typeof refreshToken === "string" ? refreshToken : undefined,
+    });
+  }
+}
+
 async function rawRequest<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const headers = new Headers(options.headers);
   headers.set("Accept", "application/json");
+  const accessToken = getAdminAccessToken();
+  if (accessToken && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${accessToken}`);
+  }
 
   let body: BodyInit | undefined;
   if (options.body !== undefined) {
@@ -90,7 +131,6 @@ async function rawRequest<T>(path: string, options: ApiOptions = {}): Promise<T>
     ...options,
     headers,
     body,
-    credentials: "include",
   });
 
   const text = await response.text();
@@ -100,6 +140,7 @@ async function rawRequest<T>(path: string, options: ApiOptions = {}): Promise<T>
     throw new ApiError(response.status, data);
   }
 
+  persistTokensFromResponse(data);
   return data as T;
 }
 
@@ -115,11 +156,14 @@ export async function apiRequest<T>(path: string, options: ApiOptions = {}): Pro
   }
 
   try {
+    const refreshToken = getAdminRefreshToken();
     await rawRequest("/auth/admin/refresh", {
       method: "POST",
+      body: refreshToken ? { refreshToken } : {},
       retryOnUnauthorized: false,
     });
   } catch (refreshError) {
+    clearAdminTokens();
     if (!options.suppressAuthExpired) emitAuthExpired();
     throw refreshError;
   }

@@ -4,8 +4,8 @@
     "direction": "admin-frontend-to-backend",
     "format": "json-only",
     "dateFormat": "ISO-8601",
-    "authMode": "httpOnly cookies",
-    "frontendFetchRequirement": "Use credentials: 'include' for all /auth/admin/* and /admin/* requests."
+    "authMode": "httpOnly cookies plus JSON bearer tokens",
+    "frontendFetchRequirement": "Use JSON accessToken in Authorization: Bearer <token>. Cookies may also be set by the backend, but the admin UI should not depend on them."
   },
   "commonHeaders": {
     "Accept": "application/json",
@@ -193,7 +193,7 @@
       "body": {
         "status": "inactive"
       },
-      "note": "Inactive users cannot login and existing access/refresh tokens are cleared."
+      "note": "Admin/helper users are made inactive and cannot login. Volunteer users are deleted so they can submit a fresh registration request with the same email. Do not show this action for the primary super admin."
     },
     "makeUserActive": {
       "method": "PATCH",
@@ -215,7 +215,7 @@
       "params": {
         "id": 15
       },
-      "note": "Use deactivate for normal blocking. Delete is explicit destructive admin action."
+      "note": "Delete is explicit destructive admin action. The primary super admin cannot be deleted."
     }
   }
 }

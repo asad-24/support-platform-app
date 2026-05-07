@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ApiError, apiRequest } from "../lib/api";
+import { apiRequest, clearAdminTokens, getAdminRefreshToken } from "../lib/api";
 import type { AdminUser } from "../lib/types";
 
 type AuthContextValue = {
@@ -14,6 +14,8 @@ type UserResponse = {
   success: true;
   data: {
     user: AdminUser;
+    accessToken?: string;
+    refreshToken?: string;
   };
 };
 
@@ -63,17 +65,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         retryOnUnauthorized: false,
       });
       if (requestId !== sessionRequestId.current) return;
-      const session = await apiRequest<UserResponse>("/auth/admin/me", {
-        retryOnUnauthorized: false,
-      });
-      if (requestId !== sessionRequestId.current) return;
-      setUser(session.data.user || response.data.user);
+      setUser(response.data.user);
     } catch (error) {
-      if (error instanceof ApiError && [400, 401].includes(error.status)) {
-        throw new Error(
-          "Login succeeded, but the browser did not keep the session cookie. Open the admin UI and API with the same hostname, for example http://127.0.0.1:3000 with http://127.0.0.1:8000, and restart the backend with credentialed CORS.",
-        );
-      }
       throw error;
     } finally {
       if (requestId === sessionRequestId.current) setLoading(false);
@@ -84,10 +77,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await apiRequest<{ success: true }>("/auth/admin/logout", {
         method: "POST",
-        body: {},
+        body: getAdminRefreshToken() ? { refreshToken: getAdminRefreshToken() } : {},
         retryOnUnauthorized: false,
       });
     } finally {
+      clearAdminTokens();
       sessionRequestId.current += 1;
       setUser(null);
       setLoading(false);
