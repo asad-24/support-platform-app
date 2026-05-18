@@ -50,10 +50,16 @@ function clean(payload) {
 function normalizeSchoolPayload(input = {}) {
   const body = input.school && typeof input.school === 'object' ? input.school : input;
   return clean({
+    uniqueSiteId: pick(body, 'uniqueSiteId', 'unique_site_id'),
     schoolName: pick(body, 'schoolName', 'school_name'),
+    localName: pick(body, 'localName', 'local_name'),
     schoolType: pick(body, 'schoolType', 'school_type'),
     operatorName: pick(body, 'operatorName', 'operator_name'),
+    phone: pick(body, 'phone'),
     urgency: pick(body, 'urgency'),
+    needs: Array.isArray(pick(body, 'needs')) ? pick(body, 'needs') : undefined,
+    correctionIssues: Array.isArray(pick(body, 'correctionIssues', 'correction_issues')) ? pick(body, 'correctionIssues', 'correction_issues') : undefined,
+    adminFeedback: pick(body, 'adminFeedback', 'admin_feedback'),
   });
 }
 
@@ -71,7 +77,9 @@ function normalizeLocationPayload(input = {}) {
     country: pick(input, 'country'),
     state: pick(input, 'state'),
     lga: pick(input, 'lga'),
+    ward: pick(input, 'ward'),
     community: pick(input, 'community'),
+    landmark: pick(input, 'landmark'),
     address: pick(input, 'address'),
   });
 }
@@ -88,6 +96,12 @@ function normalizeChildrenPayload(input = {}) {
     age1115Count: pick(input, 'age1115Count', 'age_11_15_count'),
     age1618Count: pick(input, 'age1618Count', 'age_16_18_count'),
     age18PlusCount: pick(input, 'age18PlusCount', 'age_18_plus_count'),
+    age0to5: pick(input, 'age0to5', 'age_0_to_5'),
+    age6to9: pick(input, 'age6to9', 'age_6_to_9'),
+    age10to14: pick(input, 'age10to14', 'age_10_to_14'),
+    age15plus: pick(input, 'age15plus', 'age_15_plus'),
+    ageGroups: pick(input, 'ageGroups', 'age_groups'),
+    notes: pick(input, 'notes'),
   });
 }
 
@@ -110,15 +124,40 @@ function normalizeWelfarePayload(input = {}) {
     safetySexualAbuse: pick(input, 'safetySexualAbuse', 'safety_sexual_abuse'),
     safetyTrafficking: pick(input, 'safetyTrafficking', 'safety_trafficking'),
     additionalNotes: pick(input, 'additionalNotes', 'additional_notes'),
+    feedingStatus: pick(input, 'feedingStatus', 'feeding_status'),
+    shelterStatus: pick(input, 'shelterStatus', 'shelter_status'),
+    sanitationStatus: pick(input, 'sanitationStatus', 'sanitation_status'),
+    waterAccess: pick(input, 'waterAccess', 'water_access'),
+    healthAccess: pick(input, 'healthAccess', 'health_access'),
+    clothingStatus: pick(input, 'clothingStatus', 'clothing_status'),
+    mealsPerDay: pick(input, 'mealsPerDay', 'meals_per_day'),
+    waterSource: pick(input, 'waterSource', 'water_source'),
+    hasToiletAccess: pick(input, 'hasToiletAccess', 'has_toilet_access'),
+    hasAdequateClothing: pick(input, 'hasAdequateClothing', 'has_adequate_clothing'),
+    hasHealthcareAccess: pick(input, 'hasHealthcareAccess', 'has_healthcare_access'),
+    sleepingArrangement: pick(input, 'sleepingArrangement', 'sleeping_arrangement'),
+    hygieneCondition: pick(input, 'hygieneCondition', 'hygiene_condition'),
+    safetyRisks: pick(input, 'safetyRisks', 'safety_risks'),
+    immediateInterventionNeeded: pick(input, 'immediateInterventionNeeded', 'immediate_intervention_needed'),
+    urgencyReason: pick(input, 'urgencyReason', 'urgency_reason'),
+    followUpDate: pick(input, 'followUpDate', 'follow_up_date'),
+    notes: pick(input, 'notes'),
   });
 }
 
 function normalizePhotoPayload(input = {}) {
   return clean({
+    clientId: pick(input, 'clientId', 'client_id') || pick(input, 'id'),
     fileUrl: pick(input, 'fileUrl', 'file_url') || pick(input, 'url'),
     localPath: pick(input, 'localPath', 'local_path'),
+    mediaKind: pick(input, 'mediaKind', 'media_kind'),
+    mimeType: pick(input, 'mimeType', 'mime_type'),
+    size: pick(input, 'size'),
     category: pick(input, 'category') || pick(input, 'type') || 'other',
     caption: pick(input, 'caption'),
+    capturedAt: pick(input, 'capturedAt', 'captured_at') || pick(input, 'timestamp'),
+    latitude: pick(input, 'latitude'),
+    longitude: pick(input, 'longitude'),
   });
 }
 
@@ -129,14 +168,21 @@ function serializeSchoolRow(school) {
     id: row.id,
     submitted_by_user_id: row.submittedByUserId,
     approved_by_user_id: row.approvedByUserId,
+    unique_site_id: row.uniqueSiteId,
     school_name: row.schoolName,
+    local_name: row.localName,
     school_type: row.schoolType,
     operator_name: row.operatorName,
+    phone: row.phone,
     status: row.status,
     urgency: row.urgency,
+    needs: Array.isArray(row.needs) ? row.needs : [],
+    correction_issues: Array.isArray(row.correctionIssues) ? row.correctionIssues : [],
     admin_feedback: row.adminFeedback,
     submitted_at: row.submittedAt,
     reviewed_at: row.reviewedAt,
+    archived_at: row.archivedAt,
+    archived_by_user_id: row.archivedByUserId,
     created_at: row.createdAt,
     updated_at: row.updatedAt,
   };
@@ -159,7 +205,9 @@ function serializeLocation(row) {
     country: data.country,
     state: data.state,
     lga: data.lga,
+    ward: data.ward,
     community: data.community,
+    landmark: data.landmark,
     address: data.address,
   };
 }
@@ -180,6 +228,12 @@ function serializeChildren(row) {
     age_11_15_count: data.age1115Count,
     age_16_18_count: data.age1618Count,
     age_18_plus_count: data.age18PlusCount,
+    age_0_to_5: data.age0to5,
+    age_6_to_9: data.age6to9,
+    age_10_to_14: data.age10to14,
+    age_15_plus: data.age15plus,
+    age_groups: data.ageGroups,
+    notes: data.notes,
   };
 }
 
@@ -216,10 +270,17 @@ function serializePhoto(row) {
     id: data.id,
     school_id: data.schoolId,
     uploaded_by_user_id: data.uploadedByUserId,
+    client_id: data.clientId,
     file_url: data.fileUrl,
     local_path: data.localPath,
+    media_kind: data.mediaKind || 'image',
+    mime_type: data.mimeType,
+    size: data.size,
     category: data.category,
     caption: data.caption,
+    captured_at: data.capturedAt,
+    latitude: data.latitude,
+    longitude: data.longitude,
     created_at: data.createdAt,
   };
 }
@@ -275,7 +336,7 @@ function serializeVolunteerNotification(row) {
 
 async function serializeSchoolAggregate(school) {
   if (!school) return null;
-  const [operators, location, childrenStats, welfare, photos, reviews, submittedBy, approvedBy] = await Promise.all([
+  const [operators, location, childrenStats, welfare, photos, reviews, submittedBy, approvedBy, archivedBy] = await Promise.all([
     SchoolOperator.findAll({ where: { schoolId: school.id }, order: [['id', 'ASC']] }),
     SchoolLocation.findOne({ where: { schoolId: school.id } }),
     SchoolChildrenStats.findOne({ where: { schoolId: school.id } }),
@@ -284,12 +345,14 @@ async function serializeSchoolAggregate(school) {
     SchoolReview.findAll({ where: { schoolId: school.id }, order: [['id', 'DESC']] }),
     User.findByPk(school.submittedByUserId),
     school.approvedByUserId ? User.findByPk(school.approvedByUserId) : null,
+    school.archivedByUserId ? User.findByPk(school.archivedByUserId) : null,
   ]);
 
   return {
     ...serializeSchoolRow(school),
     submitted_by: sanitizeUser(submittedBy),
     approved_by: sanitizeUser(approvedBy),
+    archived_by: sanitizeUser(archivedBy),
     operators: operators.map(serializeOperator),
     location: serializeLocation(location),
     children_stats: serializeChildren(childrenStats),
@@ -299,13 +362,41 @@ async function serializeSchoolAggregate(school) {
   };
 }
 
-function buildSchoolWhere(query = {}, defaults = {}) {
+async function serializeSchoolListRow(school) {
+  const [location, submittedBy] = await Promise.all([
+    SchoolLocation.findOne({ where: { schoolId: school.id } }),
+    User.findByPk(school.submittedByUserId),
+  ]);
+  return {
+    ...serializeSchoolRow(school),
+    submitted_by: sanitizeUser(submittedBy),
+    location: serializeLocation(location),
+  };
+}
+
+async function locationSchoolIds(query = {}) {
+  const locationWhere = {};
+  if (query.state) locationWhere.state = query.state;
+  if (query.lga) locationWhere.lga = query.lga;
+  if (!Object.keys(locationWhere).length) return null;
+  const rows = await SchoolLocation.findAll({ where: locationWhere });
+  return rows.map((row) => row.schoolId);
+}
+
+async function buildSchoolWhere(query = {}, defaults = {}) {
   const where = { ...defaults };
+  if (query.archived === 'true') {
+    where.archivedAt = { [Op.ne]: null };
+  } else if (query.archived !== 'all') {
+    where.archivedAt = null;
+  }
   if (query.status && SCHOOL_STATUSES.has(query.status)) where.status = query.status;
   if (query.submitted_by_user_id) where.submittedByUserId = Number(query.submitted_by_user_id);
   if (query.school_type) where.schoolType = query.school_type;
   if (query.urgency) where.urgency = query.urgency;
   if (query.search) where.schoolName = { [Op.like]: `%${String(query.search).trim()}%` };
+  const ids = await locationSchoolIds(query);
+  if (ids) where.id = ids.length ? ids : [-1];
   return where;
 }
 
@@ -318,13 +409,13 @@ function pagination(query = {}) {
 async function listSchools(query = {}, defaults = {}) {
   const { limit, offset, page } = pagination(query);
   const { rows, count } = await School.findAndCountAll({
-    where: buildSchoolWhere(query, defaults),
+    where: await buildSchoolWhere(query, defaults),
     order: [['createdAt', 'DESC']],
     limit,
     offset,
   });
   return {
-    items: rows.map(serializeSchoolRow),
+    items: await Promise.all(rows.map(serializeSchoolListRow)),
     pagination: { total: count, page, limit },
   };
 }
@@ -438,6 +529,45 @@ async function updateSchool(school, payload = {}, userId) {
   });
 }
 
+async function updateSchoolAsAdmin(school, payload = {}, adminId) {
+  if (!school) {
+    const error = new Error('School not found');
+    error.status = 404;
+    throw error;
+  }
+  return sequelize.transaction(async (transaction) => {
+    await applyAggregatePayload(school, payload, adminId, transaction);
+    await VolunteerActivityLog.create({
+      userId: school.submittedByUserId,
+      schoolId: school.id,
+      action: 'school_admin_updated',
+      metadata: { adminId },
+    }, { transaction });
+    return school.reload({ transaction });
+  });
+}
+
+async function archiveSchool(school, adminId) {
+  if (!school) {
+    const error = new Error('School not found');
+    error.status = 404;
+    throw error;
+  }
+  if (school.archivedAt) return school;
+  await school.update({ archivedAt: new Date(), archivedByUserId: adminId });
+  return school.reload();
+}
+
+async function restoreSchool(school) {
+  if (!school) {
+    const error = new Error('School not found');
+    error.status = 404;
+    throw error;
+  }
+  await school.update({ archivedAt: null, archivedByUserId: null });
+  return school.reload();
+}
+
 async function deleteSchool(school) {
   await requireEditable(school);
   return sequelize.transaction(async (transaction) => {
@@ -490,6 +620,11 @@ async function reviewSchool(school, adminId, status, comment) {
   if (!school) {
     const error = new Error('School not found');
     error.status = 404;
+    throw error;
+  }
+  if (school.archivedAt) {
+    const error = new Error('Archived schools must be restored before review.');
+    error.status = 409;
     throw error;
   }
   if (!REVIEW_STATUSES.has(status)) {
@@ -595,6 +730,52 @@ async function dashboardStatsForAdmin() {
   };
 }
 
+function countRows(rows, key, fallback = 'Unknown') {
+  const counts = new Map();
+  for (const row of rows) {
+    const raw = typeof row.get === 'function' ? row.get(key) : row[key];
+    const label = readString(raw) || fallback;
+    counts.set(label, (counts.get(label) || 0) + 1);
+  }
+  return Array.from(counts.entries())
+    .map(([label, count]) => ({ label, count }))
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+}
+
+function normalizeAnalyticsRows(rows, key) {
+  return rows.map((row) => ({ [key]: row.label, count: row.count }));
+}
+
+function topStatesWithUnknown(rows) {
+  const counted = countRows(rows, 'state', 'Unknown');
+  const unknown = counted.find((row) => row.label === 'Unknown');
+  const known = counted.filter((row) => row.label !== 'Unknown').slice(0, 10);
+  return normalizeAnalyticsRows(unknown && unknown.count > 0 ? [...known, unknown] : known, 'state');
+}
+
+async function dashboardAnalyticsForAdmin() {
+  const [schools, locations, users, completedProfiles] = await Promise.all([
+    School.findAll({ attributes: ['status', 'urgency'] }),
+    SchoolLocation.findAll({ attributes: ['state'] }),
+    User.findAll({ attributes: ['status'] }),
+    VolunteerProfile.count({ where: { isCompleted: true } }),
+  ]);
+
+  const totalVolunteers = await User.count({ where: { role: 'volunteer' } });
+  const incompleteProfiles = Math.max(0, totalVolunteers - completedProfiles);
+
+  return {
+    schools_by_status: normalizeAnalyticsRows(countRows(schools, 'status'), 'status'),
+    schools_by_urgency: normalizeAnalyticsRows(countRows(schools, 'urgency'), 'urgency'),
+    schools_by_state: topStatesWithUnknown(locations),
+    users_by_status: normalizeAnalyticsRows(countRows(users, 'status'), 'status'),
+    volunteer_profile_completion: [
+      { status: 'complete', count: completedProfiles },
+      { status: 'incomplete', count: incompleteProfiles },
+    ],
+  };
+}
+
 async function volunteerSummary(userId) {
   const user = await User.findByPk(userId);
   if (!user || user.role !== 'volunteer') return null;
@@ -623,8 +804,10 @@ module.exports = {
   SchoolReview,
   SchoolWelfareAssessment,
   VolunteerNotification,
+  archiveSchool,
   buildSchoolWhere,
   createSchool,
+  dashboardAnalyticsForAdmin,
   dashboardStatsForAdmin,
   dashboardStatsForVolunteer,
   deleteSchool,
@@ -645,11 +828,14 @@ module.exports = {
   serializeOperator,
   serializePhoto,
   serializeSchoolAggregate,
+  serializeSchoolListRow,
   serializeSchoolRow,
   serializeVolunteerNotification,
   serializeWelfare,
   submitSchool,
   updateSchool,
+  updateSchoolAsAdmin,
+  restoreSchool,
   upsertOne,
   volunteerSummary,
 };

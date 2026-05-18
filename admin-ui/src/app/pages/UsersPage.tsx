@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Eye, RefreshCw, UserX } from "lucide-react";
+import { Eye, RefreshCw, School, UserX } from "lucide-react";
+import { useNavigate } from "react-router";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
@@ -39,6 +40,7 @@ type VolunteerSummaryResponse = {
 
 export function UsersPage() {
   const { user: currentAdmin } = useAuth();
+  const navigate = useNavigate();
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
   const [volunteerSummary, setVolunteerSummary] = useState<VolunteerSummary | null>(null);
@@ -232,16 +234,24 @@ export function UsersPage() {
                 )}
 
                 <div className="border-t pt-4">
-                  <Button
-                    variant="outline"
-                    className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    onClick={() => void deactivateUser(selectedUser)}
-                    disabled={actionLoading === selectedUser.id || isProtectedUser(selectedUser)}
-                    title={isProtectedUser(selectedUser) ? SUPER_ADMIN_PROTECTED_MESSAGE : "Deactivate user"}
-                  >
-                    <UserX className="h-4 w-4" />
-                    {isProtectedUser(selectedUser) ? "Protected account" : actionLoading === selectedUser.id ? "Deactivating..." : "Deactivate user"}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedUser.role === "volunteer" && (
+                      <Button variant="outline" onClick={() => navigate(`/schools?submitted_by_user_id=${selectedUser.id}`)}>
+                        <School className="h-4 w-4" />
+                        View schools
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => void deactivateUser(selectedUser)}
+                      disabled={actionLoading === selectedUser.id || isProtectedUser(selectedUser)}
+                      title={isProtectedUser(selectedUser) ? SUPER_ADMIN_PROTECTED_MESSAGE : "Deactivate user"}
+                    >
+                      <UserX className="h-4 w-4" />
+                      {isProtectedUser(selectedUser) ? "Protected account" : actionLoading === selectedUser.id ? "Deactivating..." : "Deactivate user"}
+                    </Button>
+                  </div>
                 </div>
               </>
             )}

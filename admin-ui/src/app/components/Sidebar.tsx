@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { cn } from "./ui/utils";
-import { ChevronDown, ClipboardList, LayoutDashboard, LogOut, ShieldCheck, UserRound, Users, X } from "lucide-react";
+import { ChevronDown, ClipboardList, LayoutDashboard, LogOut, School, ShieldCheck, UserRound, Users, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 export function Sidebar() {
@@ -32,6 +32,7 @@ export function Sidebar() {
   };
 
   const isDashboard = location.pathname === "/";
+  const isSchools = location.pathname.startsWith("/schools");
   const isUsers = location.pathname === "/users";
   const isRequests = location.pathname.startsWith("/users/registration-requests");
   const usersActive = isUsers || isRequests;
@@ -101,6 +102,29 @@ export function Sidebar() {
                 {isDashboard && isExpanded && <div className="absolute right-2 top-1/2 -translate-y-1/2 w-2 h-2 bg-sidebar-primary-foreground rounded-full animate-pulse" />}
               </button>
               {!isExpanded && <SidebarTooltip title="Dashboard" description="Admin overview" />}
+            </div>
+
+            <div className="relative group">
+              <button
+                onClick={() => navigateTo("/schools")}
+                className={cn(
+                  "transition-all duration-300 flex items-center relative overflow-hidden hover:scale-105 hover:shadow-lg",
+                  isExpanded ? "w-full px-4 py-3 justify-start rounded-xl" : "w-12 h-12 justify-center mx-auto rounded-full",
+                  isSchools
+                    ? "bg-gradient-to-br from-sidebar-primary to-sidebar-primary/80 shadow-lg shadow-sidebar-primary/30 scale-105"
+                    : "bg-gradient-to-br from-sidebar-accent to-sidebar-accent/80 hover:from-sidebar-primary/80 hover:to-sidebar-primary/60",
+                )}
+              >
+                <School className={cn("w-5 h-5 flex-shrink-0", isSchools ? "text-sidebar-primary-foreground" : "text-sidebar-accent-foreground group-hover:text-sidebar-primary-foreground")} />
+                {isExpanded && (
+                  <div className="ml-3 overflow-hidden text-left">
+                    <div className={cn("font-medium text-sm whitespace-nowrap", isSchools ? "text-sidebar-primary-foreground" : "text-sidebar-accent-foreground group-hover:text-sidebar-primary-foreground")}>Schools</div>
+                    {isSchools && <div className="text-xs text-sidebar-primary-foreground/70 mt-0.5 whitespace-nowrap">School review</div>}
+                  </div>
+                )}
+                {isSchools && isExpanded && <div className="absolute right-2 top-1/2 -translate-y-1/2 w-2 h-2 bg-sidebar-primary-foreground rounded-full animate-pulse" />}
+              </button>
+              {!isExpanded && <SidebarTooltip title="Schools" description="School review" />}
             </div>
 
             <div className="relative group">

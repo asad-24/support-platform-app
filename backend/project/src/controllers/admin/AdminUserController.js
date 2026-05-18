@@ -134,19 +134,6 @@ class AdminUserController {
       return superAdminProtectedResponse(res);
     }
 
-    if (status === 'inactive' && target.role === 'volunteer') {
-      const snapshot = userJson(target);
-      await ProfileStore.destroyForUser(target.id);
-      await User.destroy({ where: { id: target.id } });
-      return res.json({
-        success: true,
-        data: {
-          deleted: true,
-          user: { ...snapshot, status: 'inactive' },
-        },
-      });
-    }
-
     const user = await AuthStore.setStatus(req.params.id, status);
     return res.json({ success: true, data: { user } });
   }

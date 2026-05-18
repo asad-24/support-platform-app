@@ -134,6 +134,7 @@ class FlutterSchoolStore {
   async getVisibleSite(id, user = null) {
     const school = await this.findSchool(id);
     if (!school) throw notFound();
+    if (school.archivedAt) throw notFound();
 
     const isOwner = user && Number(user.id) === Number(school.submittedByUserId);
     const isAdmin = user && user.role === 'admin';
@@ -286,6 +287,7 @@ class FlutterSchoolStore {
     const where = {
       submittedByUserId: requestedUserId,
       status: { [Op.ne]: 'draft' },
+      archivedAt: null,
     };
     if (query.reviewStatus && STATUS_BY_REVIEW[query.reviewStatus]) {
       where.status = STATUS_BY_REVIEW[query.reviewStatus];
@@ -296,7 +298,7 @@ class FlutterSchoolStore {
   }
 
   async dashboardSummary() {
-    const rows = await School.findAll({ where: { status: { [Op.ne]: 'draft' } } });
+    const rows = await School.findAll({ where: { status: { [Op.ne]: 'draft' }, archivedAt: null } });
     const childrenRows = await SchoolChildrenStats.findAll({
       where: { schoolId: rows.map((row) => row.id) },
     });
@@ -315,7 +317,7 @@ class FlutterSchoolStore {
 
   async exportSites() {
     const rows = await School.findAll({
-      where: { status: 'approved' },
+      where: { status: 'approved', archivedAt: null },
       order: [['updatedAt', 'DESC']],
     });
     const sites = await Promise.all(rows.map((school) => this.serializeSite(school)));
@@ -341,7 +343,7 @@ class FlutterSchoolStore {
   async listDrafts(user, query = {}) {
     this.requireWriter(user);
     const rows = await School.findAll({
-      where: { submittedByUserId: user.id, status: 'draft' },
+      where: { submittedByUserId: user.id, status: 'draft', archivedAt: null },
       order: [['updatedAt', 'DESC']],
     });
     const items = await Promise.all(rows.map((school) => this.serializeDraft(school)));
@@ -396,7 +398,7 @@ class FlutterSchoolStore {
   }
 
   buildWhere(query = {}, user = null, options = {}) {
-    const where = {};
+    const where = { archivedAt: null };
     const isAdmin = user && user.role === 'admin';
 
     if (options.defaultPublishedOnly && !isAdmin) {

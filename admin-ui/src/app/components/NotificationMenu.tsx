@@ -11,11 +11,16 @@ export function NotificationMenu() {
   const { notifications, unreadCount, loading, refreshNotifications, markRead, markAllRead } = useNotifications();
   const [open, setOpen] = useState(false);
 
-  const openNotification = async (notificationId: number, applicationId?: number) => {
-    if (applicationId) {
+  const openNotification = async (notification: (typeof notifications)[number]) => {
+    const applicationId = typeof notification.metadata?.applicationId === "number" ? notification.metadata.applicationId : undefined;
+    const schoolId = notification.school_id || numberFromMetadata(notification.metadata?.school_id);
+
+    if (notification.type === "school_submitted" && schoolId) {
+      navigate(`/schools?schoolId=${schoolId}`);
+    } else if (applicationId) {
       navigate(`/users/registration-requests?applicationId=${applicationId}`);
     }
-    await markRead(notificationId);
+    await markRead(notification.id);
     setOpen(false);
   };
 
@@ -34,7 +39,7 @@ export function NotificationMenu() {
       <SheetContent className="w-full overflow-y-auto sm:max-w-md">
         <SheetHeader>
           <SheetTitle>Notifications</SheetTitle>
-          <SheetDescription>Unread volunteer registration notifications.</SheetDescription>
+          <SheetDescription>Unread registration and school submission notifications.</SheetDescription>
         </SheetHeader>
 
         <div className="flex items-center justify-between border-y px-4 py-3">
@@ -53,14 +58,14 @@ export function NotificationMenu() {
         <div className="space-y-3 px-4 py-4">
           {notifications.length === 0 ? (
             <div className="rounded-md border border-dashed px-3 py-8 text-center text-sm text-muted-foreground">
-              No unread registration notifications.
+              No unread notifications.
             </div>
           ) : (
             notifications.map((notification) => (
               <button
                 key={notification.id}
                 className="flex w-full cursor-pointer flex-col items-start gap-1 rounded-lg border bg-card p-3 text-left transition-colors hover:bg-accent"
-                onClick={() => void openNotification(notification.id, notification.metadata?.applicationId)}
+                onClick={() => void openNotification(notification)}
               >
                 <div className="font-medium text-foreground">{notification.title}</div>
                 <div className="text-sm text-muted-foreground">{notification.message}</div>
@@ -72,4 +77,9 @@ export function NotificationMenu() {
       </SheetContent>
     </Sheet>
   );
+}
+
+function numberFromMetadata(value: unknown) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : undefined;
 }

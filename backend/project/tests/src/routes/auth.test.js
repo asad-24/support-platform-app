@@ -558,10 +558,12 @@ describe('auth routes', () => {
       body: { status: 'inactive' },
     });
     expect(status.status).toBe(200);
-    expect(status.body.data.deleted).toBe(true);
     expect(status.body.data.user.status).toBe('inactive');
-    expect(await User.findOne({ where: { email: 'inactive-volunteer@example.com' } })).toBeNull();
-    expect(await ProfileStore.getByUserId(volunteerAuth.user.id)).toBeNull();
+    expect(status.body.data.deleted).toBeUndefined();
+    const pausedVolunteer = await User.findOne({ where: { email: 'inactive-volunteer@example.com' } });
+    expect(pausedVolunteer).toBeTruthy();
+    expect(pausedVolunteer.status).toBe('inactive');
+    expect(await ProfileStore.getByUserId(volunteerAuth.user.id)).toBeTruthy();
 
     const afterInactive = await httpRequest(baseUrl, 'POST', '/auth/login', {
       body: {
@@ -577,11 +579,25 @@ describe('auth routes', () => {
     });
     expect(existingToken.status).toBe(401);
 
-    const registerAgain = await httpRequest(baseUrl, 'POST', '/volunteer-applications', {
-      body: volunteerApplicationBody(),
+    const existingRefresh = await httpRequest(baseUrl, 'POST', '/auth/refresh', {
+      body: { refreshToken: beforeInactive.body.refreshToken },
     });
-    expect(registerAgain.status).toBe(201);
-    expect(registerAgain.body.status).toBe('pending');
+    expect(existingRefresh.status).toBe(401);
+
+    const activeAgain = await httpRequest(baseUrl, 'PATCH', `/admin/users/${volunteerAuth.user.id}/status`, {
+      headers: { cookie: adminCookies },
+      body: { status: 'active' },
+    });
+    expect(activeAgain.status).toBe(200);
+    expect(activeAgain.body.data.user.status).toBe('active');
+    const afterReactivate = await httpRequest(baseUrl, 'POST', '/auth/login', {
+      body: {
+        identifier: 'inactive_volunteer',
+        password: 'secret123',
+        accessRole: 'volunteer',
+      },
+    });
+    expect(afterReactivate.status).toBe(200);
 
     const secondAdmin = await AuthStore.createUser({
       name: 'Inactive Admin',

@@ -92,6 +92,158 @@
         "success": true
       }
     },
+    "schoolList": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": 22,
+              "submitted_by_user_id": 15,
+              "approved_by_user_id": null,
+              "unique_site_id": "SSA-0000022",
+              "school_name": "Al-Huda Quranic School",
+              "local_name": null,
+              "school_type": "traditional_quranic_school",
+              "operator_name": "Mallam Musa",
+              "phone": "+2348012345678",
+              "status": "pending",
+              "urgency": "high",
+              "needs": [
+                "feeding",
+                "waterAccess"
+              ],
+              "correction_issues": [],
+              "admin_feedback": null,
+              "submitted_at": "2026-05-07T08:00:00.000Z",
+              "reviewed_at": null,
+              "archived_at": null,
+              "archived_by_user_id": null,
+              "created_at": "2026-05-07T08:00:00.000Z",
+              "updated_at": "2026-05-07T08:00:00.000Z",
+              "submitted_by": {
+                "id": 15,
+                "name": "Ibrahim Sule",
+                "email": "ibrahim.sule@example.com",
+                "username": "ibrahim_sule",
+                "role": "volunteer",
+                "status": "active"
+              },
+              "location": {
+                "id": 3,
+                "school_id": 22,
+                "latitude": 12.002,
+                "longitude": 8.523,
+                "country": "Nigeria",
+                "state": "Kano",
+                "lga": "Nassarawa",
+                "ward": null,
+                "community": "Tudun Wada",
+                "landmark": null,
+                "address": "Near central mosque"
+              }
+            }
+          ],
+          "pagination": {
+            "total": 1,
+            "page": 1,
+            "limit": 25
+          }
+        }
+      }
+    },
+    "schoolShow": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "school": {
+            "id": 22,
+            "school_name": "Al-Huda Quranic School",
+            "status": "pending",
+            "submitted_by": {
+              "id": 15,
+              "name": "Ibrahim Sule",
+              "email": "ibrahim.sule@example.com",
+              "role": "volunteer",
+              "status": "active"
+            },
+            "location": {
+              "state": "Kano",
+              "lga": "Nassarawa",
+              "community": "Tudun Wada"
+            },
+            "operators": [
+              {
+                "id": 4,
+                "school_id": 22,
+                "name": "Mallam Musa",
+                "phone": "+2348012345678"
+              }
+            ],
+            "photos": [
+              {
+                "id": 9,
+                "school_id": 22,
+                "file_url": "http://127.0.0.1:8000/uploads/schools/22/entrance.jpg",
+                "local_path": "uploads/schools/22/entrance.jpg",
+                "media_kind": "image",
+                "mime_type": "image/jpeg",
+                "size": 184522,
+                "category": "entrance",
+                "caption": "School entrance",
+                "captured_at": "2026-05-07T08:02:00.000Z",
+                "latitude": 12.002,
+                "longitude": 8.523
+              },
+              {
+                "id": 10,
+                "school_id": 22,
+                "file_url": "http://127.0.0.1:8000/uploads/schools/22/video.mp4",
+                "local_path": "uploads/schools/22/video.mp4",
+                "media_kind": "video",
+                "mime_type": "video/mp4",
+                "size": 2048000,
+                "category": "other",
+                "caption": "Walkthrough video"
+              }
+            ],
+            "reviews": []
+          }
+        }
+      }
+    },
+    "schoolArchived": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "archived": true,
+          "school": {
+            "id": 22,
+            "status": "approved",
+            "archived_at": "2026-05-07T09:00:00.000Z",
+            "archived_by_user_id": 1
+          }
+        }
+      }
+    },
+    "schoolRestored": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "restored": true,
+          "school": {
+            "id": 22,
+            "status": "approved",
+            "archived_at": null,
+            "archived_by_user_id": null
+          }
+        }
+      }
+    },
     "notificationList": {
       "status": 200,
       "body": {

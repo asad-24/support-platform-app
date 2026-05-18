@@ -10,7 +10,7 @@ class SchoolController {
 
   async show(req, res) {
     const school = await SchoolStore.getSchool(req.params.id);
-    if (!school || school.status !== 'approved') {
+    if (!school || school.status !== 'approved' || school.archivedAt) {
       return res.status(404).json({ success: false, error: 'School not found' });
     }
     await SchoolStore.logView(school.id, req.auth.user.id);

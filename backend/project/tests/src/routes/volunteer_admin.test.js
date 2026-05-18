@@ -269,6 +269,127 @@ describe('volunteer and admin routes', () => {
     expect(publicSchool.body.data.school.id).toBe(schoolId);
   });
 
+  test('admin can filter, inspect media, edit approved schools, archive, and restore', async () => {
+    const volunteerToken = await signUpVolunteer();
+    const volunteerAuth = { authorization: `Bearer ${volunteerToken}` };
+    await httpRequest(baseUrl, 'PUT', '/volunteer/profile', {
+      headers: volunteerAuth,
+      body: {
+        full_name: 'Volunteer One',
+        phone: '+2348012345678',
+        state: 'Kano',
+        lga: 'Nasarawa',
+        address: 'Near central mosque',
+      },
+    });
+
+    const school = await httpRequest(baseUrl, 'POST', '/volunteer/schools', {
+      headers: volunteerAuth,
+      body: {
+        school: {
+          school_name: 'Filterable Quranic School',
+          school_type: 'traditional_quranic_school',
+          urgency: 'high',
+        },
+        location: {
+          state: 'Kano',
+          lga: 'Nasarawa',
+          community: 'Tudun Wada',
+        },
+        photos: [{
+          id: 'admin-video-001',
+          file_url: 'https://cdn.example.com/school-video.mp4',
+          media_kind: 'video',
+          mime_type: 'video/mp4',
+          size: 2048,
+          category: 'other',
+          caption: 'Walkthrough video',
+        }],
+      },
+    });
+    expect(school.status).toBe(201);
+    const schoolId = school.body.data.school.id;
+
+    const adminToken = await signInAdmin();
+    const adminAuth = { authorization: `Bearer ${adminToken}` };
+    const volunteers = await httpRequest(baseUrl, 'GET', '/admin/volunteers', { headers: adminAuth });
+    const volunteerId = volunteers.body.data.items[0].id;
+
+    const filtered = await httpRequest(
+      baseUrl,
+      'GET',
+      `/admin/schools?status=pending&submitted_by_user_id=${volunteerId}&state=Kano&lga=Nasarawa&school_type=traditional_quranic_school&urgency=high&search=Filterable`,
+      { headers: adminAuth }
+    );
+    expect(filtered.status).toBe(200);
+    expect(filtered.body.data.items).toHaveLength(1);
+    expect(filtered.body.data.items[0]).toMatchObject({
+      id: schoolId,
+      submitted_by: { id: volunteerId, email: 'volunteer@example.com' },
+      location: { state: 'Kano', lga: 'Nasarawa' },
+    });
+
+    const detail = await httpRequest(baseUrl, 'GET', `/admin/schools/${schoolId}`, { headers: adminAuth });
+    expect(detail.status).toBe(200);
+    expect(detail.body.data.school.photos[0]).toMatchObject({
+      media_kind: 'video',
+      mime_type: 'video/mp4',
+      size: 2048,
+      caption: 'Walkthrough video',
+    });
+
+    const approved = await httpRequest(baseUrl, 'POST', `/admin/schools/${schoolId}/approve`, {
+      headers: adminAuth,
+      body: { comment: 'Verified.' },
+    });
+    expect(approved.status).toBe(200);
+    expect(approved.body.data.school.status).toBe('approved');
+
+    const dashboard = await httpRequest(baseUrl, 'GET', '/admin/dashboard', { headers: adminAuth });
+    expect(dashboard.status).toBe(200);
+    expect(dashboard.body.data.stats.approved_schools).toBe(1);
+    expect(dashboard.body.data.analytics).toMatchObject({
+      schools_by_status: expect.arrayContaining([{ status: 'approved', count: 1 }]),
+      schools_by_urgency: expect.arrayContaining([{ urgency: 'high', count: 1 }]),
+      schools_by_state: expect.arrayContaining([{ state: 'Kano', count: 1 }]),
+      users_by_status: expect.arrayContaining([{ status: 'active', count: 2 }]),
+      volunteer_profile_completion: expect.arrayContaining([{ status: 'complete', count: 1 }]),
+    });
+
+    const edited = await httpRequest(baseUrl, 'PATCH', `/admin/schools/${schoolId}`, {
+      headers: adminAuth,
+      body: {
+        school: { school_name: 'Edited Approved School' },
+        location: { state: 'Kano', lga: 'Nasarawa', community: 'Updated Community' },
+      },
+    });
+    expect(edited.status).toBe(200);
+    expect(edited.body.data.school.status).toBe('approved');
+    expect(edited.body.data.school.school_name).toBe('Edited Approved School');
+    expect(edited.body.data.school.location.community).toBe('Updated Community');
+
+    const archived = await httpRequest(baseUrl, 'DELETE', `/admin/schools/${schoolId}`, { headers: adminAuth });
+    expect(archived.status).toBe(200);
+    expect(archived.body.data.school.archived_at).toBeTruthy();
+
+    const defaultList = await httpRequest(baseUrl, 'GET', '/admin/schools', { headers: adminAuth });
+    expect(defaultList.body.data.items.some((item) => item.id === schoolId)).toBe(false);
+
+    const archivedList = await httpRequest(baseUrl, 'GET', '/admin/schools?archived=true', { headers: adminAuth });
+    expect(archivedList.body.data.items.some((item) => item.id === schoolId)).toBe(true);
+
+    const publicArchived = await httpRequest(baseUrl, 'GET', `/schools/${schoolId}`, { headers: adminAuth });
+    expect(publicArchived.status).toBe(404);
+
+    const restored = await httpRequest(baseUrl, 'POST', `/admin/schools/${schoolId}/restore`, { headers: adminAuth });
+    expect(restored.status).toBe(200);
+    expect(restored.body.data.school.archived_at).toBe(null);
+
+    const publicRestored = await httpRequest(baseUrl, 'GET', `/schools/${schoolId}`, { headers: adminAuth });
+    expect(publicRestored.status).toBe(200);
+    expect(publicRestored.body.data.school.id).toBe(schoolId);
+  });
+
   test('admin token cannot access volunteer app routes', async () => {
     const adminToken = await signInAdmin();
     const res = await httpRequest(baseUrl, 'GET', '/volunteer/profile', {

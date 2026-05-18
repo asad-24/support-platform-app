@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ApiError, apiRequest } from "../lib/api";
 import type { AdminNotification } from "../lib/types";
-import { useAuth } from "./AuthContext";
 import { formatDateTime } from "../lib/format";
+import { useAppSelector } from "@store/hooks";
 
 type NotificationListResponse = {
   success: true;
@@ -28,7 +28,7 @@ type NotificationsContextValue = {
 const NotificationsContext = createContext<NotificationsContextValue | null>(null);
 
 export function NotificationsProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const user = useAppSelector((state) => state.auth.user);
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const [loading, setLoading] = useState(false);
   const [popup, setPopup] = useState<AdminNotification | null>(null);
@@ -39,10 +39,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     setLoading(true);
     try {
-      const response = await apiRequest<NotificationListResponse>(
-        "/admin/notifications?status=unread&type=volunteer_application_received&page=1&limit=25",
-      );
-      const nextItems = response.data.items;
+      const response = await apiRequest<NotificationListResponse>("/admin/notifications?status=unread&page=1&limit=50");
+      const nextItems = response.data.items.filter((item) => (
+        item.type === "volunteer_application_received" || item.type === "school_submitted"
+      ));
       const newItems = nextItems.filter((item) => !seenIds.current.has(item.id));
       seenIds.current = new Set(nextItems.map((item) => item.id));
       if (firstLoadDone.current && newItems.length > 0) setPopup(newItems[0]);
@@ -114,7 +114,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     <NotificationsContext.Provider value={value}>
       {children}
       {popup && (
-        <div className="fixed right-4 top-24 z-[60] w-[min(22rem,calc(100vw-2rem))] rounded-lg border bg-card p-4 text-card-foreground shadow-xl">
+        <div className="fixed right-4 top-24 z-[60] w-[min(22rem,calc(100vw-2rem))] rounded-2xl border bg-card p-4 text-card-foreground shadow-xl">
           <div className="text-sm font-semibold">{popup.title}</div>
           <div className="mt-1 text-sm text-muted-foreground">{popup.message}</div>
           <div className="mt-2 text-xs text-muted-foreground">{formatDateTime(popup.created_at)}</div>

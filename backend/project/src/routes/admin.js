@@ -34,6 +34,7 @@ module.exports = [
   { method: 'PUT', path: '/schools/:id', name: 'schools.update', middleware: ['auth', 'admin'], handler: 'admin/AdminSchoolController.update' },
   { method: 'PATCH', path: '/schools/:id', name: 'schools.patch', middleware: ['auth', 'admin'], handler: 'admin/AdminSchoolController.update' },
   { method: 'DELETE', path: '/schools/:id', name: 'schools.destroy', middleware: ['auth', 'admin'], handler: 'admin/AdminSchoolController.destroy' },
+  { method: 'POST', path: '/schools/:id/restore', name: 'schools.restore', middleware: ['auth', 'admin'], handler: 'admin/AdminSchoolController.restore' },
   { method: 'PATCH', path: '/schools/:id/status', name: 'schools.status', middleware: ['auth', 'admin'], handler: 'admin/AdminSchoolReviewController.update_status' },
   { method: 'POST', path: '/schools/:id/approve', name: 'schools.approve', middleware: ['auth', 'admin'], handler: 'admin/AdminSchoolReviewController.approve' },
   { method: 'POST', path: '/schools/:id/reject', name: 'schools.reject', middleware: ['auth', 'admin'], handler: 'admin/AdminSchoolReviewController.reject' },

@@ -48,6 +48,127 @@
       "authRequired": true,
       "credentials": "include"
     },
+    "listSchools": {
+      "method": "GET",
+      "path": "/admin/schools",
+      "authRequired": true,
+      "credentials": "include",
+      "query": {
+        "status": "pending",
+        "submitted_by_user_id": 15,
+        "state": "Kano",
+        "lga": "Nassarawa",
+        "school_type": "traditional_quranic_school",
+        "urgency": "high",
+        "search": "Al-Huda",
+        "archived": "all",
+        "page": 1,
+        "limit": 25
+      }
+    },
+    "showSchool": {
+      "method": "GET",
+      "path": "/admin/schools/:id",
+      "authRequired": true,
+      "credentials": "include",
+      "params": {
+        "id": 22
+      }
+    },
+    "createSchool": {
+      "method": "POST",
+      "path": "/admin/schools",
+      "authRequired": true,
+      "credentials": "include",
+      "body": {
+        "submitted_by_user_id": 15,
+        "status": "draft",
+        "school": {
+          "school_name": "Al-Huda Quranic School",
+          "school_type": "traditional_quranic_school",
+          "urgency": "high",
+          "needs": [
+            "feeding",
+            "waterAccess"
+          ]
+        },
+        "location": {
+          "state": "Kano",
+          "lga": "Nassarawa",
+          "community": "Tudun Wada"
+        },
+        "operators": [
+          {
+            "name": "Mallam Musa",
+            "phone": "+2348012345678"
+          }
+        ]
+      }
+    },
+    "updateSchool": {
+      "method": "PATCH",
+      "path": "/admin/schools/:id",
+      "authRequired": true,
+      "credentials": "include",
+      "params": {
+        "id": 22
+      },
+      "body": {
+        "school": {
+          "school_name": "Updated school name",
+          "urgency": "medium"
+        },
+        "location": {
+          "state": "Kano",
+          "lga": "Nassarawa"
+        }
+      },
+      "note": "Admin edits do not change the current review status."
+    },
+    "approveSchool": {
+      "method": "POST",
+      "path": "/admin/schools/:id/approve",
+      "authRequired": true,
+      "credentials": "include",
+      "params": {
+        "id": 22
+      },
+      "body": {
+        "comment": "Verified and approved."
+      }
+    },
+    "rejectSchool": {
+      "method": "POST",
+      "path": "/admin/schools/:id/reject",
+      "authRequired": true,
+      "credentials": "include",
+      "params": {
+        "id": 22
+      },
+      "body": {
+        "comment": "Location details are incomplete."
+      }
+    },
+    "archiveSchool": {
+      "method": "DELETE",
+      "path": "/admin/schools/:id",
+      "authRequired": true,
+      "credentials": "include",
+      "params": {
+        "id": 22
+      },
+      "body": {}
+    },
+    "restoreSchool": {
+      "method": "POST",
+      "path": "/admin/schools/:id/restore",
+      "authRequired": true,
+      "credentials": "include",
+      "params": {
+        "id": 22
+      },
+      "body": {}
+    },
     "listNotifications": {
       "method": "GET",
       "path": "/admin/notifications",

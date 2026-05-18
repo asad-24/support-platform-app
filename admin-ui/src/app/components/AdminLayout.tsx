@@ -12,6 +12,10 @@ const titles: Record<string, { title: string; subtitle: string }> = {
     title: "Users",
     subtitle: "View active users, inspect volunteer profiles, and deactivate accounts.",
   },
+  "/schools": {
+    title: "Schools",
+    subtitle: "Review, approve, reject, and manage submitted schools.",
+  },
   "/users/registration-requests": {
     title: "Registration Requests",
     subtitle: "Review volunteer applications and approve or reject access.",

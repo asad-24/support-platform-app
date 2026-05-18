@@ -22,6 +22,8 @@ class School extends Model {
         adminFeedback: { type: DataTypes.TEXT, allowNull: true, field: 'admin_feedback' },
         submittedAt: { type: DataTypes.DATE, allowNull: true, field: 'submitted_at' },
         reviewedAt: { type: DataTypes.DATE, allowNull: true, field: 'reviewed_at' },
+        archivedAt: { type: DataTypes.DATE, allowNull: true, field: 'archived_at' },
+        archivedByUserId: { type: DataTypes.INTEGER, allowNull: true, field: 'archived_by_user_id' },
       },
       { sequelize, tableName: 'schools', modelName: 'School' }
     );

@@ -31,7 +31,7 @@ class AdminSchoolController {
     try {
       const school = await SchoolStore.getSchool(req.params.id);
       if (!school) return res.status(404).json({ success: false, error: 'School not found' });
-      const updated = await SchoolStore.updateSchool(school, req.body, school.submittedByUserId);
+      const updated = await SchoolStore.updateSchoolAsAdmin(school, req.body, req.auth.user.id);
       return res.json({ success: true, data: { school: await SchoolStore.serializeSchoolAggregate(updated) } });
     } catch (error) {
       return handleError(res, error);
@@ -42,8 +42,19 @@ class AdminSchoolController {
     try {
       const school = await SchoolStore.getSchool(req.params.id);
       if (!school) return res.status(404).json({ success: false, error: 'School not found' });
-      await SchoolStore.deleteSchool(school);
-      return res.json({ success: true, data: { deleted: true } });
+      const archived = await SchoolStore.archiveSchool(school, req.auth.user.id);
+      return res.json({ success: true, data: { archived: true, school: await SchoolStore.serializeSchoolAggregate(archived) } });
+    } catch (error) {
+      return handleError(res, error);
+    }
+  }
+
+  async restore(req, res) {
+    try {
+      const school = await SchoolStore.getSchool(req.params.id);
+      if (!school) return res.status(404).json({ success: false, error: 'School not found' });
+      const restored = await SchoolStore.restoreSchool(school);
+      return res.json({ success: true, data: { restored: true, school: await SchoolStore.serializeSchoolAggregate(restored) } });
     } catch (error) {
       return handleError(res, error);
     }

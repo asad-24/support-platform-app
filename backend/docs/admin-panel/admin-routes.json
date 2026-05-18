@@ -134,12 +134,59 @@
       {
         "method": "GET",
         "path": "/admin/schools",
-        "purpose": "Existing admin school/site review list."
+        "query": [
+          "status",
+          "submitted_by_user_id",
+          "state",
+          "lga",
+          "school_type",
+          "urgency",
+          "search",
+          "archived",
+          "page",
+          "limit"
+        ],
+        "purpose": "List school submissions for admin management. Archived schools are excluded by default; use archived=true or archived=all when needed."
+      },
+      {
+        "method": "POST",
+        "path": "/admin/schools",
+        "purpose": "Create an admin-managed school record tied to a volunteer submitter."
+      },
+      {
+        "method": "GET",
+        "path": "/admin/schools/:id",
+        "purpose": "View full school submission including submitter, location, operators, child stats, welfare, photos/videos, and reviews."
+      },
+      {
+        "method": "PUT/PATCH",
+        "path": "/admin/schools/:id",
+        "purpose": "Admin correction of school details in any status without changing review status."
       },
       {
         "method": "PATCH",
         "path": "/admin/schools/:id/status",
-        "purpose": "Existing school review status update."
+        "purpose": "Change a pending school review status to approved or rejected."
+      },
+      {
+        "method": "POST",
+        "path": "/admin/schools/:id/approve",
+        "purpose": "Approve a pending school, resolve related admin notification, and notify the volunteer."
+      },
+      {
+        "method": "POST",
+        "path": "/admin/schools/:id/reject",
+        "purpose": "Reject a pending school, save feedback, resolve related admin notification, and notify the volunteer."
+      },
+      {
+        "method": "DELETE",
+        "path": "/admin/schools/:id",
+        "purpose": "Archive a school record. Archived schools are hidden from default admin, Flutter, and public lists."
+      },
+      {
+        "method": "POST",
+        "path": "/admin/schools/:id/restore",
+        "purpose": "Restore an archived school record."
       }
     ]
   },
