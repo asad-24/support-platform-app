@@ -1,0 +1,342 @@
+{
+  "metadata": {
+    "app": "Support Atlas Admin Panel",
+    "direction": "admin-frontend-to-backend",
+    "format": "json-only",
+    "dateFormat": "ISO-8601",
+    "authMode": "httpOnly cookies plus JSON bearer tokens",
+    "frontendFetchRequirement": "Use JSON accessToken in Authorization: Bearer <token>. Cookies may also be set by the backend, but the admin UI should not depend on them."
+  },
+  "commonHeaders": {
+    "Accept": "application/json",
+    "Content-Type": "application/json"
+  },
+  "requests": {
+    "adminLogin": {
+      "method": "POST",
+      "path": "/auth/admin/login",
+      "authRequired": false,
+      "credentials": "include",
+      "body": {
+        "email": "admin@schoolsupportatlas.local",
+        "password": "admin123"
+      }
+    },
+    "adminMe": {
+      "method": "GET",
+      "path": "/auth/admin/me",
+      "authRequired": true,
+      "credentials": "include"
+    },
+    "adminRefresh": {
+      "method": "POST",
+      "path": "/auth/admin/refresh",
+      "authRequired": false,
+      "credentials": "include",
+      "body": {}
+    },
+    "adminLogout": {
+      "method": "POST",
+      "path": "/auth/admin/logout",
+      "authRequired": true,
+      "credentials": "include",
+      "body": {}
+    },
+    "dashboard": {
+      "method": "GET",
+      "path": "/admin/dashboard",
+      "authRequired": true,
+      "credentials": "include"
+    },
+    "listSchools": {
+      "method": "GET",
+      "path": "/admin/schools",
+      "authRequired": true,
+      "credentials": "include",
+      "query": {
+        "status": "pending",
+        "submitted_by_user_id": 15,
+        "state": "Kano",
+        "lga": "Nassarawa",
+        "school_type": "traditional_quranic_school",
+        "urgency": "high",
+        "search": "Al-Huda",
+        "archived": "all",
+        "page": 1,
+        "limit": 25
+      }
+    },
+    "showSchool": {
+      "method": "GET",
+      "path": "/admin/schools/:id",
+      "authRequired": true,
+      "credentials": "include",
+      "params": {
+        "id": 22
+      }
+    },
+    "createSchool": {
+      "method": "POST",
+      "path": "/admin/schools",
+      "authRequired": true,
+      "credentials": "include",
+      "body": {
+        "submitted_by_user_id": 15,
+        "status": "draft",
+        "school": {
+          "school_name": "Al-Huda Quranic School",
+          "school_type": "traditional_quranic_school",
+          "urgency": "high",
+          "needs": [
+            "feeding",
+            "waterAccess"
+          ]
+        },
+        "location": {
+          "state": "Kano",
+          "lga": "Nassarawa",
+          "community": "Tudun Wada"
+        },
+        "operators": [
+          {
+            "name": "Mallam Musa",
+            "phone": "+2348012345678"
+          }
+        ]
+      }
+    },
+    "updateSchool": {
+      "method": "PATCH",
+      "path": "/admin/schools/:id",
+      "authRequired": true,
+      "credentials": "include",
+      "params": {
+        "id": 22
+      },
+      "body": {
+        "school": {
+          "school_name": "Updated school name",
+          "urgency": "medium"
+        },
+        "location": {
+          "state": "Kano",
+          "lga": "Nassarawa"
+        }
+      },
+      "note": "Admin edits do not change the current review status."
+    },
+    "approveSchool": {
+      "method": "POST",
+      "path": "/admin/schools/:id/approve",
+      "authRequired": true,
+      "credentials": "include",
+      "params": {
+        "id": 22
+      },
+      "body": {
+        "comment": "Verified and approved."
+      }
+    },
+    "rejectSchool": {
+      "method": "POST",
+      "path": "/admin/schools/:id/reject",
+      "authRequired": true,
+      "credentials": "include",
+      "params": {
+        "id": 22
+      },
+      "body": {
+        "comment": "Location details are incomplete."
+      }
+    },
+    "archiveSchool": {
+      "method": "DELETE",
+      "path": "/admin/schools/:id",
+      "authRequired": true,
+      "credentials": "include",
+      "params": {
+        "id": 22
+      },
+      "body": {}
+    },
+    "restoreSchool": {
+      "method": "POST",
+      "path": "/admin/schools/:id/restore",
+      "authRequired": true,
+      "credentials": "include",
+      "params": {
+        "id": 22
+      },
+      "body": {}
+    },
+    "listNotifications": {
+      "method": "GET",
+      "path": "/admin/notifications",
+      "authRequired": true,
+      "credentials": "include",
+      "query": {
+        "status": "unread",
+        "type": "volunteer_application_received",
+        "page": 1,
+        "limit": 25
+      },
+      "pollingNote": "Poll this route every 10-30 seconds for new registration notifications."
+    },
+    "showNotification": {
+      "method": "GET",
+      "path": "/admin/notifications/:id",
+      "authRequired": true,
+      "credentials": "include",
+      "params": {
+        "id": 12
+      }
+    },
+    "markNotificationRead": {
+      "method": "POST",
+      "path": "/admin/notifications/:id/read",
+      "authRequired": true,
+      "credentials": "include",
+      "params": {
+        "id": 12
+      },
+      "body": {}
+    },
+    "markAllNotificationsRead": {
+      "method": "POST",
+      "path": "/admin/notifications/read-all",
+      "authRequired": true,
+      "credentials": "include",
+      "body": {}
+    },
+    "listVolunteerApplications": {
+      "method": "GET",
+      "path": "/admin/volunteer-applications",
+      "authRequired": true,
+      "credentials": "include",
+      "query": {
+        "status": "pending"
+      }
+    },
+    "showVolunteerApplication": {
+      "method": "GET",
+      "path": "/admin/volunteer-applications/:id",
+      "authRequired": true,
+      "credentials": "include",
+      "params": {
+        "id": 7
+      }
+    },
+    "approveVolunteerApplication": {
+      "method": "POST",
+      "path": "/admin/volunteer-applications/:id/approve",
+      "authRequired": true,
+      "credentials": "include",
+      "params": {
+        "id": 7
+      },
+      "body": {
+        "adminNotes": "Application verified and approved."
+      },
+      "backendSideEffects": [
+        "Creates volunteer user",
+        "Creates volunteer profile from application fields",
+        "Generates temporary password",
+        "Sends approval email through SMTP using .env credentials",
+        "Marks application approved",
+        "Resolves related admin notification"
+      ]
+    },
+    "rejectVolunteerApplication": {
+      "method": "POST",
+      "path": "/admin/volunteer-applications/:id/reject",
+      "authRequired": true,
+      "credentials": "include",
+      "params": {
+        "id": 7
+      },
+      "body": {
+        "adminNotes": "Identity details could not be verified."
+      },
+      "backendSideEffects": [
+        "Marks application rejected",
+        "Stores admin notes",
+        "Does not create a user",
+        "Resolves related admin notification"
+      ]
+    },
+    "listUsers": {
+      "method": "GET",
+      "path": "/admin/users",
+      "authRequired": true,
+      "credentials": "include",
+      "query": {
+        "role": "volunteer",
+        "status": "active",
+        "search": "ibrahim",
+        "page": 1,
+        "limit": 25
+      }
+    },
+    "createAdminUser": {
+      "method": "POST",
+      "path": "/admin/users",
+      "authRequired": true,
+      "credentials": "include",
+      "body": {
+        "name": "Second Admin",
+        "email": "second-admin@example.com",
+        "username": "second_admin",
+        "password": "Admin2026#",
+        "role": "admin"
+      }
+    },
+    "createVolunteerOrHelperUser": {
+      "method": "POST",
+      "path": "/admin/users",
+      "authRequired": true,
+      "credentials": "include",
+      "body": {
+        "name": "Helper User",
+        "email": "helper@example.com",
+        "username": "helper_user",
+        "password": "Helper2026#",
+        "role": "helper"
+      }
+    },
+    "makeUserInactive": {
+      "method": "PATCH",
+      "path": "/admin/users/:id/status",
+      "authRequired": true,
+      "credentials": "include",
+      "params": {
+        "id": 15
+      },
+      "body": {
+        "status": "inactive"
+      },
+      "note": "Admin/helper users are made inactive and cannot login. Volunteer users are deleted so they can submit a fresh registration request with the same email. Do not show this action for the primary super admin."
+    },
+    "makeUserActive": {
+      "method": "PATCH",
+      "path": "/admin/users/:id/status",
+      "authRequired": true,
+      "credentials": "include",
+      "params": {
+        "id": 15
+      },
+      "body": {
+        "status": "active"
+      }
+    },
+    "deleteUser": {
+      "method": "DELETE",
+      "path": "/admin/users/:id",
+      "authRequired": true,
+      "credentials": "include",
+      "params": {
+        "id": 15
+      },
+      "note": "Delete is explicit destructive admin action. The primary super admin cannot be deleted."
+    }
+  }
+}

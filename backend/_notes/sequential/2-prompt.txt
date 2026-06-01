@@ -1,0 +1,8 @@
+Now create tests in project/tests/jobs/ for:
+- making new job. let's make a job that just adds some more enteries using model TestMeta 
+- so test complete features
+- also add cli tests to make jobs and run workers via cli
+- after tests, remove test files.
+- make sure tests are not in src. but in tests/jobs/
+
+add complete proper testing now.

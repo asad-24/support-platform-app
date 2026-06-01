@@ -1,0 +1,16 @@
+module.exports = [
+  { method: 'POST', path: '/login', name: 'login', handler: 'auth/AuthController.login' },
+  { method: 'POST', path: '/refresh', name: 'refresh', handler: 'auth/AuthController.refresh' },
+  { method: 'POST', path: '/logout', name: 'logout', middleware: 'auth', handler: 'auth/AuthController.logout' },
+  { method: 'GET', path: '/username-available', name: 'usernameAvailable', handler: 'auth/AuthController.username_available' },
+  { method: 'POST', path: '/signup', name: 'signup', handler: 'auth/AuthController.signup' },
+  { method: 'POST', path: '/change-password', name: 'changePassword', middleware: 'auth', handler: 'auth/AuthController.change_password' },
+  { method: 'POST', path: '/admin/login', name: 'admin.login', handler: 'auth/AuthController.admin_login' },
+  { method: 'POST', path: '/admin/refresh', name: 'admin.refresh', handler: 'auth/AuthController.admin_refresh' },
+  { method: 'POST', path: '/admin/logout', name: 'admin.logout', handler: 'auth/AuthController.admin_logout' },
+  { method: 'GET', path: '/admin/me', name: 'admin.me', middleware: ['auth', 'admin'], handler: 'auth/AuthController.admin_me' },
+  { method: 'POST', path: '/sign-up', name: 'sign-up', handler: 'auth/AuthController.sign_up' },
+  { method: 'POST', path: '/sign-in', name: 'sign-in', handler: 'auth/AuthController.sign_in' },
+  { method: 'POST', path: '/admin/users', name: 'admin.users.create', middleware: ['auth', 'admin'], handler: 'auth/AuthController.create_user' },
+  { method: 'GET', path: '/me', name: 'me', middleware: 'auth', handler: 'auth/AuthController.me' },
+];

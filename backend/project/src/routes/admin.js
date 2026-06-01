@@ -1,0 +1,42 @@
+module.exports = [
+  { method: 'GET', path: '/dashboard', name: 'dashboard', middleware: ['auth', 'admin'], handler: 'admin/AdminDashboardController.index' },
+
+  { method: 'GET', path: '/notifications', name: 'notifications.index', middleware: ['auth', 'admin'], handler: 'admin/AdminNotificationController.index' },
+  { method: 'POST', path: '/notifications', name: 'notifications.store', middleware: ['auth', 'admin'], handler: 'admin/AdminNotificationController.store' },
+  { method: 'POST', path: '/notifications/read-all', name: 'notifications.readAll', middleware: ['auth', 'admin'], handler: 'admin/AdminNotificationController.mark_all_read' },
+  { method: 'GET', path: '/notifications/:id', name: 'notifications.show', middleware: ['auth', 'admin'], handler: 'admin/AdminNotificationController.show' },
+  { method: 'PUT', path: '/notifications/:id', name: 'notifications.update', middleware: ['auth', 'admin'], handler: 'admin/AdminNotificationController.update' },
+  { method: 'PATCH', path: '/notifications/:id', name: 'notifications.patch', middleware: ['auth', 'admin'], handler: 'admin/AdminNotificationController.update' },
+  { method: 'DELETE', path: '/notifications/:id', name: 'notifications.destroy', middleware: ['auth', 'admin'], handler: 'admin/AdminNotificationController.destroy' },
+  { method: 'POST', path: '/notifications/:id/read', name: 'notifications.read', middleware: ['auth', 'admin'], handler: 'admin/AdminNotificationController.mark_read' },
+
+  { method: 'GET', path: '/volunteers', name: 'volunteers.index', middleware: ['auth', 'admin'], handler: 'admin/AdminVolunteerController.index' },
+  { method: 'POST', path: '/volunteers', name: 'volunteers.store', middleware: ['auth', 'admin'], handler: 'admin/AdminVolunteerController.store' },
+  { method: 'GET', path: '/volunteers/:id', name: 'volunteers.show', middleware: ['auth', 'admin'], handler: 'admin/AdminVolunteerController.show' },
+  { method: 'PUT', path: '/volunteers/:id', name: 'volunteers.update', middleware: ['auth', 'admin'], handler: 'admin/AdminVolunteerController.update' },
+  { method: 'PATCH', path: '/volunteers/:id', name: 'volunteers.patch', middleware: ['auth', 'admin'], handler: 'admin/AdminVolunteerController.update' },
+  { method: 'DELETE', path: '/volunteers/:id', name: 'volunteers.destroy', middleware: ['auth', 'admin'], handler: 'admin/AdminVolunteerController.destroy' },
+  { method: 'GET', path: '/volunteers/:id/schools', name: 'volunteers.schools', middleware: ['auth', 'admin'], handler: 'admin/AdminVolunteerController.schools' },
+
+  { method: 'GET', path: '/volunteer-applications', name: 'volunteerApplications.index', middleware: ['auth', 'admin'], handler: 'admin/AdminVolunteerApplicationController.index' },
+  { method: 'GET', path: '/volunteer-applications/:id', name: 'volunteerApplications.show', middleware: ['auth', 'admin'], handler: 'admin/AdminVolunteerApplicationController.show' },
+  { method: 'POST', path: '/volunteer-applications/:id/approve', name: 'volunteerApplications.approve', middleware: ['auth', 'admin'], handler: 'admin/AdminVolunteerApplicationController.approve' },
+  { method: 'POST', path: '/volunteer-applications/:id/reject', name: 'volunteerApplications.reject', middleware: ['auth', 'admin'], handler: 'admin/AdminVolunteerApplicationController.reject' },
+
+  { method: 'GET', path: '/users', name: 'users.index', middleware: ['auth', 'admin'], handler: 'admin/AdminUserController.index' },
+  { method: 'POST', path: '/users', name: 'users.store', middleware: ['auth', 'admin'], handler: 'admin/AdminUserController.store' },
+  { method: 'PATCH', path: '/users/:id/status', name: 'users.status', middleware: ['auth', 'admin'], handler: 'admin/AdminUserController.status' },
+  { method: 'DELETE', path: '/users/:id', name: 'users.destroy', middleware: ['auth', 'admin'], handler: 'admin/AdminUserController.destroy' },
+
+  { method: 'GET', path: '/schools', name: 'schools.index', middleware: ['auth', 'admin'], handler: 'admin/AdminSchoolController.index' },
+  { method: 'POST', path: '/schools', name: 'schools.store', middleware: ['auth', 'admin'], handler: 'admin/AdminSchoolController.store' },
+  { method: 'GET', path: '/schools/:id', name: 'schools.show', middleware: ['auth', 'admin'], handler: 'admin/AdminSchoolController.show' },
+  { method: 'PUT', path: '/schools/:id', name: 'schools.update', middleware: ['auth', 'admin'], handler: 'admin/AdminSchoolController.update' },
+  { method: 'PATCH', path: '/schools/:id', name: 'schools.patch', middleware: ['auth', 'admin'], handler: 'admin/AdminSchoolController.update' },
+  { method: 'DELETE', path: '/schools/:id', name: 'schools.destroy', middleware: ['auth', 'admin'], handler: 'admin/AdminSchoolController.destroy' },
+  { method: 'POST', path: '/schools/:id/restore', name: 'schools.restore', middleware: ['auth', 'admin'], handler: 'admin/AdminSchoolController.restore' },
+  { method: 'PATCH', path: '/schools/:id/status', name: 'schools.status', middleware: ['auth', 'admin'], handler: 'admin/AdminSchoolReviewController.update_status' },
+  { method: 'POST', path: '/schools/:id/approve', name: 'schools.approve', middleware: ['auth', 'admin'], handler: 'admin/AdminSchoolReviewController.approve' },
+  { method: 'POST', path: '/schools/:id/reject', name: 'schools.reject', middleware: ['auth', 'admin'], handler: 'admin/AdminSchoolReviewController.reject' },
+  { method: 'GET', path: '/schools/:id/reviews', name: 'schools.reviews', middleware: ['auth', 'admin'], handler: 'admin/AdminSchoolReviewController.index' },
+];
