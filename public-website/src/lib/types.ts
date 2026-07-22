@@ -53,16 +53,37 @@ export type PreferredHelpType =
   | "Sponsor Monthly"
   | "Visit/Partner";
 
-export interface HelpRequest {
+export interface SponsorNeedSnapshot {
   id: string;
+  title: string;
+  category: NeedCategory | string | null;
+  estimatedCost: number | null;
+}
+
+export type SponsorRequestStatus =
+  | "new"
+  | "contacted"
+  | "committed"
+  | "declined"
+  | "closed";
+
+export interface SponsorRequest {
+  id: number;
+  requestId: string;
   schoolId: string;
-  selectedNeeds: string[];
-  donorName: string;
-  donorEmail: string;
-  donorPhone: string;
-  donorCountry: string;
+  schoolName: string;
+  selectedNeeds: SponsorNeedSnapshot[];
+  sponsorName: string;
+  sponsorEmail: string;
+  sponsorPhone: string;
+  sponsorCountry: string;
+  organizationName: string | null;
   preferredHelpType: PreferredHelpType;
+  pledgeAmount: number | null;
+  helpDetails: string;
   message: string;
-  status: "New" | "Contacted" | "Closed";
+  profileLink: string | null;
+  status: SponsorRequestStatus;
   createdAt: string;
+  updatedAt: string;
 }

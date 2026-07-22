@@ -100,7 +100,7 @@ function approvalEmail({ application, username, password }) {
   const text = [
     `Hello ${application.fullName},`,
     '',
-    'Your Support Atlas volunteer registration request has been approved.',
+    'Your School Support Atlas volunteer registration request has been approved.',
     '',
     'Use these credentials to sign in to the Flutter app:',
     `Email: ${application.email}`,
@@ -109,12 +109,12 @@ function approvalEmail({ application, username, password }) {
     '',
     'Please change your password after signing in.',
     '',
-    'Support Atlas Admin Team',
+    'School Support Atlas Admin Team',
   ].join('\n');
 
   const html = `
     <p>Hello ${application.fullName},</p>
-    <p>Your Support Atlas volunteer registration request has been approved.</p>
+    <p>Your School Support Atlas volunteer registration request has been approved.</p>
     <p>Use these credentials to sign in to the Flutter app:</p>
     <ul>
       <li><strong>Email:</strong> ${application.email}</li>
@@ -122,12 +122,12 @@ function approvalEmail({ application, username, password }) {
       <li><strong>Temporary password:</strong> ${password}</li>
     </ul>
     <p>Please change your password after signing in.</p>
-    <p>Support Atlas Admin Team</p>
+    <p>School Support Atlas Admin Team</p>
   `;
 
   return {
     to: application.email,
-    subject: 'Your Support Atlas volunteer account is approved',
+    subject: 'Your School Support Atlas volunteer account is approved',
     text,
     html,
   };

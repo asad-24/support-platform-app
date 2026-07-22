@@ -183,10 +183,17 @@ class MongoModel {
     await collection.createIndex({ id: 1 }, { unique: true });
     for (const [key, definition] of Object.entries(this.attributes || {})) {
       if (definition && definition.unique) {
+        const options = { unique: true };
+        if (definition.allowNull !== false) {
+          options.partialFilterExpression = { [key]: { $type: 'string' } };
+        }
         await collection.createIndex(
           { [key]: 1 },
-          { unique: true, sparse: definition.allowNull !== false }
-        );
+          options
+        ).catch((error) => {
+          if (error && (error.code === 85 || error.code === 86)) return null;
+          throw error;
+        });
       }
     }
     for (const index of this.indexes || []) {

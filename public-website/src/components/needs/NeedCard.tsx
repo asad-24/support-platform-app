@@ -52,9 +52,6 @@ export function NeedCard({ need, school: schoolProp }: { need: Need; school?: Sc
                 style={{ width: `${progress}%` }}
               />
             </div>
-            <p className="mt-2 text-xs font-semibold text-slate-500">
-              {need.quantityFunded} of {need.quantityRequired} supported
-            </p>
           </div>
           <button
             type="button"
@@ -62,7 +59,7 @@ export function NeedCard({ need, school: schoolProp }: { need: Need; school?: Sc
             className="mt-5 inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-emerald-700"
           >
             <HeartHandshake className="h-4 w-4" />
-            Support This Need
+            Sponsor This Need
           </button>
         </div>
       </article>

@@ -9,12 +9,14 @@ const School = require('@src/models/School');
 const SchoolOperator = require('@src/models/SchoolOperator');
 const SchoolLocation = require('@src/models/SchoolLocation');
 const SchoolPhoto = require('@src/models/SchoolPhoto');
+const SchoolNeed = require('@src/models/SchoolNeed');
 const SchoolChildrenStats = require('@src/models/SchoolChildrenStats');
 const SchoolWelfareAssessment = require('@src/models/SchoolWelfareAssessment');
 const VolunteerActivityLog = require('@src/models/VolunteerActivityLog');
 const AdminNotification = require('@src/models/AdminNotification');
 const SchoolView = require('@src/models/SchoolView');
 const User = require('@src/models/User');
+const SchoolNeedStore = require('@src/services/SchoolNeedStore');
 
 const NEEDS = new Set([
   'feeding',
@@ -225,6 +227,7 @@ class FlutterSchoolStore {
         SchoolChildrenStats.destroy({ where: { schoolId: school.id }, transaction }),
         SchoolWelfareAssessment.destroy({ where: { schoolId: school.id }, transaction }),
         SchoolPhoto.destroy({ where: { schoolId: school.id }, transaction }),
+        SchoolNeed.destroy({ where: { schoolId: school.id }, transaction }),
         VolunteerActivityLog.destroy({ where: { schoolId: school.id }, transaction }),
         AdminNotification.destroy({ where: { schoolId: school.id }, transaction }),
       ]);
@@ -525,6 +528,9 @@ class FlutterSchoolStore {
   async applyPayload(school, payload = {}, user, transaction = null, options = {}) {
     const schoolPayload = this.normalizeSchool(payload);
     if (Object.keys(schoolPayload).length) await school.update(schoolPayload, { transaction });
+    if (Array.isArray(schoolPayload.needs)) {
+      await SchoolNeedStore.replaceSchoolNeedsFromPayload(school, schoolPayload.needs, transaction);
+    }
 
     const operatorContacts = Array.isArray(payload.operatorContacts) ? payload.operatorContacts : [];
     const operators = operatorContacts.length
@@ -603,12 +609,13 @@ class FlutterSchoolStore {
   }
 
   async serializeSite(school) {
-    const [operators, location, children, welfare, photos] = await Promise.all([
+    const [operators, location, children, welfare, photos, needs] = await Promise.all([
       SchoolOperator.findAll({ where: { schoolId: school.id }, order: [['id', 'ASC']] }),
       SchoolLocation.findOne({ where: { schoolId: school.id } }),
       SchoolChildrenStats.findOne({ where: { schoolId: school.id } }),
       SchoolWelfareAssessment.findOne({ where: { schoolId: school.id } }),
       SchoolPhoto.findAll({ where: { schoolId: school.id }, order: [['id', 'ASC']] }),
+      SchoolNeedStore.activeNeedValuesForSchool(school),
     ]);
     const primaryOperator = operators[0] || null;
     const loc = location || {};
@@ -636,7 +643,7 @@ class FlutterSchoolStore {
       populationSummary: this.serializeChildren(children),
       welfareAssessment: this.serializeWelfare(welfare),
       media: photos.map((photo) => this.serializeMedia(photo, school)),
-      needs: Array.isArray(school.needs) ? school.needs : [],
+      needs,
       adminNotes: school.status === 'rejected' ? school.adminFeedback : null,
       reviewStatus: this.reviewStatus(school.status),
       correctionIssues: this.correctionIssues(school),

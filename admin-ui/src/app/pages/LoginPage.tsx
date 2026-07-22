@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 import { Navigate, useNavigate } from "react-router";
-import { ArrowRight, ShieldCheck } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -37,18 +37,18 @@ export function LoginPage() {
       <div className="grid min-h-screen lg:grid-cols-2">
         <section className="flex min-h-[18rem] flex-col justify-between bg-sidebar px-6 py-8 text-sidebar-foreground sm:px-10 lg:min-h-screen lg:px-14 lg:py-12">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-sidebar-primary text-sidebar-primary-foreground shadow-lg">
-              <ShieldCheck className="h-6 w-6" />
+            <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-sidebar-border/30">
+              <img src="/logo_school.png" alt="School Support Atlas" className="h-full w-full object-cover" />
             </div>
             <div>
-              <div className="text-lg font-semibold">Support Atlas</div>
+              <div className="text-lg font-semibold">School Support Atlas</div>
               <div className="text-sm text-sidebar-foreground/70">Admin Panel</div>
             </div>
           </div>
 
           <div className="max-w-xl">
             <h1 className="text-3xl font-semibold leading-tight sm:text-4xl lg:text-5xl">
-              Support Atlas Admin Panel
+              School Support Atlas Admin Panel
             </h1>
             <p className="mt-5 max-w-lg text-base text-sidebar-foreground/78 sm:text-lg">
               Review volunteer registration requests, approve qualified applicants, and monitor new admin notifications from one secure workspace.

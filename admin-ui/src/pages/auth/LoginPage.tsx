@@ -66,7 +66,7 @@ export function LoginPage() {
       <Card className="rounded-3xl border-sidebar-border/30 shadow-2xl">
         <CardHeader className="px-8 pt-8 md:px-10 md:pt-10">
           <CardTitle className="text-3xl">Admin login</CardTitle>
-          <CardDescription className="text-base">Use your Support Atlas administrator account to continue.</CardDescription>
+          <CardDescription className="text-base">Use your School Support Atlas administrator account to continue.</CardDescription>
         </CardHeader>
         <CardContent className="px-8 pb-8 md:px-10 md:pb-10">
           <form className="space-y-6" onSubmit={handleSubmit}>

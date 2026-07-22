@@ -1,11 +1,11 @@
-import { apiBaseUrl, apiClient, appClient } from "@/lib/api/client";
+import { appClient, createRuntimeApiClient, runtimeApiBaseUrl } from "@/lib/api/client";
 import {
   extractCollection,
   extractSingle,
   normalizeSchool,
 } from "@/lib/api/normalizers";
 import { schools as mockSchools } from "@/lib/data/schools";
-import type { PreferredHelpType, School } from "@/lib/types";
+import type { PreferredHelpType, School, SponsorNeedSnapshot, SponsorRequest } from "@/lib/types";
 
 export type SchoolsQueryParams = {
   page?: number;
@@ -26,7 +26,7 @@ export type ApiResult<T> = {
 export async function fetchApprovedSchools(
   params: SchoolsQueryParams = {},
 ): Promise<ApiResult<School[]>> {
-  if (!apiBaseUrl) {
+  if (!runtimeApiBaseUrl()) {
     return {
       data: mockSchools,
       source: "mock",
@@ -35,7 +35,7 @@ export async function fetchApprovedSchools(
   }
 
   try {
-    const response = await apiClient.get("/schools", {
+    const response = await createRuntimeApiClient().get("/schools", {
       params: {
         page: 1,
         limit: 100,
@@ -64,7 +64,7 @@ export async function fetchApprovedSchools(
 }
 
 export async function fetchApprovedSchool(id: string): Promise<ApiResult<School>> {
-  if (!apiBaseUrl) {
+  if (!runtimeApiBaseUrl()) {
     const school = mockSchools.find((item) => item.id === id) ?? mockSchools[0];
     return {
       data: school,
@@ -74,7 +74,7 @@ export async function fetchApprovedSchool(id: string): Promise<ApiResult<School>
   }
 
   try {
-    const response = await apiClient.get(`/schools/${id}`);
+    const response = await createRuntimeApiClient().get(`/schools/${id}`);
     assertJsonResponse(response.headers["content-type"]);
     return {
       data: normalizeSchool(extractSingle(response.data)),
@@ -101,20 +101,44 @@ function assertJsonResponse(contentType: unknown) {
   throw new Error("API did not return JSON");
 }
 
-export type HelpRequestPayload = {
+export type SponsorRequestPayload = {
   schoolId: string;
-  selectedNeeds: string[];
-  donorName: string;
-  donorEmail: string;
-  donorPhone: string;
-  donorCountry: string;
+  schoolName: string;
+  selectedNeeds: SponsorNeedSnapshot[];
+  sponsorName: string;
+  sponsorEmail: string;
+  sponsorPhone: string;
+  sponsorCountry: string;
+  organizationName?: string;
   preferredHelpType: PreferredHelpType;
+  pledgeAmount?: string;
+  helpDetails: string;
+  message: string;
+  profileLink?: string;
+};
+
+export type ContactRequestPayload = {
+  name: string;
+  email: string;
+  subject: string;
   message: string;
 };
 
-export async function createHelpRequest(payload: HelpRequestPayload) {
-  const response = await appClient.post<{ ok: boolean; helpRequestId: string }>(
-    "/api/help-requests",
+export async function createSponsorRequest(payload: SponsorRequestPayload) {
+  const response = await appClient.post<{
+    success: true;
+    data: { sponsorRequest: SponsorRequest };
+  }>(
+    "/api/sponsor-requests",
+    payload,
+  );
+
+  return response.data;
+}
+
+export async function createContactRequest(payload: ContactRequestPayload) {
+  const response = await appClient.post<{ success: true; data: { sent: boolean } }>(
+    "/api/contact-requests",
     payload,
   );
 

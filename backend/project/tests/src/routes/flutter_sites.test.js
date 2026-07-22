@@ -15,6 +15,7 @@ const FileStorage = require('@src/services/FileStorage');
 const AuthStore = require('@src/services/AuthStore');
 const User = require('@src/models/User');
 const School = require('@src/models/School');
+const SchoolNeed = require('@src/models/SchoolNeed');
 const SchoolPhoto = require('@src/models/SchoolPhoto');
 
 function httpRequest(baseUrl, method, urlPath, { headers = {}, body } = {}) {
@@ -272,6 +273,7 @@ describe('flutter site contract routes', () => {
       needs: ['feeding', 'educationMaterials', 'healthOutreach'],
     });
     expect(typeof created.body.id).toBe('string');
+    expect(await SchoolNeed.count({ where: { schoolId: Number(created.body.id), status: 'active' } })).toBe(3);
 
     const submitted = await httpRequest(baseUrl, 'GET', `/users/${volunteer.user.id}/submitted-sites`, {
       headers: volunteerAuth(),

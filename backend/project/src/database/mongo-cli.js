@@ -47,14 +47,18 @@ class MongoQueryInterface {
   async addIndex(table, columns, options = {}) {
     const keys = {};
     for (const column of columns) keys[snakeToCamel(column)] = 1;
+    const createOptions = {
+      unique: Boolean(options.unique),
+      name: options.name,
+    };
+    if (options.unique) {
+      createOptions.partialFilterExpression = {};
+      for (const column of columns) createOptions.partialFilterExpression[snakeToCamel(column)] = { $type: 'string' };
+    }
     try {
-      await this.db.collection(table).createIndex(keys, {
-        unique: Boolean(options.unique),
-        sparse: Boolean(options.unique),
-        name: options.name,
-      });
+      await this.db.collection(table).createIndex(keys, createOptions);
     } catch (error) {
-      if (error && error.code === 85) return;
+      if (error && (error.code === 85 || error.code === 86)) return;
       throw error;
     }
   }

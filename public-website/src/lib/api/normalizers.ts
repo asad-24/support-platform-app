@@ -47,6 +47,7 @@ export function extractCollection(payload: unknown): unknown[] {
   for (const value of possible) {
     if (Array.isArray(value)) return value;
     if (isRecord(value) && Array.isArray(value.data)) return value.data;
+    if (isRecord(value) && Array.isArray(value.items)) return value.items;
   }
 
   return [];
@@ -54,6 +55,9 @@ export function extractCollection(payload: unknown): unknown[] {
 
 export function extractSingle(payload: unknown): unknown {
   if (isRecord(payload)) {
+    if (isRecord(payload.data) && payload.data.school) return payload.data.school;
+    if (isRecord(payload.data) && payload.data.item) return payload.data.item;
+    if (isRecord(payload.data) && payload.data.record) return payload.data.record;
     return (
       payload.data ??
       payload.school ??
@@ -71,16 +75,16 @@ export function normalizeSchool(raw: unknown, index = 0): School {
   if (!isRecord(raw)) return mockSchools[index % mockSchools.length];
 
   const id = stringValue(raw.id ?? raw._id ?? raw.uuid ?? raw.school_id, `school-${index + 1}`);
+  const location = isRecord(raw.location) ? raw.location : {};
   const type = enumValue<SchoolType>(
     normalizeType(raw.type ?? raw.schoolType ?? raw.school_type ?? raw.category),
     types,
     "Public School",
   );
-  const city = stringValue(raw.city ?? raw.lga ?? raw.localGovernment ?? raw.local_government, "Unknown city");
-  const state = stringValue(raw.state ?? raw.stateName ?? raw.state_name, "Unknown state");
+  const city = stringValue(raw.city ?? raw.lga ?? raw.localGovernment ?? raw.local_government ?? location.lga ?? location.community, "Unknown city");
+  const state = stringValue(raw.state ?? raw.stateName ?? raw.state_name ?? location.state, "Unknown state");
   const images = normalizeImages(raw.images ?? raw.photos ?? raw.media, index);
   const needs = normalizeNeeds(raw.needs ?? raw.welfareNeeds ?? raw.welfare ?? raw.requirements, id);
-  const location = isRecord(raw.location) ? raw.location : {};
 
   return {
     id,
@@ -92,12 +96,12 @@ export function normalizeSchool(raw: unknown, index = 0): School {
     ),
     state,
     city,
-    address: stringValue(raw.address ?? raw.locationAddress ?? raw.location_address, `${city}, ${state}`),
+    address: stringValue(raw.address ?? raw.locationAddress ?? raw.location_address ?? location.address, `${city}, ${state}`),
     latitude: numberValue(raw.latitude ?? raw.lat ?? location.latitude, mockSchools[index % mockSchools.length].latitude),
     longitude: numberValue(raw.longitude ?? raw.lng ?? raw.lon ?? location.longitude, mockSchools[index % mockSchools.length].longitude),
-    totalStudents: numberValue(raw.totalStudents ?? raw.students ?? raw.student_count ?? raw.childrenCount, 0),
-    totalTeachers: numberValue(raw.totalTeachers ?? raw.teachers ?? raw.teacher_count, 0),
-    totalClassrooms: numberValue(raw.totalClassrooms ?? raw.classrooms ?? raw.classroom_count, 0),
+    totalStudents: numberValue(raw.totalStudents ?? raw.total_students ?? raw.students ?? raw.student_count ?? raw.childrenCount, 0),
+    totalTeachers: numberValue(raw.totalTeachers ?? raw.total_teachers ?? raw.teachers ?? raw.teacher_count, 0),
+    totalClassrooms: numberValue(raw.totalClassrooms ?? raw.total_classrooms ?? raw.classrooms ?? raw.classroom_count, 0),
     foundedYear: numberValue(raw.foundedYear ?? raw.founded_year ?? raw.yearFounded, new Date().getFullYear()),
     images,
     contactPerson: stringValue(raw.contactPerson ?? raw.contact_person ?? raw.operatorName, "School contact"),

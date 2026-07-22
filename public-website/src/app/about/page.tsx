@@ -26,7 +26,7 @@ export default function AboutPage() {
         <SectionHeading
           eyebrow="About"
           title="A public welfare platform for education support in Nigeria"
-          text="Naija School Relief is designed to make school and madrasa support more visible, specific, and accountable."
+          text="School Support Atlas is designed to make school and madrasa support more visible, specific, and accountable."
         />
         <div className="grid gap-6 md:grid-cols-3">
           {principles.map((item) => (

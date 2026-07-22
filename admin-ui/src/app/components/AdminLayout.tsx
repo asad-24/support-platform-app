@@ -6,7 +6,7 @@ import { NotificationsProvider } from "../context/NotificationsContext";
 const titles: Record<string, { title: string; subtitle: string }> = {
   "/": {
     title: "Dashboard",
-    subtitle: "Overview of Support Atlas admin activity.",
+    subtitle: "Overview of School Support Atlas admin activity.",
   },
   "/users": {
     title: "Users",

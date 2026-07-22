@@ -16,9 +16,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Naija School Relief | Welfare Support for Schools and Madrasas",
+  title: "School Support Atlas | Welfare Support for Schools and Madrasas",
   description:
-    "Explore verified Nigerian schools and madrasas in need, sponsor specific needs, and send help requests to admin.",
+    "Explore verified Nigerian schools and madrasas in need, sponsor specific needs, and send sponsor requests to admin.",
+  icons: {
+    icon: [{ url: "/favicon.png", type: "image/png" }],
+    shortcut: [{ url: "/favicon.png", type: "image/png" }],
+    apple: [{ url: "/logo_school.png", type: "image/png" }],
+  },
 };
 
 export default function RootLayout({

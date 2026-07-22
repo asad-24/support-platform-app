@@ -44,7 +44,7 @@ const pieColors = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--
 
 const metricCards = [
   { key: "pending_reviews", label: "Pending school reviews", description: "Records awaiting admin decision", icon: ClipboardCheck, tone: "dark" },
-  { key: "approved_schools", label: "Approved schools", description: "Schools cleared for Support Atlas", icon: CheckCircle2, tone: "light" },
+  { key: "approved_schools", label: "Approved schools", description: "Schools cleared for School Support Atlas", icon: CheckCircle2, tone: "light" },
   { key: "rejected_schools", label: "Rejected schools", description: "Records returned or declined", icon: School, tone: "light" },
   { key: "total_volunteers", label: "Total volunteers", description: "Volunteer accounts in the system", icon: Users, tone: "dark" },
   { key: "completed_volunteer_profiles", label: "Completed profiles", description: "Volunteers with full profiles", icon: Users, tone: "light" },

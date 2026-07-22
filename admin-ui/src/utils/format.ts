@@ -5,7 +5,7 @@ export function formatNumber(value: number | null | undefined) {
 }
 
 export function initials(nameOrEmail: string | null | undefined) {
-  const value = nameOrEmail || "Support Atlas";
+  const value = nameOrEmail || "School Support Atlas";
   const parts = value.split(/[\s@.]+/).filter(Boolean);
   return parts
     .slice(0, 2)

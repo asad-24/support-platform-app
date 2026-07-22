@@ -13,7 +13,9 @@ class SchoolController {
     if (!school || school.status !== 'approved' || school.archivedAt) {
       return res.status(404).json({ success: false, error: 'School not found' });
     }
-    await SchoolStore.logView(school.id, req.auth.user.id);
+    if (req.auth?.user?.id) {
+      await SchoolStore.logView(school.id, req.auth.user.id);
+    }
     return res.json({ success: true, data: { school: await SchoolStore.serializeSchoolAggregate(school) } });
   }
 }

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import type { LucideIcon } from "lucide-react";
-import { PanelLeftClose, PanelLeftOpen, ShieldCheck } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { ScrollArea } from "@app/components/ui/scroll-area";
 import { cn } from "@app/components/ui/utils";
 import { useAppSelector } from "@store/hooks";
@@ -73,8 +73,8 @@ export function DashboardSidebar({ items, label, sublabel, onNavigate }: Dashboa
               )}
               aria-label="Expand sidebar"
             >
-              <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sidebar-primary to-sidebar-primary/80 shadow-lg">
-                <ShieldCheck className="size-6 text-sidebar-primary-foreground" />
+              <span className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-sidebar-border/30">
+                <img src="/logo_school.png" alt="School Support Atlas" className="h-full w-full object-cover" />
               </span>
               {isExpanded ? (
                 <span className="min-w-0">

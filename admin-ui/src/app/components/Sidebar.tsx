@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { cn } from "./ui/utils";
-import { ChevronDown, ClipboardList, LayoutDashboard, LogOut, School, ShieldCheck, UserRound, Users, X } from "lucide-react";
+import { ChevronDown, ClipboardList, LayoutDashboard, LogOut, School, UserRound, Users, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 export function Sidebar() {
@@ -63,13 +63,13 @@ export function Sidebar() {
             </button>
           )}
           
-          <div className="w-12 h-12 bg-gradient-to-br from-sidebar-primary to-sidebar-primary/80 rounded-full flex items-center justify-center shadow-lg">
-            <ShieldCheck className="w-6 h-6 text-sidebar-primary-foreground" />
+          <div className="w-12 h-12 overflow-hidden rounded-2xl bg-white flex items-center justify-center shadow-lg ring-1 ring-sidebar-border/30">
+            <img src="/logo_school.png" alt="School Support Atlas" className="h-full w-full object-cover" />
           </div>
           {isExpanded && (
             <div className="mt-3 text-center">
               <h2 className="text-sidebar-foreground font-semibold text-base whitespace-nowrap">
-                Support Atlas
+                School Support Atlas
               </h2>
               <p className="text-sidebar-foreground/70 text-xs whitespace-nowrap mt-1">
                 Admin Panel

@@ -23,7 +23,7 @@ export function HelpRequestModal({
         <div className="flex items-start justify-between gap-4 border-b border-slate-100 p-5 sm:p-6">
           <div>
             <p className="text-sm font-bold uppercase tracking-[0.18em] text-emerald-700">
-              Help request
+              Sponsor request
             </p>
             <h2 className="mt-1 text-2xl font-black text-slate-950">
               {school.name}

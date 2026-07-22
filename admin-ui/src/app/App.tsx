@@ -7,8 +7,10 @@ import { LoadingBlock } from "@components/StateBlock";
 import { useSessionBootstrap } from "@hooks/useSessionBootstrap";
 import { DashboardLayout } from "@layouts/DashboardLayout";
 import { DashboardPage } from "@pages/admin/DashboardPage";
+import { NeedsPage } from "@pages/admin/NeedsPage";
 import { RegistrationRequestsPage } from "@pages/admin/RegistrationRequestsPage";
 import { SchoolsPage } from "@pages/admin/SchoolsPage";
+import { SponsorsPage } from "@pages/admin/SponsorsPage";
 import { UsersPage } from "@pages/admin/UsersPage";
 import { LoginPage } from "@pages/auth/LoginPage";
 import { store } from "@store";
@@ -39,6 +41,8 @@ export default function App() {
               <Route element={<DashboardLayout />}>
                 <Route index element={<DashboardPage />} />
                 <Route path="/schools" element={<SchoolsPage />} />
+                <Route path="/needs" element={<NeedsPage />} />
+                <Route path="/sponsors" element={<SponsorsPage />} />
                 <Route path="/users" element={<UsersPage />} />
                 <Route path="/users/registration-requests" element={<RegistrationRequestsPage />} />
               </Route>
@@ -53,6 +57,7 @@ export default function App() {
 }
 
 function ProtectedRoute() {
+  const location = useLocation();
   const { status, user } = useAppSelector((state) => state.auth);
 
   if (status === "checking") {
@@ -64,7 +69,7 @@ function ProtectedRoute() {
   }
 
   if (status === "unauthenticated" || !user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
   return <Outlet />;

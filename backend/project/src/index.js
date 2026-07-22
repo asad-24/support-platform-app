@@ -44,6 +44,9 @@ debug('server: binding routes');
 bind_routes(app, routes, {
   controllers_base_dir: path.resolve(__dirname, 'controllers'),
 });
+bind_routes(app, routes.map((route) => ({ ...route, path: path.posix.join('/api', route.path) })), {
+  controllers_base_dir: path.resolve(__dirname, 'controllers'),
+});
 
 const host = config('server.host', '127.0.0.1');
 const port = config('server.port', 3000);

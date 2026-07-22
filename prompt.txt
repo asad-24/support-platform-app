@@ -1,0 +1,5 @@
+ssh  saim@62.171.160.209
+Saim@2026 
+Check how th eporject in this officer charles is deployeud with systemctl adn cloudflare config tunnel and how servies are running 
+make a md file for that how i can implement the same proejct on new  vps add all the things liek install mongo db dabtabase aint server and run migration bpm i installed nodejs and all other deps 
+related to supor t schoola tlas just make a md file 

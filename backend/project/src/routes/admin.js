@@ -23,6 +23,14 @@ module.exports = [
   { method: 'POST', path: '/volunteer-applications/:id/approve', name: 'volunteerApplications.approve', middleware: ['auth', 'admin'], handler: 'admin/AdminVolunteerApplicationController.approve' },
   { method: 'POST', path: '/volunteer-applications/:id/reject', name: 'volunteerApplications.reject', middleware: ['auth', 'admin'], handler: 'admin/AdminVolunteerApplicationController.reject' },
 
+  { method: 'GET', path: '/sponsor-requests', name: 'sponsorRequests.index', middleware: ['auth', 'admin'], handler: 'admin/AdminSponsorRequestController.index' },
+  { method: 'GET', path: '/sponsor-requests/:id', name: 'sponsorRequests.show', middleware: ['auth', 'admin'], handler: 'admin/AdminSponsorRequestController.show' },
+  { method: 'PATCH', path: '/sponsor-requests/:id/status', name: 'sponsorRequests.status', middleware: ['auth', 'admin'], handler: 'admin/AdminSponsorRequestController.update_status' },
+
+  { method: 'GET', path: '/needs', name: 'needs.index', middleware: ['auth', 'admin'], handler: 'admin/AdminSchoolNeedController.index' },
+  { method: 'PATCH', path: '/needs/:id/status', name: 'needs.status', middleware: ['auth', 'admin'], handler: 'admin/AdminSchoolNeedController.update_status' },
+  { method: 'DELETE', path: '/needs/:id', name: 'needs.destroy', middleware: ['auth', 'admin'], handler: 'admin/AdminSchoolNeedController.destroy' },
+
   { method: 'GET', path: '/users', name: 'users.index', middleware: ['auth', 'admin'], handler: 'admin/AdminUserController.index' },
   { method: 'POST', path: '/users', name: 'users.store', middleware: ['auth', 'admin'], handler: 'admin/AdminUserController.store' },
   { method: 'PATCH', path: '/users/:id/status', name: 'users.status', middleware: ['auth', 'admin'], handler: 'admin/AdminUserController.status' },

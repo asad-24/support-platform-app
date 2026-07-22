@@ -2,7 +2,7 @@
 
 import { CheckCircle2, Send } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useCreateHelpRequest } from "@/lib/api/hooks";
+import { useCreateSponsorRequest } from "@/lib/api/hooks";
 import type { PreferredHelpType, School } from "@/lib/types";
 
 const helpTypes: PreferredHelpType[] = [
@@ -28,7 +28,7 @@ export function HelpRequestForm({
     "idle",
   );
   const [error, setError] = useState("");
-  const createHelpRequest = useCreateHelpRequest();
+  const createSponsorRequest = useCreateSponsorRequest();
 
   const selectedSummary = useMemo(
     () =>
@@ -52,22 +52,39 @@ export function HelpRequestForm({
     setStatus("loading");
     setError("");
     const formData = new FormData(event.currentTarget);
+    const selectedNeedSnapshots = school.needs
+      .filter((need) => selectedNeeds.includes(need.id))
+      .map((need) => ({
+        id: need.id,
+        title: need.title,
+        category: need.category,
+        estimatedCost: need.estimatedCost,
+      }));
+    const profileLink =
+      typeof window === "undefined"
+        ? `/schools/${school.id}`
+        : `${window.location.origin}/schools/${school.id}`;
 
     const payload = {
       schoolId: school.id,
-      selectedNeeds,
-      donorName: String(formData.get("donorName") ?? ""),
-      donorEmail: String(formData.get("donorEmail") ?? ""),
-      donorPhone: String(formData.get("donorPhone") ?? ""),
-      donorCountry: String(formData.get("donorCountry") ?? ""),
+      schoolName: school.name,
+      selectedNeeds: selectedNeedSnapshots,
+      sponsorName: String(formData.get("sponsorName") ?? ""),
+      sponsorEmail: String(formData.get("sponsorEmail") ?? ""),
+      sponsorPhone: String(formData.get("sponsorPhone") ?? ""),
+      sponsorCountry: String(formData.get("sponsorCountry") ?? ""),
+      organizationName: String(formData.get("organizationName") ?? ""),
       preferredHelpType: String(
         formData.get("preferredHelpType") ?? "Donate Money",
       ) as PreferredHelpType,
+      pledgeAmount: String(formData.get("pledgeAmount") ?? ""),
+      helpDetails: String(formData.get("helpDetails") ?? ""),
       message: String(formData.get("message") ?? ""),
+      profileLink,
     };
 
     try {
-      await createHelpRequest.mutateAsync(payload);
+      await createSponsorRequest.mutateAsync(payload);
     } catch (requestError) {
       setStatus("error");
       setError(
@@ -87,10 +104,10 @@ export function HelpRequestForm({
       <div className="rounded-3xl bg-emerald-50 p-8 text-center ring-1 ring-emerald-100">
         <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-700" />
         <h3 className="mt-4 text-2xl font-black text-slate-950">
-          Thank you. The team has been notified.
+          Thank you. Your sponsor request was sent.
         </h3>
         <p className="mt-3 text-slate-600">
-          Admin will receive the school, selected needs, donor details, and profile link.
+          Admin will receive the school, selected needs, sponsor details, and profile link.
         </p>
       </div>
     );
@@ -122,14 +139,19 @@ export function HelpRequestForm({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Full name" name="donorName" required />
-        <Field label="Email" name="donorEmail" type="email" required />
-        <Field label="Phone or WhatsApp" name="donorPhone" required />
-        <Field label="Country" name="donorCountry" required />
+        <Field label="Full name" name="sponsorName" required />
+        <Field label="Email" name="sponsorEmail" type="email" required />
+        <Field label="Phone or WhatsApp" name="sponsorPhone" required />
+        <Field label="Country" name="sponsorCountry" required />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Organization name" name="organizationName" />
+        <Field label="Pledge amount" name="pledgeAmount" type="number" />
       </div>
 
       <label className="block">
-        <span className="text-sm font-bold text-slate-700">Preferred help type</span>
+        <span className="text-sm font-bold text-slate-700">How you can help</span>
         <select
           name="preferredHelpType"
           className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
@@ -139,6 +161,17 @@ export function HelpRequestForm({
             <option key={type}>{type}</option>
           ))}
         </select>
+      </label>
+
+      <label className="block">
+        <span className="text-sm font-bold text-slate-700">Amount, items, or support details</span>
+        <textarea
+          name="helpDetails"
+          rows={3}
+          className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+          placeholder="Example: 20 desks, monthly feeding support, borehole repair, or a donation amount."
+          required
+        />
       </label>
 
       <label className="block">
@@ -164,7 +197,7 @@ export function HelpRequestForm({
         className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-700 px-6 py-3.5 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Send className="h-4 w-4" />
-        {status === "loading" ? "Sending..." : "Send Help Request"}
+        {status === "loading" ? "Sending..." : "Submit Sponsor Request"}
       </button>
     </form>
   );

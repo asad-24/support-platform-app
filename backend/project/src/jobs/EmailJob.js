@@ -31,9 +31,9 @@ class EmailJob {
 
   async run() {
     const payload = {
-      from: this.data?.from || config('mail.from', 'Support Atlas <no-reply@schoolsupportatlas.local>'),
+      from: this.data?.from || config('mail.from', 'School Support Atlas <info@schoolsupportatlas.com>'),
       to: this.data?.to,
-      subject: this.data?.subject || 'Support Atlas account update',
+      subject: this.data?.subject || 'School Support Atlas account update',
       text: this.data?.text || '',
       html: this.data?.html || undefined,
     };

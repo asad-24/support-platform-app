@@ -1,4 +1,4 @@
 module.exports = [
-  { method: 'GET', path: '/', name: 'index', middleware: 'auth', handler: 'school/SchoolController.index' },
-  { method: 'GET', path: '/:id', name: 'show', middleware: 'auth', handler: 'school/SchoolController.show' },
+  { method: 'GET', path: '/', name: 'index', handler: 'school/SchoolController.index' },
+  { method: 'GET', path: '/:id', name: 'show', handler: 'school/SchoolController.show' },
 ];

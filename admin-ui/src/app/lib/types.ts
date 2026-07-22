@@ -62,7 +62,7 @@ export type AdminNotification = {
   id: number;
   actor_user_id: number | null;
   school_id: number | null;
-  type: "volunteer_application_received" | "school_submitted" | "manual" | string;
+  type: "volunteer_application_received" | "school_submitted" | "sponsor_request_received" | "manual" | string;
   title: string;
   message: string;
   status: NotificationStatus;
@@ -75,6 +75,76 @@ export type AdminNotification = {
     [key: string]: unknown;
   } | null;
   created_at: string;
+};
+
+export type SponsorRequestStatus = "new" | "contacted" | "committed" | "declined" | "closed";
+
+export type SponsorNeedSnapshot = {
+  id: string;
+  title: string;
+  category: string | null;
+  estimatedCost: number | null;
+};
+
+export type SponsorRequest = {
+  id: number;
+  requestId: string;
+  sponsorName: string;
+  sponsorEmail: string;
+  sponsorPhone: string;
+  sponsorCountry: string;
+  organizationName: string | null;
+  preferredHelpType: string;
+  pledgeAmount: number | string | null;
+  helpDetails: string;
+  message: string;
+  schoolId: string;
+  schoolName: string;
+  selectedNeeds: SponsorNeedSnapshot[];
+  profileLink: string | null;
+  status: SponsorRequestStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type SchoolNeedStatus = "active" | "paused" | "deleted";
+
+export type SchoolNeed = {
+  id: number;
+  school_id: number;
+  submitted_by_user_id: number | null;
+  original_need_id: string | null;
+  title: string;
+  category: string | null;
+  description: string | null;
+  urgency: "low" | "medium" | "high" | string | null;
+  estimatedCost?: number | string | null;
+  estimated_cost: number | string | null;
+  quantityRequired?: number | null;
+  quantity_required: number | null;
+  quantityFunded?: number | null;
+  quantity_funded: number | null;
+  images: string[];
+  status: SchoolNeedStatus;
+  paused_at: string | null;
+  paused_by_user_id: number | null;
+  deleted_at: string | null;
+  deleted_by_user_id: number | null;
+  created_at: string;
+  updated_at: string;
+  school?: {
+    id: number;
+    school_name: string | null;
+    status: SchoolStatus;
+    submitted_by_user_id: number;
+    submitted_by?: ManagedUser | null;
+    location?: {
+      state: string | null;
+      lga: string | null;
+      community: string | null;
+      address: string | null;
+    } | null;
+  } | null;
 };
 
 export type VolunteerApplicationStatus = "pending" | "approved" | "rejected";

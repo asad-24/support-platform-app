@@ -14,9 +14,17 @@ import { SectionHeading } from "@/components/common/SectionHeading";
 import { NeedCard } from "@/components/needs/NeedCard";
 import { HelpThisSchoolButton } from "@/components/schools/HelpThisSchoolButton";
 import { useApprovedSchool } from "@/lib/api/hooks";
+import type { ApiResult } from "@/lib/api/schools";
+import type { School } from "@/lib/types";
 
-export function SchoolProfileContent({ id }: { id: string }) {
-  const { data, isLoading } = useApprovedSchool(id);
+export function SchoolProfileContent({
+  id,
+  initialResult,
+}: {
+  id: string;
+  initialResult?: ApiResult<School>;
+}) {
+  const { data, isLoading } = useApprovedSchool(id, initialResult);
   const school = data?.data;
 
   if (isLoading) {

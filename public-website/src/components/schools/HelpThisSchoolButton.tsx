@@ -7,7 +7,7 @@ import type { School } from "@/lib/types";
 
 export function HelpThisSchoolButton({
   school,
-  label = "Help This School",
+  label = "Sponsor This School",
 }: {
   school: School;
   label?: string;

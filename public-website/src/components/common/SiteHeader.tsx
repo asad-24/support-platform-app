@@ -1,6 +1,6 @@
 "use client";
 
-import { HeartHandshake, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -10,6 +10,7 @@ const nav = [
   ["Needs", "/needs"],
   ["Impact", "/impact"],
   ["About", "/about"],
+  ["App", "/app"],
   ["Contact", "/contact"],
 ];
 
@@ -20,12 +21,12 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/90 backdrop-blur-xl">
       <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-3" onClick={() => setOpen(false)}>
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-700 text-white shadow-lg shadow-emerald-700/20">
-            <HeartHandshake className="h-5 w-5" />
+          <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-lg shadow-emerald-700/15 ring-1 ring-emerald-100">
+            <img src="/logo_school.png" alt="School Support Atlas" className="h-full w-full object-cover" />
           </span>
           <span>
             <span className="block text-lg font-black leading-tight text-slate-950">
-              Naija School Relief
+              School Support Atlas
             </span>
             <span className="block text-xs font-bold uppercase tracking-[0.16em] text-emerald-700">
               Welfare platform

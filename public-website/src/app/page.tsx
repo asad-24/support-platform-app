@@ -260,7 +260,7 @@ export default function Home() {
             </h2>
             <p className="mt-4 leading-7 text-slate-600">
               Badges show verification and urgency. Admin notifications include
-              selected needs, donor details, message, and profile link for follow-up.
+              selected needs, sponsor details, message, and profile link for follow-up.
             </p>
           </div>
         </Reveal>

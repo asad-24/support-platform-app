@@ -12,9 +12,11 @@ const SchoolChildrenStats = require('@src/models/SchoolChildrenStats');
 const SchoolWelfareAssessment = require('@src/models/SchoolWelfareAssessment');
 const SchoolReview = require('@src/models/SchoolReview');
 const SchoolView = require('@src/models/SchoolView');
+const SchoolNeed = require('@src/models/SchoolNeed');
 const VolunteerActivityLog = require('@src/models/VolunteerActivityLog');
 const AdminNotification = require('@src/models/AdminNotification');
 const VolunteerNotification = require('@src/models/VolunteerNotification');
+const SchoolNeedStore = require('@src/services/SchoolNeedStore');
 const { sanitizeUser } = require('@src/services/auth/credentials');
 const ProfileStore = require('@src/services/VolunteerProfileStore');
 
@@ -171,12 +173,21 @@ function serializeSchoolRow(school) {
     unique_site_id: row.uniqueSiteId,
     school_name: row.schoolName,
     local_name: row.localName,
+    name: row.schoolName,
+    description: row.description,
     school_type: row.schoolType,
+    type: row.schoolType,
     operator_name: row.operatorName,
+    contact_person: row.operatorName,
     phone: row.phone,
     status: row.status,
     urgency: row.urgency,
     needs: Array.isArray(row.needs) ? row.needs : [],
+    images: Array.isArray(row.images) ? row.images : [],
+    total_students: row.totalStudents,
+    total_teachers: row.totalTeachers,
+    total_classrooms: row.totalClassrooms,
+    founded_year: row.foundedYear,
     correction_issues: Array.isArray(row.correctionIssues) ? row.correctionIssues : [],
     admin_feedback: row.adminFeedback,
     submitted_at: row.submittedAt,
@@ -336,7 +347,7 @@ function serializeVolunteerNotification(row) {
 
 async function serializeSchoolAggregate(school) {
   if (!school) return null;
-  const [operators, location, childrenStats, welfare, photos, reviews, submittedBy, approvedBy, archivedBy] = await Promise.all([
+  const [operators, location, childrenStats, welfare, photos, reviews, submittedBy, approvedBy, archivedBy, needs] = await Promise.all([
     SchoolOperator.findAll({ where: { schoolId: school.id }, order: [['id', 'ASC']] }),
     SchoolLocation.findOne({ where: { schoolId: school.id } }),
     SchoolChildrenStats.findOne({ where: { schoolId: school.id } }),
@@ -346,10 +357,12 @@ async function serializeSchoolAggregate(school) {
     User.findByPk(school.submittedByUserId),
     school.approvedByUserId ? User.findByPk(school.approvedByUserId) : null,
     school.archivedByUserId ? User.findByPk(school.archivedByUserId) : null,
+    SchoolNeedStore.activeNeedsForSchool(school),
   ]);
 
   return {
     ...serializeSchoolRow(school),
+    needs,
     submitted_by: sanitizeUser(submittedBy),
     approved_by: sanitizeUser(approvedBy),
     archived_by: sanitizeUser(archivedBy),
@@ -363,12 +376,14 @@ async function serializeSchoolAggregate(school) {
 }
 
 async function serializeSchoolListRow(school) {
-  const [location, submittedBy] = await Promise.all([
+  const [location, submittedBy, needs] = await Promise.all([
     SchoolLocation.findOne({ where: { schoolId: school.id } }),
     User.findByPk(school.submittedByUserId),
+    SchoolNeedStore.activeNeedsForSchool(school),
   ]);
   return {
     ...serializeSchoolRow(school),
+    needs,
     submitted_by: sanitizeUser(submittedBy),
     location: serializeLocation(location),
   };
@@ -462,6 +477,9 @@ async function applyAggregatePayload(school, payload, userId, transaction) {
   const schoolPayload = normalizeSchoolPayload(payload);
   if (Object.keys(schoolPayload).length) {
     await school.update(schoolPayload, { transaction });
+  }
+  if (Array.isArray(schoolPayload.needs)) {
+    await SchoolNeedStore.replaceSchoolNeedsFromPayload(school, schoolPayload.needs, transaction);
   }
 
   if (payload.operators !== undefined) await replaceOperators(school.id, payload.operators, transaction);
@@ -577,6 +595,7 @@ async function deleteSchool(school) {
       SchoolChildrenStats.destroy({ where: { schoolId: school.id }, transaction }),
       SchoolWelfareAssessment.destroy({ where: { schoolId: school.id }, transaction }),
       SchoolPhoto.destroy({ where: { schoolId: school.id }, transaction }),
+      SchoolNeed.destroy({ where: { schoolId: school.id }, transaction }),
       VolunteerActivityLog.destroy({ where: { schoolId: school.id }, transaction }),
     ]);
     await school.destroy({ transaction });

@@ -757,7 +757,7 @@ function detailFields(school: School) {
     { label: "Submitter", value: `${school.submitted_by?.name || `User #${school.submitted_by_user_id}`}\n${school.submitted_by?.email || ""}` },
     { label: "Location", value: [school.location?.community, school.location?.lga, school.location?.state].filter(Boolean).join(", ") },
     { label: "Address", value: school.location?.address || school.location?.landmark },
-    { label: "Needs", value: school.needs?.length ? school.needs.map(readable).join(", ") : null },
+    { label: "Needs", value: school.needs?.length ? school.needs.map(needText).join(", ") : null },
     { label: "Admin feedback", value: school.admin_feedback },
     { label: "Reviewed", value: school.reviewed_at ? formatDateTime(school.reviewed_at) : "Not reviewed" },
     { label: "Archived", value: school.archived_at ? formatDateTime(school.archived_at) : "No" },
@@ -809,7 +809,7 @@ function formFromSchool(school: School): SchoolFormState {
     address: school.location?.address || "",
     latitude: school.location?.latitude == null ? "" : String(school.location.latitude),
     longitude: school.location?.longitude == null ? "" : String(school.location.longitude),
-    needs: (school.needs || []).join(", "),
+    needs: (school.needs || []).map(needText).join(", "),
     operators: (school.operators || []).map((operator) => [operator.name || "", operator.phone || ""].filter(Boolean).join(" | ")).join("\n"),
     totalChildren: school.children_stats?.total_children == null ? "" : String(school.children_stats.total_children),
     boysCount: school.children_stats?.boys_count == null ? "" : String(school.children_stats.boys_count),
@@ -880,6 +880,16 @@ function numberOrNull(value: string) {
 
 function readable(value: string) {
   return value ? titleCase(value.replace(/_/g, " ")) : "Not set";
+}
+
+function needText(value: unknown) {
+  if (typeof value === "string") return readable(value);
+  if (value && typeof value === "object") {
+    const need = value as { title?: unknown; original_need_id?: unknown; originalNeedId?: unknown; id?: unknown };
+    const raw = need.title ?? need.original_need_id ?? need.originalNeedId ?? need.id;
+    return typeof raw === "string" ? readable(raw) : "Need";
+  }
+  return "Need";
 }
 
 function yesNo(value: boolean | null | undefined) {

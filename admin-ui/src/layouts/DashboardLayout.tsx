@@ -3,7 +3,9 @@ import { Outlet, useLocation, useNavigate } from "react-router";
 import {
   ChevronRight,
   ClipboardList,
+  HeartHandshake,
   LayoutDashboard,
+  ListChecks,
   LogOut,
   Menu,
   School,
@@ -23,6 +25,8 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 const adminItems: SidebarItem[] = [
   { id: "dashboard", name: "Dashboard", description: "Operational overview", icon: LayoutDashboard, path: "/", group: "Overview" },
   { id: "schools", name: "Schools", description: "School review", icon: School, path: "/schools", group: "Review" },
+  { id: "needs", name: "Needs", description: "Pause or delete public needs", icon: ListChecks, path: "/needs", group: "Review" },
+  { id: "sponsors", name: "Sponsors", description: "Sponsor follow-up", icon: HeartHandshake, path: "/sponsors", group: "Support" },
   { id: "users", name: "Users", description: "Active accounts", icon: Users, path: "/users", group: "People" },
   {
     id: "requests",
@@ -70,14 +74,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     <NotificationsProvider>
       <div className="flex h-screen bg-background">
         <div className="hidden flex-shrink-0 lg:block">
-          <DashboardSidebar items={adminItems} label="Support Atlas" sublabel="Admin Panel" />
+          <DashboardSidebar items={adminItems} label="School Support Atlas" sublabel="Admin Panel" />
         </div>
 
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetContent side="left" className="w-[22rem] max-w-[calc(100vw-2rem)] overflow-hidden border-0 bg-transparent p-0 shadow-none">
             <DashboardSidebar
               items={adminItems}
-              label="Support Atlas"
+              label="School Support Atlas"
               sublabel="Admin Panel"
               onNavigate={() => setMobileOpen(false)}
             />
@@ -99,7 +103,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       <Menu className="size-4" />
                       <span className="sr-only">Open navigation</span>
                     </Button>
-                    <span className="shrink-0 font-medium text-foreground">Support Atlas</span>
+                    <span className="shrink-0 font-medium text-foreground">School Support Atlas</span>
                     <ChevronRight className="size-3 shrink-0" />
                     <span className="shrink-0">Admin Panel</span>
                     <ChevronRight className="size-3 shrink-0" />
